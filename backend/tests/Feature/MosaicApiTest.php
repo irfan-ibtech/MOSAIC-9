@@ -219,4 +219,34 @@ class MosaicApiTest extends TestCase
         $toggleResponse->assertStatus(200)
             ->assertJsonPath('sync_telemetry.earth_link_state', 'LOSS_OF_SIGNAL');
     }
+
+    public function test_crew_specific_scenarios_and_simulations(): void
+    {
+        $elena = CrewMember::where('name', 'like', '%Elena Rostova%')->first();
+        $this->assertNotNull($elena);
+
+        // Elena has astronaut-tailored scenarios
+        $response = $this->getJson("/api/scenarios?crew_member_id={$elena->id}");
+        $response->assertStatus(200);
+        $scenarios = $response->json();
+        $this->assertCount(2, $scenarios);
+        $names = array_column($scenarios, 'name');
+        $this->assertStringContainsString('Biosensor Re-Calibration', $names[0] . ' ' . $names[1]);
+
+        // Elena simulation uses Elena's current state (HRV: 53ms, BP: 115mmHg), not Alex Morgan's collapsed state (27ms / 88mmHg)
+        $simResponse = $this->postJson('/api/scenarios/simulate', [
+            'crew_member_id' => $elena->id,
+            'name' => 'Elena Custom Recovery',
+            'sleep_delta_hours' => 1.0,
+            'workload_delta_pct' => -10,
+            'cycle_ergometer_watts' => 155,
+            'hydration_fluid_ml' => 750,
+        ]);
+
+        $simResponse->assertStatus(201);
+        $comparison = $simResponse->json('baseline_comparison');
+        $this->assertEquals(53.0, $comparison['hrv']['current']);
+        $this->assertEquals(115.0, $comparison['bp']['current']);
+        $this->assertGreaterThan(50.0, $comparison['hrv']['projected']);
+    }
 }

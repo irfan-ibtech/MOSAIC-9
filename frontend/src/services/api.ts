@@ -17,6 +17,7 @@ import {
   DEFAULT_RECENT_EVENTS,
   DEFAULT_INCIDENTS,
   DEFAULT_SCENARIOS,
+  CREW_SIMULATION_DEFAULTS,
   DEFAULT_GROUND_COMMS,
   DEFAULT_SYNC_TELEMETRY,
   DEFAULT_RECONSTRUCTION_INC1,
@@ -290,9 +291,13 @@ export const mosaicApi = {
     }),
 
   // Scenario Sandbox
-  getScenarios: (crewMemberId?: number) => {
+  getScenarios: async (crewMemberId?: number) => {
     const qs = crewMemberId ? `?crew_member_id=${crewMemberId}` : '';
-    return fetchWithFallback<CountermeasureScenario[]>(`/scenarios${qs}`, `scenarios_${crewMemberId || 'all'}`);
+    const res = await fetchWithFallback<CountermeasureScenario[]>(`/scenarios${qs}`, `scenarios_${crewMemberId || 'all'}`);
+    if (crewMemberId && Array.isArray(res)) {
+      return res.filter((s) => s.crew_member_id === crewMemberId);
+    }
+    return res;
   },
 
   simulateScenario: async (payload: {
@@ -317,22 +322,38 @@ export const mosaicApi = {
       // offline fallback simulation
     }
 
-    // High-fidelity offline simulation model
-    const sleepEffect = payload.sleep_delta_hours * 6.8;
-    const workloadEffect = (payload.workload_delta_pct / -10.0) * 3.2;
-    const ergoEffect = (payload.cycle_ergometer_watts / 50.0) * 2.5;
-    const hydrationEffect = (payload.hydration_fluid_ml / 400.0) * 2.0;
-    const projHrv = Math.min(68, Math.max(25, 27.0 + sleepEffect + workloadEffect + hydrationEffect));
-    const projHr = Math.max(54, Math.min(95, 78.0 - (sleepEffect * 0.8) - (hydrationEffect * 1.5)));
-    const projBp = Math.min(125, Math.max(85, 88.0 + (hydrationEffect * 5.0) + (ergoEffect * 3.0)));
-    const projPvt = Math.max(200, Math.min(380, 310.0 - (sleepEffect * 15.0) - (workloadEffect * 8.0)));
-    const risk = Math.max(8, Math.min(90, Math.round(75 - (projHrv - 27) * 1.5)));
-    const recoveryHours = Math.max(18, Math.round(72 - (payload.sleep_delta_hours * 12)));
+    // High-fidelity offline simulation model tailored to crew member
+    const crewConfig = CREW_SIMULATION_DEFAULTS[payload.crew_member_id] || CREW_SIMULATION_DEFAULTS[1];
+    const currHrv = crewConfig.currentHrv;
+    const currHr = crewConfig.currentHr;
+    const currBp = crewConfig.currentBp;
+    const currPvt = crewConfig.currentPvt;
+    const currFatigue = crewConfig.currentFatigue;
+
+    const sleepEffect = payload.sleep_delta_hours;
+    const workloadEffect = -payload.workload_delta_pct / 100.0;
+    const ergoEffect = payload.cycle_ergometer_watts / 185.0;
+    const hydrationEffect = payload.hydration_fluid_ml / 1000.0;
+
+    const projHrv = Math.min(crewConfig.baseHrv + 6.0, Math.max(20.0, Math.round((currHrv + (sleepEffect * 6.8) + (workloadEffect * 7.5) + (ergoEffect * 3.5)) * 10) / 10));
+    const projHr = Math.max(crewConfig.baseHr - 3.0, Math.min(95.0, Math.round((currHr - (sleepEffect * 3.2) - (workloadEffect * 3.5) - (ergoEffect * 2.0)) * 10) / 10));
+    
+    let projBp: number;
+    if (currBp < crewConfig.baseBp) {
+      projBp = Math.min(crewConfig.baseBp + 2.0, Math.max(85.0, Math.round((currBp + (hydrationEffect * 14.0) + (ergoEffect * 4.0) + (sleepEffect * 1.5)) * 10) / 10));
+    } else {
+      projBp = Math.max(crewConfig.baseBp - 2.0, Math.round((currBp - (sleepEffect * 2.5) - (workloadEffect * 3.0)) * 10) / 10);
+    }
+
+    const projPvt = Math.max(crewConfig.basePvt - 5.0, Math.min(380.0, Math.round((currPvt - (sleepEffect * 24.0) - (workloadEffect * 16.0)) * 10) / 10));
+    const projFatigue = Math.max(1.0, Math.min(10.0, Math.round((currFatigue - (sleepEffect * 1.5) - (workloadEffect * 1.2)) * 10) / 10));
+    const risk = Math.max(5, Math.min(85, Math.round(20 + ((currFatigue - 2.0) * 7) - (sleepEffect * 12) - (hydrationEffect * 8) - (ergoEffect * 8))));
+    const recoveryHours = Math.max(12, Math.round(48 + ((currFatigue - 2.0) * 6) - (sleepEffect * 10) - (hydrationEffect * 8) - (workloadEffect * 12)));
 
     const simScenario: CountermeasureScenario = {
       id: Date.now(),
       crew_member_id: payload.crew_member_id,
-      incident_id: 1,
+      incident_id: null,
       name: payload.name || 'Custom Simulation',
       description: `Simulated: ${payload.sleep_delta_hours}h sleep, ${payload.workload_delta_pct}% workload, ${payload.cycle_ergometer_watts}W ergo, ${payload.hydration_fluid_ml}mL fluid.`,
       inputs: {
@@ -343,31 +364,31 @@ export const mosaicApi = {
         ambient_co2_target_mmhg: payload.ambient_co2_target_mmhg ?? 2.8,
       },
       projections: {
-        projected_hrv_rmssd: Math.round(projHrv * 10) / 10,
-        projected_resting_hr: Math.round(projHr * 10) / 10,
-        projected_systolic_bp: Math.round(projBp * 10) / 10,
-        projected_pvt_latency_ms: Math.round(projPvt * 10) / 10,
-        projected_fatigue_index: 3.5,
+        projected_hrv_rmssd: projHrv,
+        projected_resting_hr: projHr,
+        projected_systolic_bp: projBp,
+        projected_pvt_latency_ms: projPvt,
+        projected_fatigue_index: projFatigue,
         time_to_stability_hours: recoveryHours,
         risk_recurrence_pct: risk,
         trajectory_hourly: [
-          { hour: 0, hrv: 27, hr: 78, bp: 88, pvt: 310 },
-          { hour: 12, hrv: Math.round((27 + projHrv * 0.3) * 10) / 10, hr: Math.round((78 + projHr * 0.3) / 1.3), bp: Math.round(88 + (projBp - 88) * 0.35), pvt: Math.round(310 - (310 - projPvt) * 0.3) },
-          { hour: 24, hrv: Math.round((27 + projHrv * 0.7) * 10) / 10, hr: Math.round((78 + projHr * 0.7) / 1.7), bp: Math.round(88 + (projBp - 88) * 0.75), pvt: Math.round(310 - (310 - projPvt) * 0.7) },
-          { hour: 48, hrv: Math.round(projHrv * 10) / 10, hr: Math.round(projHr * 10) / 10, bp: Math.round(projBp * 10) / 10, pvt: Math.round(projPvt * 10) / 10 },
+          { hour: 0, hrv: currHrv, hr: currHr, bp: currBp, pvt: currPvt },
+          { hour: 12, hrv: Math.round((currHrv + (projHrv - currHrv) * 0.35) * 10) / 10, hr: Math.round((currHr + (projHr - currHr) * 0.35) * 10) / 10, bp: Math.round((currBp + (projBp - currBp) * 0.45) * 10) / 10, pvt: Math.round((currPvt + (projPvt - currPvt) * 0.3) * 10) / 10 },
+          { hour: 24, hrv: Math.round((currHrv + (projHrv - currHrv) * 0.70) * 10) / 10, hr: Math.round((currHr + (projHr - currHr) * 0.70) * 10) / 10, bp: Math.round((currBp + (projBp - currBp) * 0.80) * 10) / 10, pvt: Math.round((currPvt + (projPvt - currPvt) * 0.7) * 10) / 10 },
+          { hour: 48, hrv: projHrv, hr: projHr, bp: projBp, pvt: projPvt },
         ],
       },
-      assumptions: 'Presumes nominal adherence to countermeasure inputs.',
+      assumptions: 'Presumes nominal adherence to countermeasure inputs. Strictly deterministic aerospace simulation model.',
       is_active: false,
     };
 
     return {
       scenario: simScenario,
       baseline_comparison: {
-        hrv: { current: 27.0, projected: simScenario.projections.projected_hrv_rmssd, baseline: 58.0, unit: 'ms' },
-        hr: { current: 78.0, projected: simScenario.projections.projected_resting_hr, baseline: 60.0, unit: 'bpm' },
-        bp: { current: 88.0, projected: simScenario.projections.projected_systolic_bp, baseline: 118.0, unit: 'mmHg' },
-        pvt: { current: 310.0, projected: simScenario.projections.projected_pvt_latency_ms, baseline: 215.0, unit: 'ms' },
+        hrv: { current: currHrv, projected: projHrv, baseline: crewConfig.baseHrv, unit: 'ms' },
+        hr: { current: currHr, projected: projHr, baseline: crewConfig.baseHr, unit: 'bpm' },
+        bp: { current: currBp, projected: projBp, baseline: crewConfig.baseBp, unit: 'mmHg' },
+        pvt: { current: currPvt, projected: projPvt, baseline: crewConfig.basePvt, unit: 'ms' },
       },
     };
   },

@@ -14,7 +14,15 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
-export const SystemStatusScreen: React.FC = () => {
+interface SystemStatusScreenProps {
+  earthLinkState?: 'LOSS_OF_SIGNAL' | 'DEGRADED_COMM' | 'HIGH_GAIN_ESTABLISHED';
+  onToggleCommLink?: (state: 'LOSS_OF_SIGNAL' | 'DEGRADED_COMM' | 'HIGH_GAIN_ESTABLISHED') => void;
+}
+
+export const SystemStatusScreen: React.FC<SystemStatusScreenProps> = ({
+  earthLinkState,
+  onToggleCommLink,
+}) => {
   const [syncData, setSyncData] = useState<SyncTelemetryData | null>(null);
   const [storageStats, setStorageStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
@@ -34,8 +42,17 @@ export const SystemStatusScreen: React.FC = () => {
     fetchStatus();
   }, []);
 
+  useEffect(() => {
+    if (earthLinkState && syncData && syncData.earth_link_state !== earthLinkState) {
+      setSyncData((prev) => (prev ? { ...prev, earth_link_state: earthLinkState } : null));
+    }
+  }, [earthLinkState]);
+
   const handleToggleLink = async (state: 'LOSS_OF_SIGNAL' | 'DEGRADED_COMM' | 'HIGH_GAIN_ESTABLISHED') => {
     try {
+      if (onToggleCommLink) {
+        onToggleCommLink(state);
+      }
       const res = await mosaicApi.toggleCommLink(state);
       setStatusMessage(res.message);
       fetchStatus();

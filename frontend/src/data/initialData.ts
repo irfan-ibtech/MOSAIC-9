@@ -373,6 +373,7 @@ export const DEFAULT_RECENT_EVENTS: LedgerEvent[] = [
 ];
 
 export const DEFAULT_SCENARIOS: CountermeasureScenario[] = [
+  // Alex Morgan (id: 1)
   {
     id: 1,
     crew_member_id: 1,
@@ -411,7 +412,261 @@ export const DEFAULT_SCENARIOS: CountermeasureScenario[] = [
     assumptions: 'Presumes ongoing high-tempo payload checkout with partial sleep window expansion.',
     is_active: false,
   },
+  // Dr. Sarah Chen (id: 2)
+  {
+    id: 3,
+    crew_member_id: 2,
+    incident_id: null,
+    name: 'Scenario Alpha: Expanded Medical Duty & Circadian Stability',
+    description: 'Covers Commander Morgan clinical checkouts (+15% workload) with circadian sleep buffer (+0.5h) and maintenance fluid intake (600 mL).',
+    inputs: { sleep_delta_hours: 0.5, workload_delta_pct: 15, cycle_ergometer_watts: 175, hydration_fluid_ml: 600, ambient_co2_target_mmhg: 2.2 },
+    projections: {
+      projected_hrv_rmssd: 61.0,
+      projected_resting_hr: 58.0,
+      projected_systolic_bp: 113.0,
+      projected_pvt_latency_ms: 210.0,
+      projected_fatigue_index: 2.2,
+      time_to_stability_hours: 18,
+      risk_recurrence_pct: 6,
+    },
+    assumptions: 'Demonstrates stable physiological adaptation under elevated clinical triage responsibility.',
+    is_active: true,
+  },
+  {
+    id: 4,
+    crew_member_id: 2,
+    incident_id: null,
+    name: 'Scenario Bravo: High-Intensity Aerobic VO2-Max Preservation',
+    description: 'Targeted 195W ergometer training block with 1000 mL hydration loading to preserve peak cardiovascular reserve for Mars orbital insertion.',
+    inputs: { sleep_delta_hours: 1.0, workload_delta_pct: 0, cycle_ergometer_watts: 195, hydration_fluid_ml: 1000, ambient_co2_target_mmhg: 2.0 },
+    projections: {
+      projected_hrv_rmssd: 66.0,
+      projected_resting_hr: 55.0,
+      projected_systolic_bp: 112.0,
+      projected_pvt_latency_ms: 205.0,
+      projected_fatigue_index: 1.8,
+      time_to_stability_hours: 12,
+      risk_recurrence_pct: 4,
+    },
+    assumptions: 'Peak aerobic countermeasure profile maintains vagal tone and plasma volume.',
+    is_active: false,
+  },
+  // Marcus Vance (id: 3)
+  {
+    id: 5,
+    crew_member_id: 3,
+    incident_id: 2,
+    name: 'Scenario Alpha: ECLSS Scrubbing & Workload Relief',
+    description: 'Cabin CO2 active scrubbing to <1.8 mmHg, 30% reduction in manual overhaul shift, and +2.0h sleep restoration.',
+    inputs: { sleep_delta_hours: 2.0, workload_delta_pct: -30, cycle_ergometer_watts: 150, hydration_fluid_ml: 800, ambient_co2_target_mmhg: 1.8 },
+    projections: {
+      projected_hrv_rmssd: 50.0,
+      projected_resting_hr: 64.0,
+      projected_systolic_bp: 121.0,
+      projected_pvt_latency_ms: 226.0,
+      projected_fatigue_index: 2.8,
+      time_to_stability_hours: 24,
+      risk_recurrence_pct: 12,
+    },
+    assumptions: 'Rapid clearance of hypercapnic vasodilation upon local ventilation increase and shift limitation.',
+    is_active: true,
+  },
+  {
+    id: 6,
+    crew_member_id: 3,
+    incident_id: 2,
+    name: 'Scenario Bravo: Split-Shift Rotation with Ergo Aerobics',
+    description: 'Split 6h maintenance shifts with interleaved cycle ergometer sessions to stimulate pulmonary gas exchange.',
+    inputs: { sleep_delta_hours: 1.0, workload_delta_pct: -15, cycle_ergometer_watts: 165, hydration_fluid_ml: 600, ambient_co2_target_mmhg: 2.2 },
+    projections: {
+      projected_hrv_rmssd: 47.0,
+      projected_resting_hr: 66.0,
+      projected_systolic_bp: 123.0,
+      projected_pvt_latency_ms: 238.0,
+      projected_fatigue_index: 3.9,
+      time_to_stability_hours: 42,
+      risk_recurrence_pct: 26,
+    },
+    assumptions: 'Split-shift avoids prolonged sustained exertion in confined node compartments.',
+    is_active: false,
+  },
+  // Elena Rostova (id: 4)
+  {
+    id: 7,
+    crew_member_id: 4,
+    incident_id: null,
+    name: 'Scenario Alpha: Biosensor Re-Calibration & Hydration Protocol',
+    description: 'Patch electrode re-coupling window with nominal geology payload analysis, +1.0h sleep, and 750 mL oral hydration.',
+    inputs: { sleep_delta_hours: 1.0, workload_delta_pct: -10, cycle_ergometer_watts: 155, hydration_fluid_ml: 750, ambient_co2_target_mmhg: 2.1 },
+    projections: {
+      projected_hrv_rmssd: 56.0,
+      projected_resting_hr: 61.0,
+      projected_systolic_bp: 116.0,
+      projected_pvt_latency_ms: 216.0,
+      projected_fatigue_index: 2.2,
+      time_to_stability_hours: 16,
+      risk_recurrence_pct: 8,
+    },
+    assumptions: 'Restores telemetry confidence score from UNKNOWN to STABLE upon sensor re-acquisition.',
+    is_active: true,
+  },
+  {
+    id: 8,
+    crew_member_id: 4,
+    incident_id: null,
+    name: 'Scenario Bravo: Core Sample Glovebox High-Workload Shift',
+    description: 'Simulate prolonged glovebox rock sample analysis with +20% workload and countermeasure hydration.',
+    inputs: { sleep_delta_hours: 0.0, workload_delta_pct: 20, cycle_ergometer_watts: 170, hydration_fluid_ml: 900, ambient_co2_target_mmhg: 2.5 },
+    projections: {
+      projected_hrv_rmssd: 51.0,
+      projected_resting_hr: 65.0,
+      projected_systolic_bp: 117.0,
+      projected_pvt_latency_ms: 229.0,
+      projected_fatigue_index: 3.6,
+      time_to_stability_hours: 28,
+      risk_recurrence_pct: 18,
+    },
+    assumptions: 'Evaluates astronaut cognitive reserve under intensive glovebox science operations.',
+    is_active: false,
+  },
 ];
+
+export const CREW_SIMULATION_DEFAULTS: Record<number, {
+  currentHrv: number;
+  currentHr: number;
+  currentBp: number;
+  currentPvt: number;
+  currentFatigue: number;
+  baseHrv: number;
+  baseHr: number;
+  baseBp: number;
+  basePvt: number;
+  alpha: {
+    name: string;
+    sleepDelta: number;
+    workloadDelta: number;
+    ergoWatts: number;
+    hydrationMl: number;
+    ambientCo2: number;
+  };
+  bravo: {
+    name: string;
+    sleepDelta: number;
+    workloadDelta: number;
+    ergoWatts: number;
+    hydrationMl: number;
+    ambientCo2: number;
+  };
+}> = {
+  1: {
+    currentHrv: 27.0,
+    currentHr: 78.0,
+    currentBp: 88.0,
+    currentPvt: 310.0,
+    currentFatigue: 8.5,
+    baseHrv: 58.0,
+    baseHr: 60.0,
+    baseBp: 118.0,
+    basePvt: 215.0,
+    alpha: {
+      name: 'Scenario Alpha: Sleep Restoration & Fluid Loading',
+      sleepDelta: 2.5,
+      workloadDelta: -35,
+      ergoWatts: 140,
+      hydrationMl: 1200,
+      ambientCo2: 2.0,
+    },
+    bravo: {
+      name: 'Scenario Bravo: Workload Maintenance with Sleep Aid',
+      sleepDelta: 1.5,
+      workloadDelta: -10,
+      ergoWatts: 160,
+      hydrationMl: 800,
+      ambientCo2: 2.8,
+    },
+  },
+  2: {
+    currentHrv: 62.0,
+    currentHr: 57.0,
+    currentBp: 114.0,
+    currentPvt: 212.0,
+    currentFatigue: 2.0,
+    baseHrv: 64.0,
+    baseHr: 56.0,
+    baseBp: 112.0,
+    basePvt: 208.0,
+    alpha: {
+      name: 'Scenario Alpha: Expanded Medical Duty & Circadian Stability',
+      sleepDelta: 0.5,
+      workloadDelta: 15,
+      ergoWatts: 175,
+      hydrationMl: 600,
+      ambientCo2: 2.2,
+    },
+    bravo: {
+      name: 'Scenario Bravo: High-Intensity Aerobic VO2-Max Preservation',
+      sleepDelta: 1.0,
+      workloadDelta: 0,
+      ergoWatts: 195,
+      hydrationMl: 1000,
+      ambientCo2: 2.0,
+    },
+  },
+  3: {
+    currentHrv: 42.0,
+    currentHr: 69.0,
+    currentBp: 126.0,
+    currentPvt: 258.0,
+    currentFatigue: 6.0,
+    baseHrv: 52.0,
+    baseHr: 64.0,
+    baseBp: 122.0,
+    basePvt: 222.0,
+    alpha: {
+      name: 'Scenario Alpha: ECLSS Scrubbing & Workload Relief',
+      sleepDelta: 2.0,
+      workloadDelta: -30,
+      ergoWatts: 150,
+      hydrationMl: 800,
+      ambientCo2: 1.8,
+    },
+    bravo: {
+      name: 'Scenario Bravo: Split-Shift Rotation with Ergo Aerobics',
+      sleepDelta: 1.0,
+      workloadDelta: -15,
+      ergoWatts: 165,
+      hydrationMl: 600,
+      ambientCo2: 2.2,
+    },
+  },
+  4: {
+    currentHrv: 53.0,
+    currentHr: 63.0,
+    currentBp: 115.0,
+    currentPvt: 222.0,
+    currentFatigue: 2.8,
+    baseHrv: 55.0,
+    baseHr: 62.0,
+    baseBp: 116.0,
+    basePvt: 218.0,
+    alpha: {
+      name: 'Scenario Alpha: Biosensor Re-Calibration & Hydration Protocol',
+      sleepDelta: 1.0,
+      workloadDelta: -10,
+      ergoWatts: 155,
+      hydrationMl: 750,
+      ambientCo2: 2.1,
+    },
+    bravo: {
+      name: 'Scenario Bravo: Core Sample Glovebox High-Workload Shift',
+      sleepDelta: 0.0,
+      workloadDelta: 20,
+      ergoWatts: 170,
+      hydrationMl: 900,
+      ambientCo2: 2.5,
+    },
+  },
+};
 
 export const DEFAULT_GROUND_COMMS: GroundCommunication[] = [
   {

@@ -903,7 +903,7 @@ class MosaicSeeder extends Seeder
         ]);
 
         $marcusIncidentTime = $baseDate->copy()->addDays(118)->addHours(19)->addMinutes(15);
-        Incident::create([
+        $incidentMarcus = Incident::create([
             'incident_code' => 'INC-ARES4-118-002',
             'crew_member_id' => $marcus->id,
             'incident_type' => 'workload_exhaustion_co2',
@@ -933,6 +933,7 @@ class MosaicSeeder extends Seeder
         ]);
 
         // 6. Countermeasure Scenarios (Module F)
+        // Alex Morgan Scenarios
         CountermeasureScenario::create([
             'crew_member_id' => $alex->id,
             'incident_id' => $incident->id,
@@ -980,6 +981,159 @@ class MosaicSeeder extends Seeder
                 'risk_recurrence_pct' => 38,
             ],
             'assumptions' => 'Pharmacological sleep aids may introduce residual morning cognitive grogginess or affect rapid awakening readiness.',
+            'is_active' => false,
+        ]);
+
+        // Dr. Sarah Chen Scenarios (CMO nominal homeostatic maintenance)
+        CountermeasureScenario::create([
+            'crew_member_id' => $sarah->id,
+            'incident_id' => null,
+            'name' => 'Scenario Alpha: Expanded Medical Duty & Circadian Stability',
+            'description' => 'Covers Commander Morgan clinical checkouts (+15% workload) with circadian sleep buffer (+0.5h) and maintenance fluid intake (600 mL).',
+            'inputs' => [
+                'sleep_delta_hours' => 0.5,
+                'workload_delta_pct' => 15,
+                'cycle_ergometer_watts' => 175,
+                'hydration_fluid_ml' => 600,
+                'ambient_co2_target_mmhg' => 2.2,
+            ],
+            'projections' => [
+                'projected_hrv_rmssd' => 61.0,
+                'projected_resting_hr' => 58.0,
+                'projected_systolic_bp' => 113.0,
+                'projected_pvt_latency_ms' => 210.0,
+                'projected_fatigue_index' => 2.2,
+                'time_to_stability_hours' => 18,
+                'risk_recurrence_pct' => 6,
+            ],
+            'assumptions' => 'Demonstrates stable physiological adaptation under elevated clinical triage responsibility.',
+            'is_active' => true,
+        ]);
+
+        CountermeasureScenario::create([
+            'crew_member_id' => $sarah->id,
+            'incident_id' => null,
+            'name' => 'Scenario Bravo: High-Intensity Aerobic VO2-Max Preservation',
+            'description' => 'Targeted 195W ergometer training block with 1000 mL hydration loading to preserve peak cardiovascular reserve for Mars orbital insertion.',
+            'inputs' => [
+                'sleep_delta_hours' => 1.0,
+                'workload_delta_pct' => 0,
+                'cycle_ergometer_watts' => 195,
+                'hydration_fluid_ml' => 1000,
+                'ambient_co2_target_mmhg' => 2.0,
+            ],
+            'projections' => [
+                'projected_hrv_rmssd' => 66.0,
+                'projected_resting_hr' => 55.0,
+                'projected_systolic_bp' => 112.0,
+                'projected_pvt_latency_ms' => 205.0,
+                'projected_fatigue_index' => 1.8,
+                'time_to_stability_hours' => 12,
+                'risk_recurrence_pct' => 4,
+            ],
+            'assumptions' => 'Peak aerobic countermeasure profile maintains vagal tone and plasma volume.',
+            'is_active' => false,
+        ]);
+
+        // Marcus Vance Scenarios (ECLSS & Maintenance Overhaul Recovery)
+        CountermeasureScenario::create([
+            'crew_member_id' => $marcus->id,
+            'incident_id' => $incidentMarcus->id,
+            'name' => 'Scenario Alpha: ECLSS Scrubbing & Workload Relief',
+            'description' => 'Cabin CO2 active scrubbing to <1.8 mmHg, 30% reduction in manual overhaul shift, and +2.0h sleep restoration.',
+            'inputs' => [
+                'sleep_delta_hours' => 2.0,
+                'workload_delta_pct' => -30,
+                'cycle_ergometer_watts' => 150,
+                'hydration_fluid_ml' => 800,
+                'ambient_co2_target_mmhg' => 1.8,
+            ],
+            'projections' => [
+                'projected_hrv_rmssd' => 50.0,
+                'projected_resting_hr' => 64.0,
+                'projected_systolic_bp' => 121.0,
+                'projected_pvt_latency_ms' => 226.0,
+                'projected_fatigue_index' => 2.8,
+                'time_to_stability_hours' => 24,
+                'risk_recurrence_pct' => 12,
+            ],
+            'assumptions' => 'Rapid clearance of hypercapnic vasodilation upon local ventilation increase and shift limitation.',
+            'is_active' => true,
+        ]);
+
+        CountermeasureScenario::create([
+            'crew_member_id' => $marcus->id,
+            'incident_id' => $incidentMarcus->id,
+            'name' => 'Scenario Bravo: Split-Shift Rotation with Ergo Aerobics',
+            'description' => 'Split 6h maintenance shifts with interleaved cycle ergometer sessions to stimulate pulmonary gas exchange.',
+            'inputs' => [
+                'sleep_delta_hours' => 1.0,
+                'workload_delta_pct' => -15,
+                'cycle_ergometer_watts' => 165,
+                'hydration_fluid_ml' => 600,
+                'ambient_co2_target_mmhg' => 2.2,
+            ],
+            'projections' => [
+                'projected_hrv_rmssd' => 47.0,
+                'projected_resting_hr' => 66.0,
+                'projected_systolic_bp' => 123.0,
+                'projected_pvt_latency_ms' => 238.0,
+                'projected_fatigue_index' => 3.9,
+                'time_to_stability_hours' => 42,
+                'risk_recurrence_pct' => 26,
+            ],
+            'assumptions' => 'Split-shift avoids prolonged sustained exertion in confined node compartments.',
+            'is_active' => false,
+        ]);
+
+        // Elena Rostova Scenarios (Sensor Re-calibration & Science Duty)
+        CountermeasureScenario::create([
+            'crew_member_id' => $elena->id,
+            'incident_id' => null,
+            'name' => 'Scenario Alpha: Biosensor Re-Calibration & Hydration Protocol',
+            'description' => 'Patch electrode re-coupling window with nominal geology payload analysis, +1.0h sleep, and 750 mL oral hydration.',
+            'inputs' => [
+                'sleep_delta_hours' => 1.0,
+                'workload_delta_pct' => -10,
+                'cycle_ergometer_watts' => 155,
+                'hydration_fluid_ml' => 750,
+                'ambient_co2_target_mmhg' => 2.1,
+            ],
+            'projections' => [
+                'projected_hrv_rmssd' => 56.0,
+                'projected_resting_hr' => 61.0,
+                'projected_systolic_bp' => 116.0,
+                'projected_pvt_latency_ms' => 216.0,
+                'projected_fatigue_index' => 2.2,
+                'time_to_stability_hours' => 16,
+                'risk_recurrence_pct' => 8,
+            ],
+            'assumptions' => 'Restores telemetry confidence score from UNKNOWN to STABLE upon sensor re-acquisition.',
+            'is_active' => true,
+        ]);
+
+        CountermeasureScenario::create([
+            'crew_member_id' => $elena->id,
+            'incident_id' => null,
+            'name' => 'Scenario Bravo: Core Sample Glovebox High-Workload Shift',
+            'description' => 'Simulate prolonged glovebox rock sample analysis with +20% workload and countermeasure hydration.',
+            'inputs' => [
+                'sleep_delta_hours' => 0.0,
+                'workload_delta_pct' => 20,
+                'cycle_ergometer_watts' => 170,
+                'hydration_fluid_ml' => 900,
+                'ambient_co2_target_mmhg' => 2.5,
+            ],
+            'projections' => [
+                'projected_hrv_rmssd' => 51.0,
+                'projected_resting_hr' => 65.0,
+                'projected_systolic_bp' => 117.0,
+                'projected_pvt_latency_ms' => 229.0,
+                'projected_fatigue_index' => 3.6,
+                'time_to_stability_hours' => 28,
+                'risk_recurrence_pct' => 18,
+            ],
+            'assumptions' => 'Evaluates astronaut cognitive reserve under intensive glovebox science operations.',
             'is_active' => false,
         ]);
 

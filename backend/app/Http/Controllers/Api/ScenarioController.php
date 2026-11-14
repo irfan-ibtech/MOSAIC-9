@@ -46,17 +46,48 @@ class ScenarioController extends Controller
         ]);
 
         $member = CrewMember::findOrFail($validated['crew_member_id']);
-        $baseHrv = $member->baseline_profile['hrv_rmssd'] ?? 58;
-        $baseHr = $member->baseline_profile['resting_heart_rate'] ?? 60;
-        $baseBp = $member->baseline_profile['systolic_bp'] ?? 118;
-        $basePvt = $member->baseline_profile['pvt_reaction_time_ms'] ?? 215;
+        $baseHrv = $member->baseline_profile['hrv_rmssd'] ?? 58.0;
+        $baseHr = $member->baseline_profile['resting_heart_rate'] ?? 60.0;
+        $baseBp = $member->baseline_profile['systolic_bp'] ?? 118.0;
+        $basePvt = $member->baseline_profile['pvt_reaction_time_ms'] ?? 215.0;
 
-        // Current acute degraded states for Commander Alex Morgan
-        $currentHrv = 27.0;
-        $currentHr = 78.0;
-        $currentBp = 88.0;
-        $currentPvt = 310.0;
-        $currentFatigue = 8.5;
+        // Dynamic starting physiological state derived from astronaut identity and recent health records
+        if ($member->id === 1 || str_contains($member->name, 'Alex Morgan')) {
+            // Commander Alex Morgan: Acute presyncope / severe sleep deficit / orthostatic collapse
+            $currentHrv = 27.0;
+            $currentHr = 78.0;
+            $currentBp = 88.0;
+            $currentPvt = 310.0;
+            $currentFatigue = 8.5;
+        } elseif ($member->id === 2 || str_contains($member->name, 'Sarah Chen')) {
+            // Dr. Sarah Chen: Nominal homeostatic baseline / stable circadian state
+            $currentHrv = 62.0;
+            $currentHr = 57.0;
+            $currentBp = 114.0;
+            $currentPvt = 212.0;
+            $currentFatigue = 2.0;
+        } elseif ($member->id === 3 || str_contains($member->name, 'Marcus Vance')) {
+            // Marcus Vance: Elevated cabin CO2 exposure / prolonged overtime manual shift
+            $currentHrv = 42.0;
+            $currentHr = 69.0;
+            $currentBp = 126.0;
+            $currentPvt = 258.0;
+            $currentFatigue = 6.0;
+        } elseif ($member->id === 4 || str_contains($member->name, 'Elena Rostova')) {
+            // Elena Rostova: Telemetry sensor dropout / pre-gap stable baseline
+            $currentHrv = 53.0;
+            $currentHr = 63.0;
+            $currentBp = 115.0;
+            $currentPvt = 222.0;
+            $currentFatigue = 2.8;
+        } else {
+            // Generalized physiological fallback
+            $currentHrv = round($baseHrv * 0.85, 1);
+            $currentHr = round($baseHr * 1.1, 1);
+            $currentBp = $baseBp;
+            $currentPvt = round($basePvt * 1.15, 1);
+            $currentFatigue = 4.0;
+        }
 
         // Deterministic simulation math based on aerospace physiological countermeasure research
         // 1. Sleep delta impact: +1 hour sleep improves HRV by ~6.5ms, drops HR by ~3.2 bpm, improves PVT by -24ms
@@ -68,16 +99,23 @@ class ScenarioController extends Controller
         // 4. Hydration fluid loading: improves intravascular volume and systolic orthostatic tolerance
         $hydrationImpact = ($validated['hydration_fluid_ml'] / 1000.0);
 
-        // Projected values
-        $projectedHrv = min($baseHrv, max(20.0, round($currentHrv + ($sleepImpact * 7.2) + ($workloadImpact * 8.0) + ($ergoImpact * 4.5), 1)));
-        $projectedHr = max($baseHr, min(95.0, round($currentHr - ($sleepImpact * 3.8) - ($workloadImpact * 4.2) - ($ergoImpact * 2.5), 1)));
-        $projectedBp = min($baseBp, max(85.0, round($currentBp + ($hydrationImpact * 14.5) + ($ergoImpact * 5.0) + ($sleepImpact * 2.0), 1)));
-        $projectedPvt = max($basePvt, min(380.0, round($currentPvt - ($sleepImpact * 26.0) - ($workloadImpact * 18.0), 1)));
-        $projectedFatigue = max(1.5, min(10.0, round($currentFatigue - ($sleepImpact * 1.6) - ($workloadImpact * 1.4), 1)));
+        // Projected values relative to each astronaut's starting state and individual baseline
+        $projectedHrv = min($baseHrv + 6.0, max(20.0, round($currentHrv + ($sleepImpact * 6.8) + ($workloadImpact * 7.5) + ($ergoImpact * 3.5), 1)));
+        $projectedHr = max($baseHr - 3.0, min(95.0, round($currentHr - ($sleepImpact * 3.2) - ($workloadImpact * 3.5) - ($ergoImpact * 2.0), 1)));
+
+        // BP adjustment: if currently hypotensive (like Alex), hydration & ergo elevate it; if elevated (like Marcus), rest normalizes it
+        if ($currentBp < $baseBp) {
+            $projectedBp = min($baseBp + 2.0, max(85.0, round($currentBp + ($hydrationImpact * 14.0) + ($ergoImpact * 4.0) + ($sleepImpact * 1.5), 1)));
+        } else {
+            $projectedBp = max($baseBp - 2.0, round($currentBp - ($sleepImpact * 2.5) - ($workloadImpact * 3.0), 1));
+        }
+
+        $projectedPvt = max($basePvt - 5.0, min(380.0, round($currentPvt - ($sleepImpact * 24.0) - ($workloadImpact * 16.0), 1)));
+        $projectedFatigue = max(1.0, min(10.0, round($currentFatigue - ($sleepImpact * 1.5) - ($workloadImpact * 1.2), 1)));
 
         // Time to stability estimation in hours
-        $timeToStability = max(18, round(72 - ($sleepImpact * 12) - ($hydrationImpact * 10) - ($workloadImpact * 15)));
-        $riskRecurrence = max(8, min(85, round(65 - ($sleepImpact * 14) - ($hydrationImpact * 12) - ($ergoImpact * 10))));
+        $timeToStability = max(12, round(48 + (($currentFatigue - 2.0) * 6) - ($sleepImpact * 10) - ($hydrationImpact * 8) - ($workloadImpact * 12)));
+        $riskRecurrence = max(5, min(85, round(20 + (($currentFatigue - 2.0) * 7) - ($sleepImpact * 12) - ($hydrationImpact * 8) - ($ergoImpact * 8))));
 
         $projections = [
             'projected_hrv_rmssd' => $projectedHrv,

@@ -2,17 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { CrewMember, CountermeasureScenario } from '../types';
 import { mosaicApi } from '../services/api';
 import { TelemetryChart } from '../components/common/TelemetryChart';
-import { DEFAULT_CREW_MEMBERS, DEFAULT_SCENARIOS } from '../data/initialData';
+import { DEFAULT_CREW_MEMBERS, DEFAULT_SCENARIOS, CREW_SIMULATION_DEFAULTS } from '../data/initialData';
 import {
   Sliders,
   Play,
   RotateCcw,
   ShieldAlert,
   TrendingUp,
-  Info,
-  CheckCircle2,
-  Clock,
-  Sparkles,
   ChevronDown,
 } from 'lucide-react';
 
@@ -30,32 +26,92 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
   const list = crewMembers && crewMembers.length > 0 ? crewMembers : DEFAULT_CREW_MEMBERS;
   const crew = selectedCrew || list[0] || DEFAULT_CREW_MEMBERS[0];
 
-  const [scenarios, setScenarios] = useState<CountermeasureScenario[]>(DEFAULT_SCENARIOS);
-  const [scenarioName, setScenarioName] = useState('Scenario Alpha: Sleep Restoration & Fluid Loading');
-  const [sleepDelta, setSleepDelta] = useState<number>(2.5);
-  const [workloadDelta, setWorkloadDelta] = useState<number>(-35);
-  const [ergoWatts, setErgoWatts] = useState<number>(140);
-  const [hydrationMl, setHydrationMl] = useState<number>(1200);
-  const [ambientCo2, setAmbientCo2] = useState<number>(2.0);
+  const crewConfig = CREW_SIMULATION_DEFAULTS[crew.id] || CREW_SIMULATION_DEFAULTS[1];
 
-  const [activeSimulationResult, setActiveSimulationResult] = useState<any>({
-    scenario: DEFAULT_SCENARIOS[0],
-    baseline_comparison: {
-      hrv: { current: 27.0, projected: DEFAULT_SCENARIOS[0].projections.projected_hrv_rmssd, baseline: 58.0, unit: 'ms' },
-      hr: { current: 78.0, projected: DEFAULT_SCENARIOS[0].projections.projected_resting_hr, baseline: 60.0, unit: 'bpm' },
-      bp: { current: 88.0, projected: DEFAULT_SCENARIOS[0].projections.projected_systolic_bp, baseline: 118.0, unit: 'mmHg' },
-      pvt: { current: 310.0, projected: DEFAULT_SCENARIOS[0].projections.projected_pvt_latency_ms, baseline: 215.0, unit: 'ms' },
-    },
-  });
+  const [scenarios, setScenarios] = useState<CountermeasureScenario[]>(() =>
+    DEFAULT_SCENARIOS.filter((s) => s.crew_member_id === crew.id)
+  );
+
+  const [scenarioName, setScenarioName] = useState(crewConfig.alpha.name);
+  const [sleepDelta, setSleepDelta] = useState<number>(crewConfig.alpha.sleepDelta);
+  const [workloadDelta, setWorkloadDelta] = useState<number>(crewConfig.alpha.workloadDelta);
+  const [ergoWatts, setErgoWatts] = useState<number>(crewConfig.alpha.ergoWatts);
+  const [hydrationMl, setHydrationMl] = useState<number>(crewConfig.alpha.hydrationMl);
+  const [ambientCo2, setAmbientCo2] = useState<number>(crewConfig.alpha.ambientCo2);
+
+  const [activeSimulationResult, setActiveSimulationResult] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
+  // Sync state whenever the active astronaut changes
   useEffect(() => {
-    mosaicApi.getScenarios().then((resList) => {
+    const config = CREW_SIMULATION_DEFAULTS[crew.id] || CREW_SIMULATION_DEFAULTS[1];
+
+    setScenarioName(config.alpha.name);
+    setSleepDelta(config.alpha.sleepDelta);
+    setWorkloadDelta(config.alpha.workloadDelta);
+    setErgoWatts(config.alpha.ergoWatts);
+    setHydrationMl(config.alpha.hydrationMl);
+    setAmbientCo2(config.alpha.ambientCo2);
+
+    // Fetch astronaut-specific scenarios from backend or local fallback
+    mosaicApi.getScenarios(crew.id).then((resList) => {
       if (resList && resList.length > 0) {
-        setScenarios(resList);
+        setScenarios(resList.filter((s) => s.crew_member_id === crew.id));
+      } else {
+        setScenarios(DEFAULT_SCENARIOS.filter((s) => s.crew_member_id === crew.id));
       }
     });
-  }, []);
+
+    // Run baseline simulation for this astronaut's Alpha preset
+    mosaicApi
+      .simulateScenario({
+        crew_member_id: crew.id,
+        name: config.alpha.name,
+        sleep_delta_hours: config.alpha.sleepDelta,
+        workload_delta_pct: config.alpha.workloadDelta,
+        cycle_ergometer_watts: config.alpha.ergoWatts,
+        hydration_fluid_ml: config.alpha.hydrationMl,
+        ambient_co2_target_mmhg: config.alpha.ambientCo2,
+      })
+      .then((sim) => {
+        setActiveSimulationResult(sim);
+      })
+      .catch(() => {
+        // Safe fallback matching crew config
+        setActiveSimulationResult({
+          scenario: {
+            id: Date.now(),
+            crew_member_id: crew.id,
+            incident_id: null,
+            name: config.alpha.name,
+            description: 'Astronaut-specific recovery baseline simulation.',
+            inputs: config.alpha,
+            projections: {
+              projected_hrv_rmssd: config.baseHrv,
+              projected_resting_hr: config.baseHr,
+              projected_systolic_bp: config.baseBp,
+              projected_pvt_latency_ms: config.basePvt,
+              projected_fatigue_index: 2.0,
+              time_to_stability_hours: 24,
+              risk_recurrence_pct: 10,
+              trajectory_hourly: [
+                { hour: 0, hrv: config.currentHrv, hr: config.currentHr, bp: config.currentBp, pvt: config.currentPvt },
+                { hour: 12, hrv: Math.round(config.currentHrv + (config.baseHrv - config.currentHrv) * 0.4), hr: Math.round(config.currentHr + (config.baseHr - config.currentHr) * 0.4), bp: Math.round(config.currentBp + (config.baseBp - config.currentBp) * 0.4), pvt: Math.round(config.currentPvt + (config.basePvt - config.currentPvt) * 0.4) },
+                { hour: 24, hrv: Math.round(config.currentHrv + (config.baseHrv - config.currentHrv) * 0.8), hr: Math.round(config.currentHr + (config.baseHr - config.currentHr) * 0.8), bp: Math.round(config.currentBp + (config.baseBp - config.currentBp) * 0.8), pvt: Math.round(config.currentPvt + (config.basePvt - config.currentPvt) * 0.8) },
+                { hour: 48, hrv: config.baseHrv, hr: config.baseHr, bp: config.baseBp, pvt: config.basePvt },
+              ],
+            },
+            is_active: true,
+          },
+          baseline_comparison: {
+            hrv: { current: config.currentHrv, projected: config.baseHrv, baseline: config.baseHrv, unit: 'ms' },
+            hr: { current: config.currentHr, projected: config.baseHr, baseline: config.baseHr, unit: 'bpm' },
+            bp: { current: config.currentBp, projected: config.baseBp, baseline: config.baseBp, unit: 'mmHg' },
+            pvt: { current: config.currentPvt, projected: config.basePvt, baseline: config.basePvt, unit: 'ms' },
+          },
+        });
+      });
+  }, [crew.id]);
 
   const handleRunSimulation = async () => {
     setIsSimulating(true);
@@ -71,8 +127,10 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
       });
       setActiveSimulationResult(res);
       // Reload list
-      mosaicApi.getScenarios().then((resList) => {
-        if (resList && resList.length > 0) setScenarios(resList);
+      mosaicApi.getScenarios(crew.id).then((resList) => {
+        if (resList && resList.length > 0) {
+          setScenarios(resList.filter((s) => s.crew_member_id === crew.id));
+        }
       });
     } catch (err) {
       alert('Simulation error');
@@ -84,36 +142,50 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
   const handleReset = () => {
     setSleepDelta(0.0);
     setWorkloadDelta(0);
-    setErgoWatts(185);
-    setHydrationMl(0);
-    setAmbientCo2(2.8);
-    setScenarioName('Neutral Schedule (No Countermeasures)');
+    setErgoWatts(crew.baseline_profile?.exercise_target_watts || 175);
+    setHydrationMl(500);
+    setAmbientCo2(2.5);
+    setScenarioName(`Neutral Schedule (Baseline Nominal Maintenance)`);
   };
 
   const handleLoadPreset = (preset: 'alpha' | 'bravo') => {
-    if (preset === 'alpha') {
-      setScenarioName('Scenario Alpha: Sleep Restoration & Fluid Loading');
-      setSleepDelta(2.5);
-      setWorkloadDelta(-35);
-      setErgoWatts(140);
-      setHydrationMl(1200);
-      setAmbientCo2(2.0);
-    } else {
-      setScenarioName('Scenario Bravo: Workload Maintenance with Sleep Aid');
-      setSleepDelta(1.5);
-      setWorkloadDelta(-10);
-      setErgoWatts(160);
-      setHydrationMl(800);
-      setAmbientCo2(2.8);
-    }
+    const config = CREW_SIMULATION_DEFAULTS[crew.id] || CREW_SIMULATION_DEFAULTS[1];
+    const target = preset === 'alpha' ? config.alpha : config.bravo;
+
+    setScenarioName(target.name);
+    setSleepDelta(target.sleepDelta);
+    setWorkloadDelta(target.workloadDelta);
+    setErgoWatts(target.ergoWatts);
+    setHydrationMl(target.hydrationMl);
+    setAmbientCo2(target.ambientCo2);
   };
 
-  // Trajectory Recovery Chart
+  // Trajectory Recovery Chart Data
+  const currentHrv = activeSimulationResult?.baseline_comparison?.hrv?.current ?? crewConfig.currentHrv;
+  const projHrv = activeSimulationResult?.scenario?.projections?.projected_hrv_rmssd ?? activeSimulationResult?.baseline_comparison?.hrv?.projected ?? crewConfig.baseHrv;
+  const baseHrv = activeSimulationResult?.baseline_comparison?.hrv?.baseline ?? crewConfig.baseHrv;
+  const diffHrv = Math.round(((projHrv - currentHrv) / (currentHrv || 1)) * 100);
+
+  const currentBp = activeSimulationResult?.baseline_comparison?.bp?.current ?? crewConfig.currentBp;
+  const projBp = activeSimulationResult?.scenario?.projections?.projected_systolic_bp ?? activeSimulationResult?.baseline_comparison?.bp?.projected ?? crewConfig.baseBp;
+  const baseBp = activeSimulationResult?.baseline_comparison?.bp?.baseline ?? crewConfig.baseBp;
+
+  const currentHr = activeSimulationResult?.baseline_comparison?.hr?.current ?? crewConfig.currentHr;
+  const projHr = activeSimulationResult?.scenario?.projections?.projected_resting_hr ?? activeSimulationResult?.baseline_comparison?.hr?.projected ?? crewConfig.baseHr;
+  const baseHr = activeSimulationResult?.baseline_comparison?.hr?.baseline ?? crewConfig.baseHr;
+
+  const currentPvt = activeSimulationResult?.baseline_comparison?.pvt?.current ?? crewConfig.currentPvt;
+  const projPvt = activeSimulationResult?.scenario?.projections?.projected_pvt_latency_ms ?? activeSimulationResult?.baseline_comparison?.pvt?.projected ?? crewConfig.basePvt;
+  const basePvt = activeSimulationResult?.baseline_comparison?.pvt?.baseline ?? crewConfig.basePvt;
+
+  const timeToStability = activeSimulationResult?.scenario?.projections?.time_to_stability_hours ?? 24;
+  const riskRecurrence = activeSimulationResult?.scenario?.projections?.risk_recurrence_pct ?? 12;
+
   const trajectoryData = activeSimulationResult?.scenario?.projections?.trajectory_hourly || [
-    { hour: 0, hrv: 27, hr: 78, bp: 88, pvt: 310 },
-    { hour: 12, hrv: 35, hr: 73, bp: 98, pvt: 285 },
-    { hour: 24, hrv: 44, hr: 68, bp: 108, pvt: 255 },
-    { hour: 48, hrv: 52, hr: 63, bp: 114, pvt: 228 },
+    { hour: 0, hrv: currentHrv, hr: currentHr, bp: currentBp, pvt: currentPvt },
+    { hour: 12, hrv: Math.round(currentHrv + (projHrv - currentHrv) * 0.35), hr: Math.round(currentHr + (projHr - currentHr) * 0.35), bp: Math.round(currentBp + (projBp - currentBp) * 0.45), pvt: Math.round(currentPvt + (projPvt - currentPvt) * 0.3) },
+    { hour: 24, hrv: Math.round(currentHrv + (projHrv - currentHrv) * 0.70), hr: Math.round(currentHr + (projHr - currentHr) * 0.70), bp: Math.round(currentBp + (projBp - currentBp) * 0.80), pvt: Math.round(currentPvt + (projPvt - currentPvt) * 0.7) },
+    { hour: 48, hrv: projHrv, hr: projHr, bp: projBp, pvt: projPvt },
   ];
 
   const trajectoryChartOptions = {
@@ -178,19 +250,19 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
           </p>
         </div>
 
-        {/* Astronaut Selector & Preset Controls */}
-        <div className="flex items-center gap-3 flex-wrap">
-          {onSelectCrew && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-mono text-slate-400 uppercase">CREW:</span>
-              <div className="relative">
+        {/* Crew & Preset Switchers */}
+        <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
+          {onSelectCrew && list.length > 0 && (
+            <div className="flex items-center bg-space-900 border border-space-700 rounded-lg px-2.5 py-1">
+              <span className="text-[11px] text-slate-400 font-mono mr-2">CREW:</span>
+              <div className="relative inline-flex items-center">
                 <select
                   value={crew.id}
                   onChange={(e) => {
                     const found = list.find((c) => c.id === Number(e.target.value));
                     if (found) onSelectCrew(found);
                   }}
-                  className="appearance-none bg-space-900 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-2.5 pr-7 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-cyan-500 cursor-pointer"
+                  className="appearance-none bg-transparent text-xs text-white font-medium focus:outline-none cursor-pointer pr-6"
                 >
                   {list.map((c) => (
                     <option key={c.id} value={c.id} className="bg-space-900 text-slate-100">
@@ -198,7 +270,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2 top-2 pointer-events-none" />
+                <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-1 pointer-events-none" />
               </div>
             </div>
           )}
@@ -276,7 +348,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Sleep Schedule Delta:</span>
                 <span className="font-bold text-cyan-400">
-                  {sleepDelta > 0 ? `+${sleepDelta}h` : `${sleepDelta}h`} (Total: {(8.0 + sleepDelta).toFixed(1)}h)
+                  {sleepDelta > 0 ? `+${sleepDelta}h` : `${sleepDelta}h`} (Total: {((crew.baseline_profile?.sleep_target_hours || 8.0) + sleepDelta).toFixed(1)}h)
                 </span>
               </div>
               <input
@@ -289,7 +361,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
                 className="w-full accent-cyan-500 cursor-pointer"
               />
               <div className="text-[10px] text-slate-500 font-sans">
-                Each +1.0h sleep accelerates parasympathetic tone recovery by ~7.2ms HRV.
+                Each +1.0h sleep accelerates parasympathetic tone recovery by ~6.8ms HRV.
               </div>
             </div>
 
@@ -304,7 +376,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
               <input
                 type="range"
                 min="-60"
-                max="20"
+                max="40"
                 step="5"
                 value={workloadDelta}
                 onChange={(e) => setWorkloadDelta(Number(e.target.value))}
@@ -319,23 +391,23 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
             <div className="space-y-1.5 p-3 rounded-lg bg-space-900 border border-space-800">
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Cycle Ergometer Power:</span>
-                <span className="font-bold text-purple-400">{ergoWatts} Watts</span>
+                <span className="font-bold text-cyan-400">{ergoWatts} Watts</span>
               </div>
               <input
                 type="range"
                 min="0"
-                max="200"
+                max="240"
                 step="10"
                 value={ergoWatts}
                 onChange={(e) => setErgoWatts(Number(e.target.value))}
-                className="w-full accent-purple-500 cursor-pointer"
+                className="w-full accent-cyan-500 cursor-pointer"
               />
               <div className="text-[10px] text-slate-500 font-sans">
-                Target protocol is 185W. Graded resumption at 140W avoids acute baroreflex strain.
+                Target protocol is {crew.baseline_profile?.exercise_target_watts || 185}W. Graded resumption avoids acute baroreflex strain.
               </div>
             </div>
 
-            {/* Hydration Volume */}
+            {/* Electrolyte Fluid Loading */}
             <div className="space-y-1.5 p-3 rounded-lg bg-space-900 border border-space-800">
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Electrolyte Fluid Loading:</span>
@@ -369,71 +441,76 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
         {/* Right 7 Cols: Simulated Results & Comparison */}
         <div className="lg:col-span-7 space-y-6">
           {/* Projected KPI Grid */}
-          {activeSimulationResult && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono">
-              <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
-                <div className="text-[10px] text-slate-400 uppercase">PROJECTED HRV</div>
-                <div className="text-lg font-bold text-cyan-300 mt-1">
-                  {activeSimulationResult.scenario?.projections?.projected_hrv_rmssd || 52} ms
-                </div>
-                <div className="text-[9px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                  <TrendingUp className="w-3 h-3" />
-                  <span>Current: 27ms (+92%)</span>
-                </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono">
+            <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
+              <div className="text-[10px] text-slate-400 uppercase">PROJECTED HRV</div>
+              <div className="text-lg font-bold text-cyan-300 mt-1">
+                {projHrv} ms
               </div>
-
-              <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
-                <div className="text-[10px] text-slate-400 uppercase">PROJECTED BP</div>
-                <div className="text-lg font-bold text-emerald-400 mt-1">
-                  {activeSimulationResult.scenario?.projections?.projected_systolic_bp || 114} mmHg
-                </div>
-                <div className="text-[9px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                  <TrendingUp className="w-3 h-3" />
-                  <span>Stabilized vs 88 mmHg</span>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
-                <div className="text-[10px] text-slate-400 uppercase">RESTING HR</div>
-                <div className="text-lg font-bold text-white mt-1">
-                  {activeSimulationResult.scenario?.projections?.projected_resting_hr || 63} bpm
-                </div>
-                <div className="text-[9px] text-emerald-400 mt-0.5">
-                  Tachycardia Resolved
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
-                <div className="text-[10px] text-slate-400 uppercase">PVT REACTION TIME</div>
-                <div className="text-lg font-bold text-amber-300 mt-1">
-                  {activeSimulationResult.scenario?.projections?.projected_pvt_latency_ms || 228} ms
-                </div>
-                <div className="text-[9px] text-slate-400 mt-0.5">
-                  Baseline: 215 ms
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
-                <div className="text-[10px] text-slate-400 uppercase">TIME TO STABILITY</div>
-                <div className="text-lg font-bold text-cyan-400 mt-1">
-                  {activeSimulationResult.scenario?.projections?.time_to_stability_hours || 36} Hours
-                </div>
-                <div className="text-[9px] text-slate-400 mt-0.5">
-                  Projected Rest Window
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
-                <div className="text-[10px] text-slate-400 uppercase">EXPLORATORY RECURRENCE INDEX</div>
-                <div className="text-lg font-bold text-emerald-400 mt-1">
-                  {activeSimulationResult.scenario?.projections?.risk_recurrence_pct || 14}%
-                </div>
-                <div className="text-[9px] text-slate-400 mt-0.5">
-                  Hypothetical index (not clinical diagnosis)
-                </div>
+              <div className="text-[9px] text-emerald-400 flex items-center gap-1 mt-0.5">
+                <TrendingUp className="w-3 h-3" />
+                <span>
+                  Current: {currentHrv}ms ({diffHrv >= 0 ? `+${diffHrv}%` : `${diffHrv}%`})
+                </span>
               </div>
             </div>
-          )}
+
+            <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
+              <div className="text-[10px] text-slate-400 uppercase">PROJECTED BP</div>
+              <div className="text-lg font-bold text-emerald-400 mt-1">
+                {projBp} mmHg
+              </div>
+              <div className="text-[9px] text-slate-300 flex items-center gap-1 mt-0.5">
+                <span>
+                  {currentBp < baseBp - 5
+                    ? `Stabilized vs ${currentBp} mmHg (Hypotension Resolved)`
+                    : currentBp > baseBp + 5
+                    ? `Reduced vs ${currentBp} mmHg (Hypertension Normalized)`
+                    : `Nominal Homeostasis (Current: ${currentBp} mmHg)`}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
+              <div className="text-[10px] text-slate-400 uppercase">RESTING HR</div>
+              <div className="text-lg font-bold text-white mt-1">
+                {projHr} bpm
+              </div>
+              <div className={`text-[9px] mt-0.5 ${currentHr > 75 ? 'text-emerald-400' : 'text-slate-400'}`}>
+                {currentHr > 75 ? `Tachycardia Resolved (from ${currentHr} bpm)` : `Current: ${currentHr} bpm (Nominal)`}
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
+              <div className="text-[10px] text-slate-400 uppercase">PVT REACTION TIME</div>
+              <div className="text-lg font-bold text-amber-300 mt-1">
+                {projPvt} ms
+              </div>
+              <div className="text-[9px] text-slate-400 mt-0.5">
+                Baseline: {basePvt} ms (Current: {currentPvt} ms)
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
+              <div className="text-[10px] text-slate-400 uppercase">TIME TO STABILITY</div>
+              <div className="text-lg font-bold text-cyan-400 mt-1">
+                {timeToStability} Hours
+              </div>
+              <div className="text-[9px] text-slate-400 mt-0.5">
+                Projected Rest Window
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
+              <div className="text-[10px] text-slate-400 uppercase">EXPLORATORY RECURRENCE INDEX</div>
+              <div className="text-lg font-bold text-emerald-400 mt-1">
+                {riskRecurrence}%
+              </div>
+              <div className="text-[9px] text-slate-400 mt-0.5">
+                Hypothetical index (not clinical diagnosis)
+              </div>
+            </div>
+          </div>
 
           {/* 48-Hour Recovery Trajectory Chart */}
           <div className="bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-3">
@@ -443,7 +520,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
                   48-HOUR PROJECTED PHYSIOLOGICAL TRAJECTORY
                 </h3>
                 <p className="text-[11px] text-slate-400">
-                  Hypothetical autonomic and blood pressure stabilization under selected inputs.
+                  Hypothetical autonomic, blood pressure, and heart rate stabilization under selected inputs.
                 </p>
               </div>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-space-900 text-cyan-400 border border-space-700">
@@ -456,9 +533,14 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
 
           {/* Saved Scenarios Comparison List */}
           <div className="bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-3">
-            <h3 className="text-xs font-bold text-white uppercase font-mono">
-              SAVED EXPLORATORY SCENARIOS
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-white uppercase font-mono">
+                SAVED EXPLORATORY SCENARIOS FOR {crew.name.toUpperCase()}
+              </h3>
+              <span className="text-[10px] font-mono text-slate-400">
+                {scenarios.length} {scenarios.length === 1 ? 'scenario' : 'scenarios'} registered
+              </span>
+            </div>
 
             <div className="space-y-2">
               {scenarios.map((sc) => (

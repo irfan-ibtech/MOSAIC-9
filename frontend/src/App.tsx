@@ -26,20 +26,26 @@ export default function App() {
   const [crewMembers, setCrewMembers] = useState<CrewMember[]>(DEFAULT_CREW_MEMBERS);
   const [selectedCrew, setSelectedCrew] = useState<CrewMember | null>(DEFAULT_CREW_MEMBERS[0]);
   const [recentEvents, setRecentEvents] = useState<LedgerEvent[]>(DEFAULT_RECENT_EVENTS);
+  const [earthLinkState, setEarthLinkState] = useState<'LOSS_OF_SIGNAL' | 'DEGRADED_COMM' | 'HIGH_GAIN_ESTABLISHED'>('LOSS_OF_SIGNAL');
   const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const loadInitialData = async () => {
     try {
-      const [missionRes, crewRes] = await Promise.all([
+      const [missionRes, crewRes, syncRes] = await Promise.all([
         mosaicApi.getMission(),
         mosaicApi.getCrewList(),
+        mosaicApi.getSyncStatus(),
       ]);
 
       if (missionRes) {
         setMission(missionRes.mission);
         setRecentEvents(missionRes.recent_events || []);
+      }
+
+      if (syncRes && syncRes.sync_telemetry) {
+        setEarthLinkState(syncRes.sync_telemetry.earth_link_state);
       }
 
       if (crewRes && crewRes.length > 0) {
@@ -61,6 +67,15 @@ export default function App() {
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  const handleToggleCommLink = async (newState: 'LOSS_OF_SIGNAL' | 'DEGRADED_COMM' | 'HIGH_GAIN_ESTABLISHED') => {
+    setEarthLinkState(newState);
+    try {
+      await mosaicApi.toggleCommLink(newState);
+    } catch (err) {
+      console.warn('Comm link toggle optimistic update active');
+    }
+  };
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -89,6 +104,8 @@ export default function App() {
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
           onToggleMobileMenu={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+          earthLinkState={earthLinkState}
+          onToggleCommLink={handleToggleCommLink}
         />
 
         {/* Scrollable Workspace Content */}
@@ -157,7 +174,10 @@ export default function App() {
             )}
 
             {currentScreen === 'system_status' && (
-              <SystemStatusScreen />
+              <SystemStatusScreen
+                earthLinkState={earthLinkState}
+                onToggleCommLink={handleToggleCommLink}
+              />
             )}
           </div>
         </main>
