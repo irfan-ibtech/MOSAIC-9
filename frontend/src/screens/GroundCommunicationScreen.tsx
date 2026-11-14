@@ -128,7 +128,7 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
               </span>
             </div>
             <p className="text-[11px] text-slate-300 font-sans mt-0.5">
-              Earth is currently occluded behind Mars. Prepared briefs are automatically queued in local onboard SQLite storage and browser buffer. When High Gain link resumes, queued packets will synchronize with Houston Mission Control.
+              Earth is currently occluded behind Mars. Prepared briefs are automatically queued in local onboard SQLite storage and browser buffer. When High Gain link resumes, queued packets will synchronize with the simulated Earth ground operations terminal.
             </p>
           </div>
         </div>

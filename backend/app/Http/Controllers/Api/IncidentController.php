@@ -113,7 +113,7 @@ class IncidentController extends Controller
                     'hypothesis_id' => 'HYP-MV-01',
                     'type' => 'POSSIBLE_EXPLANATION',
                     'title' => 'Hypercapnic and Ergonomic Cephalic Strain',
-                    'plausibility' => 'HIGH (Plausibility Score: 0.85)',
+                    'plausibility' => 'HIGH (Heuristic Ranking: 0.85)',
                     'supporting_facts' => [
                         '12-hour continuous manual maintenance shift in confined Node 2.',
                         'Cabin CO2 elevated locally to 3.5 mmHg during maintenance.',
@@ -126,7 +126,7 @@ class IncidentController extends Controller
                     'hypothesis_id' => 'HYP-MV-02',
                     'type' => 'POSSIBLE_EXPLANATION',
                     'title' => 'Autonomic Circadian Disruption from Shift Extension',
-                    'plausibility' => 'MODERATE (Plausibility Score: 0.60)',
+                    'plausibility' => 'MODERATE (Heuristic Ranking: 0.60)',
                     'supporting_facts' => [
                         'Overtime shift delayed sleep window into the next mission day.',
                     ],
@@ -164,9 +164,9 @@ class IncidentController extends Controller
                     'hypothesis_id' => 'HYP-01',
                     'type' => 'POSSIBLE_EXPLANATION',
                     'title' => 'Deconditioning-Exacerbated Baroreflex Decompensation',
-                    'plausibility' => 'HIGH (Plausibility Score: 0.88)',
+                    'plausibility' => 'HIGH (Heuristic Ranking: 0.88)',
                     'supporting_facts' => [
-                        '72-hour sleep debt of 9.8 hours suppressed parasympathetic autonomic tone (HRV dropped to 27 ms).',
+                        '72-hour sleep debt of 9.8 hours coincided with a drop in HRV RMSSD from 58ms to 27ms, indicating altered autonomic tone.',
                         'Missed cycle ergometer session on Day 119 eliminated expected daily cardiovascular baroreceptor conditioning.',
                         'Rapid vertical translation in microgravity challenged fluid redistribution.',
                     ],
@@ -177,7 +177,7 @@ class IncidentController extends Controller
                     'hypothesis_id' => 'HYP-02',
                     'type' => 'POSSIBLE_EXPLANATION',
                     'title' => 'Mild CO2 Induced Cephalic Vasodilation',
-                    'plausibility' => 'MODERATE (Plausibility Score: 0.62)',
+                    'plausibility' => 'MODERATE (Heuristic Ranking: 0.62)',
                     'supporting_facts' => [
                         'Cabin CO2 elevated to 3.5 mmHg during cargo movements in Module B.',
                     ],

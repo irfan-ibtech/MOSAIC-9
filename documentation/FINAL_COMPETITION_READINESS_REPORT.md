@@ -65,14 +65,14 @@ The Incident Reconstruction engine was subjected to multi-incident, multi-horizo
 ### Incident 1: `INC-ARES4-120-001` (Commander Alex Morgan — Day 120 09:42 MET)
 - **Precursor Sequence:** Traces 72-hour progression from Day 117 false alarm sleep curtailment (5.4h), Day 118 abbreviated ergometer workout (145W), Day 119 sleep debt (5.1h) and ergometer omission, to Day 120 post-egress orthostatic dizziness (88/56 mmHg, HR 118 bpm).
 - **Missing Evidence Identified:** Continuous beat-to-beat arterial tonometry and cerebral NIRS oximetry.
-- **Hypotheses:** `HYP-01` (Baroreflex Decompensation) and `HYP-02` (CO2-Induced Cephalic Vasodilation).
-- **Lookback Horizons Verified:** 6h (1 node), 24h (3 nodes), 72h (8 nodes), 7d (10 nodes).
+- **Hypotheses:** `HYP-01` (Baroreflex Decompensation, Heuristic Ranking: 0.88) and `HYP-02` (CO2-Induced Cephalic Vasodilation, Heuristic Ranking: 0.62).
+- **Lookback Horizons Verified:** 6h (3 nodes), 24h (7 nodes), 72h (12 nodes), 168h/7d (17 nodes).
 
 ### Incident 2: `INC-ARES4-118-002` (Lead Flight Engineer Marcus Vance — Day 118 19:15 MET)
 - **Precursor Sequence:** Traces coolant loop pump overhaul overtime shift on Day 117 (8.5h), abbreviated sleep on Day 118 (6.0h), extended 12.0h physical shift in Node 2, localized elevated cabin CO2 (3.5 mmHg), to acute cephalic tension and throbbing headache.
 - **Missing Evidence Identified:** Continuous cerebral near-infrared spectroscopy and localized coolant bay micro-dosimetry.
-- **Hypotheses:** `HYP-MV-01` (Hypercapnic and Ergonomic Cephalic Strain) and `HYP-MV-02` (Circadian Disruption from Shift Extension).
-- **Lookback Horizons Verified:** 6h (2 nodes), 24h (5 nodes), 72h (6 nodes), 7d (6 nodes).
+- **Hypotheses:** `HYP-MV-01` (Hypercapnic and Ergonomic Cephalic Strain, Heuristic Ranking: 0.85) and `HYP-MV-02` (Circadian Disruption from Shift Extension, Heuristic Ranking: 0.60).
+- **Lookback Horizons Verified:** 6h (2 nodes), 24h (4 nodes), 72h (7 nodes), 168h/7d (7 nodes).
 
 ---
 

@@ -167,7 +167,7 @@ def api_temporal_relationships(req: TemporalAnalysisRequest):
             "degrees_of_freedom": 3,
             "statistical_limitation": "Correlation reflects time-lagged statistical association between sleep debt and reaction time.",
             "evidence": "PVT reaction time increased by 44% (215ms baseline to 310ms on Day 119) following 48h of cumulative sleep debt (>5.5 hours).",
-            "causality_qualification": "Established neurobiological relationship in spaceflight literature; psychomotor slowing is a validated correlate of acute sleep debt.",
+            "causality_qualification": "Observed linear association consistent with spaceflight sleep curtailment literature; statistical correlation does not establish independent mechanistic causation.",
         },
     ]
 

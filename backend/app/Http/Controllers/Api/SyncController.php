@@ -66,7 +66,7 @@ class SyncController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Ground synchronization completed successfully. Telemetry and communications delivered to Houston Flight Operations.',
+            'message' => 'Ground synchronization completed successfully. Telemetry and communications delivered to simulated Earth flight operations receiver.',
             'sync_telemetry' => $sync,
         ]);
     }

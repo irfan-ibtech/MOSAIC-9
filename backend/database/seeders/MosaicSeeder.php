@@ -795,7 +795,7 @@ class MosaicSeeder extends Seeder
                 'crew_id' => $alex->id,
                 'cat' => 'symptom_report',
                 'title' => 'CRITICAL INCIDENT: Acute Orthostatic Dizziness Episode',
-                'desc' => 'Commander reported sudden vertigo, visual gray-out, and severe unsteadiness upon standing upright in Airlock Node. Heart rate spiked to 118 bpm, systolic BP collapsed to 88 mmHg.',
+                'desc' => 'Commander reported sudden vertigo, visual gray-out, and severe unsteadiness upon standing upright in Airlock Node. Heart rate spiked to 118 bpm, systolic BP dropped to 88 mmHg.',
                 'day' => 120,
                 'hour' => 9,
                 'minute' => 42,

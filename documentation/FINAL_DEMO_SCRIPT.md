@@ -57,9 +57,9 @@ flowchart LR
 - **Visual Callouts:**
   - Personalized baseline metrics: Resting HR 60 bpm, HRV 58 ms, Systolic BP 118 mmHg, Sleep Target 8.0h, PVT Reaction 215 ms.
   - Multi-day sleep duration bar chart showing progressive sleep debt: 7.8h on Day 116, dropping to 5.4h, 4.9h, 5.1h, and 4.6h. Bars below 6.0h turn rose.
-  - Autonomic balance chart (HRV RMSSD) showing parasympathetic vagal collapse from 58 ms down to 27 ms.
+  - Autonomic balance chart (HRV RMSSD) showing progressive decline in HRV RMSSD from 58 ms down to 27 ms.
 - **Spoken Script:**
-  > *"Every astronaut has a unique physiological baseline. In the Crew Health Twin, we see Alex Morgan’s individualized parameters. Over Days 117 through 120, his sleep duration plummeted below 5 hours, while his heart rate variability collapsed from 58 milliseconds to 27 milliseconds, signaling extreme sympathetic exhaustion."*
+  > *"Every astronaut has a unique physiological baseline. In the Crew Health Twin, we see Alex Morgan’s individualized parameters. Over Days 117 through 120, his sleep duration dropped below 5 hours, while his heart rate variability dropped from 58 milliseconds to 27 milliseconds, reflecting marked autonomic balance alteration consistent with cumulative fatigue."*
 
 ---
 
@@ -69,12 +69,12 @@ flowchart LR
   - **Earliest Anomaly Detector Card:** Highlights Day 117 at 06:30 MET — *Sleep curtailment to 5.4h following unscheduled false alarm drill*.
   - **Composite Z-Score Deviation Chart:** Traces multi-sigma divergence leading up to Day 120.
   - **Discovered Cross-Domain Associations:**
-    - Sleep Restriction ➔ Autonomic Tone Collapse (Lead time: 24h, $r = -0.89$).
+    - Sleep Restriction ➔ Autonomic Tone Alteration (Lead time: 24h, $r = -0.89$).
     - Workload Task Extension ➔ Countermeasure Omission (Lead time: 12h, $r = -0.82$).
     - Cumulative Sleep Debt ➔ Vigilance Lapses ($r = +0.93$).
 - **Spoken Script:**
   > *"In Temporal Intelligence, our analytical engine pinpoints the exact earliest signal: Day 117 at 06:30 MET, when an ECLSS false alarm drill curtailed Alex's sleep.
-  > The engine also calculates cross-domain lead-lag relationships. For instance, sleep restriction preceded autonomic collapse by 24 hours ($r = -0.89$). Notice our scientific boundaries: we clearly state this is an observed linear association, never claiming correlation proves causation."*
+  > The engine also calculates cross-domain lead-lag relationships. For instance, sleep restriction preceded HRV suppression by 24 hours ($r = -0.89$). Notice our scientific boundaries: we clearly state this is an observed linear association, never claiming correlation proves causation."*
 
 ---
 
@@ -92,13 +92,13 @@ flowchart LR
 ### Step 6 & 7: Incident Reconstruction & Horizon Selection (2:10 – 2:45)
 - **Action:** Click **"Incident Reconstruction"** in the left sidebar navigation.
 - **Action:** Verify `INC-ARES4-120-001` is selected.
-- **Action:** Click through the lookback horizon buttons: `6h` (1 node) ➔ `24h` (3 nodes) ➔ `72h` (8 nodes). Leave it on `72h`.
+- **Action:** Click through the lookback horizon buttons: `6h` (3 nodes) ➔ `24h` (7 nodes) ➔ `72h` (12 nodes). Leave it on `72h`.
 - **Visual Callouts:**
-  - Chronological precursor sequence displays 8 evidence nodes spanning Day 117 alarm drill to Day 120 airlock egress.
+  - Chronological precursor sequence displays 12 evidence nodes spanning Day 117 alarm drill to Day 120 airlock egress.
   - Evidence taxonomy pills: `OBSERVED_FACT`, `DERIVED_INDICATOR`, `TEMPORAL_ASSOCIATION`.
 - **Spoken Script:**
   > *"This is MOSAIC-9’s signature capability: Incident Multi-Domain Reconstruction.
-  > By adjusting the lookback window from 6 hours to 72 hours, the platform reconstructs the complete chronological chain: the night drill on Day 117, heavy EVA prep on Day 118, skipping the cycle ergometer on Day 119, and the acute blood pressure collapse to 88/56 upon egress on Day 120.
+  > By adjusting the lookback window from 6 hours to 72 hours, the platform reconstructs the complete chronological chain: the night drill on Day 117, heavy EVA prep on Day 118, skipping the cycle ergometer on Day 119, and the acute blood pressure drop to 88/56 upon egress on Day 120.
   > Notice the scientific taxonomy pills: facts are facts, derived metrics are derived, and associations are never disguised as proven causality."*
 
 ---
@@ -109,7 +109,7 @@ flowchart LR
 - **Visual Callouts:**
   - Node 1: *Intravascular Fluid Volume Direct Telemetry* (explains that hypovolemia was inferred from hydration logs; reduces confidence from 98% to 88%).
   - Node 2: *Cerebral Tissue Oxygenation (NIRS)* (NIRS patch was inactive during equipment transit).
-  - Competing Hypotheses: `HYP-01` (Baroreflex Decompensation, 88% plausibility) vs. `HYP-02` (CO2 Vasodilation, 62% plausibility).
+  - Competing Hypotheses: `HYP-01` (Baroreflex Decompensation, Heuristic Ranking: 0.88) vs. `HYP-02` (CO2 Vasodilation, Heuristic Ranking: 0.62).
 - **Spoken Script:**
   > *"Every node can be inspected for raw sensor telemetry. But equally important is what is missing.
   > In the Missing Evidence panel, MOSAIC-9 explicitly discloses that continuous cerebral oximetry was offline, and intravascular fluid volume was inferred rather than directly measured. We also display competing scientific hypotheses with their explicit counter-evidence and physiological boundaries."*
@@ -157,11 +157,11 @@ flowchart LR
 - **Action:** Click **"HIGH GAIN PASS"** button on the link simulator.
 - **Action:** Click **"TRIGGER GROUND SYNC"** again.
 - **Visual Callouts:**
-  - Link establishes; queued packet is flushed and delivered to Houston Mission Control!
+  - Link establishes; queued packet is flushed and delivered to the simulated Earth ground flight surgery receiver!
 - **Action:** Click **"EXPORT DIAGNOSTIC SNAPSHOT"**. Browser immediately downloads `mosaic9_diagnostics_day120.json`.
 - **Spoken Script:**
   > *"Finally, in System Status, we demonstrate offline survivability. When we attempt to synchronize during planetary occultation, the system refuses to drop packets and maintains local integrity.
-  > Once the spacecraft acquires a High-Gain pass, triggering ground sync immediately flushes our queued SBAR brief to Mission Control.
+  > Once the spacecraft acquires a High-Gain pass, triggering ground sync immediately flushes our queued SBAR brief to Earth ground operations.
   > The crew can also export a structured JSON diagnostic snapshot at any moment without needing an internet connection.
   > 
   > MOSAIC-9: Every signal has a story. Thank you."*
