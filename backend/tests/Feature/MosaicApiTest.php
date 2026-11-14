@@ -264,4 +264,114 @@ class MosaicApiTest extends TestCase
         $this->assertEquals(115.0, $comparison['bp']['current']);
         $this->assertGreaterThan(50.0, $comparison['hrv']['projected']);
     }
+
+    public function test_nasa_evidence_library_and_osdr_studies(): void
+    {
+        $response = $this->getJson('/api/evidence/studies');
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'total_studies',
+                'studies',
+                'taxonomy_v2',
+                'scientific_disclaimer',
+            ]);
+
+        $this->assertGreaterThanOrEqual(7, $response->json('total_studies'));
+        $studyIds = array_column($response->json('studies'), 'study_id');
+        $this->assertContains('OSD-575', $studyIds);
+        $this->assertContains('OSD-635', $studyIds);
+
+        // Filter by NASA_OSDR source
+        $osdrOnly = $this->getJson('/api/evidence/studies?source_type=NASA_OSDR');
+        $osdrOnly->assertStatus(200);
+        $this->assertEquals(3, $osdrOnly->json('total_studies'));
+
+        // Verify OSD-575 detail & applicability notes
+        $osd575 = $this->getJson('/api/evidence/studies/OSD-575');
+        $osd575->assertStatus(200)
+            ->assertJsonPath('study.study_id', 'OSD-575');
+        $this->assertStringContainsString('NOT CONTINUOUS', $osd575->json('study.applicability_note'));
+
+        // Verify OSD-635 detail & in vitro cellular distinction
+        $osd635 = $this->getJson('/api/evidence/studies/OSD-635');
+        $osd635->assertStatus(200)
+            ->assertJsonPath('study.study_id', 'OSD-635');
+        $this->assertStringContainsString('IN VITRO', $osd635->json('study.applicability_note'));
+    }
+
+    public function test_graceful_handling_of_invalid_or_unavailable_external_osdr_data(): void
+    {
+        $invalidStudy = $this->getJson('/api/evidence/studies/OSD-999999');
+        $invalidStudy->assertStatus(404)
+            ->assertJsonPath('status', 'UNAVAILABLE_OR_INVALID_STUDY');
+
+        $malformedLookup = $this->postJson('/api/evidence/osdr-lookup', ['study_id' => 'INVALID-FORMAT']);
+        $malformedLookup->assertStatus(422)
+            ->assertJsonPath('status', 'UNAVAILABLE_OR_INVALID_STUDY');
+
+        // Cached / offline resilient lookup for OSD-575
+        $validLookup = $this->postJson('/api/evidence/osdr-lookup', ['study_id' => 'OSD-575']);
+        $validLookup->assertStatus(200)
+            ->assertJsonPath('study_id', 'OSD-575');
+    }
+
+    public function test_mission_evidence_graph_endpoint_links_telemetry_and_nasa_studies(): void
+    {
+        $alexIncident = Incident::where('incident_code', 'INC-ARES4-120-001')->first();
+        $this->assertNotNull($alexIncident);
+
+        $graphResp = $this->getJson("/api/incidents/{$alexIncident->id}/evidence-graph?horizon_hours=72");
+        $graphResp->assertStatus(200)
+            ->assertJsonPath('incident_code', 'INC-ARES4-120-001')
+            ->assertJsonStructure([
+                'incident_code',
+                'total_nodes',
+                'total_edges',
+                'taxonomy_definitions',
+                'nodes',
+                'edges',
+                'scientific_disclaimer',
+            ]);
+
+        $nodeIds = array_column($graphResp->json('nodes'), 'id');
+        $this->assertContains('NASA-OSD-575', $nodeIds);
+        $this->assertContains('NASA-OSD-635', $nodeIds);
+    }
+
+    public function test_multi_scenario_tradeoff_comparison_and_sensitivity_endpoints(): void
+    {
+        $alex = CrewMember::where('name', 'like', '%Alex Morgan%')->first();
+
+        $compareResp = $this->postJson('/api/scenarios/compare', [
+            'crew_member_id' => $alex->id,
+        ]);
+        $compareResp->assertStatus(200)
+            ->assertJsonPath('scenario_count', 5)
+            ->assertJsonStructure([
+                'crew_member_id',
+                'scenario_count',
+                'scenarios',
+                'pareto_frontier_ids',
+                'scientific_labels',
+                'scientific_disclaimer',
+            ]);
+
+        $this->assertNotEmpty($compareResp->json('pareto_frontier_ids'));
+
+        $sensResp = $this->postJson('/api/scenarios/sensitivity', [
+            'crew_member_id' => $alex->id,
+            'perturbation_pct' => 25,
+        ]);
+        $sensResp->assertStatus(200)
+            ->assertJsonPath('perturbation_percentage', 25)
+            ->assertJsonStructure([
+                'crew_member_id',
+                'perturbation_percentage',
+                'baseline_assumptions',
+                'parameter_sensitivities',
+                'most_influential_parameter',
+                'scientific_label',
+            ]);
+        $this->assertCount(5, $sensResp->json('parameter_sensitivities'));
+    }
 }

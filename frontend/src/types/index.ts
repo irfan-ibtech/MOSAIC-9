@@ -6,7 +6,79 @@ export type EvidenceClassification =
   | 'TEMPORAL_ASSOCIATION'
   | 'POSSIBLE_EXPLANATION'
   | 'MISSING_EVIDENCE'
-  | 'RECOMMENDED_REVIEW';
+  | 'RECOMMENDED_REVIEW'
+  | 'DIRECT_OBSERVATION'
+  | 'NASA_RESEARCH_CONTEXT'
+  | 'DERIVED_TEMPORAL_ASSOCIATION'
+  | 'EXPLORATORY_HYPOTHESIS'
+  | 'SYNTHETIC_SIMULATION';
+
+export interface NasaStudyRecord {
+  study_id: string;
+  accession: string;
+  title: string;
+  source_organization: string;
+  source_type: 'NASA_OSDR' | 'NASA_HRP' | 'NASA_DONKI';
+  study_type: string;
+  study_category: string;
+  organism: string;
+  population_type: string;
+  domains: string[];
+  assay_types: string[];
+  doi: string;
+  publication: string;
+  osdr_url: string;
+  api_metadata_url: string;
+  api_files_url: string;
+  retrieval_status: 'LIVE_NASA_OSDR_API' | 'CACHED_VERIFIED' | 'CURATED_REFERENCE';
+  summary: string;
+  relevance_to_mosaic: string;
+  applicability_note: string;
+  limitations: string;
+  files_manifest: Array<{
+    file_name: string;
+    category: string;
+    size_kb?: number;
+  }>;
+}
+
+export interface EvidenceGraphNode {
+  id: string;
+  label: string;
+  full_title?: string;
+  category: EvidenceClassification;
+  node_type: string;
+  domain_key?: string;
+  study_id?: string;
+  doi?: string;
+  organism?: string;
+  study_type?: string;
+  osdr_url?: string;
+  source_attribution: string;
+  confidence_or_applicability: number;
+  provenance: string;
+  limitations: string;
+  applicability_note?: string;
+  value?: number | null;
+  unit?: string | null;
+}
+
+export interface EvidenceGraphEdge {
+  source: string;
+  target: string;
+  relationship: string;
+  evidence_tier: EvidenceClassification;
+  explanation: string;
+}
+
+export interface MissionEvidenceGraph {
+  incident_code: string;
+  total_nodes: number;
+  total_edges: number;
+  nodes: EvidenceGraphNode[];
+  edges: EvidenceGraphEdge[];
+  scientific_disclaimer: string;
+}
 
 export type EventCategory =
   | 'health_observation'
@@ -132,6 +204,10 @@ export interface EvidenceNode {
   value: number | null;
   unit: string | null;
   classification: EvidenceClassification;
+  taxonomy_v2?: EvidenceClassification;
+  source_attribution?: string;
+  applicability_level?: string;
+  limitations?: string;
   reasoning: string;
   confidence: number;
   data_quality: string;
@@ -166,6 +242,8 @@ export interface ReconstructionData {
   missing_evidence: MissingEvidenceNode[];
   hypotheses: Hypothesis[];
   recommended_reviews: string[];
+  nasa_research_context?: NasaStudyRecord[];
+  evidence_graph?: MissionEvidenceGraph;
   scientific_disclaimer: string;
   metrics?: {
     total_precursor_events: number;
@@ -238,4 +316,93 @@ export interface SyncTelemetryData {
   round_trip_latency_sec: number;
   local_db_integrity_pct: number;
   offline_mode_active: boolean;
+}
+
+export interface EvaluatedScenarioTradeoff {
+  scenario_id: string;
+  name: string;
+  category: string;
+  inputs: {
+    sleep_delta_hours: number;
+    workload_delta_pct: number;
+    cycle_ergometer_watts: number;
+    hydration_fluid_ml: number;
+    ambient_co2_target_mmhg: number;
+  };
+  projections: {
+    projected_hrv_rmssd: number;
+    projected_resting_hr: number;
+    projected_systolic_bp: number;
+    projected_pvt_latency_ms: number;
+    time_to_stability_hours: number;
+    risk_recurrence_pct: number;
+  };
+  dimensions: {
+    recovery_trajectory_score: number;
+    sleep_opportunity_score: number;
+    workload_distribution_score: number;
+    exercise_preservation_score: number;
+    operational_continuity_score: number;
+    mission_schedule_disruption_pct: number;
+    environmental_constraint_score: number;
+    data_completeness_score: number;
+    uncertainty_band_pct: number;
+  };
+  evaluation_dimensions?: {
+    estimated_recovery_trajectory: number;
+    sleep_opportunity: number;
+    workload_distribution: number;
+    exercise_schedule_preservation: number;
+    mission_schedule_disruption: number;
+    environmental_constraints: number;
+    data_completeness: number;
+    uncertainty: number;
+  };
+  strengths: string[];
+  operational_tradeoffs: string[];
+  is_pareto_non_dominated: boolean;
+  scientific_label: string;
+}
+
+export interface MultiScenarioComparisonResult {
+  crew_member_id: number;
+  crew_member_name: string;
+  scenario_count: number;
+  scenarios: EvaluatedScenarioTradeoff[];
+  pareto_frontier_ids: string[];
+  scientific_labels: string[];
+  evaluation_methodology: string;
+  scientific_disclaimer: string;
+}
+
+export interface SensitivityParameterItem {
+  parameter_key: string;
+  parameter_name: string;
+  unit: string;
+  baseline_assumption: number;
+  adjusted_assumption: number;
+  low_bound_assumption: number;
+  high_bound_assumption: number;
+  target_metric: string;
+  target_unit: string;
+  outcome_at_low: number;
+  outcome_at_nominal: number;
+  outcome_at_high: number;
+  outcome_swing: number;
+  influence_score: number;
+  influence_rank: number;
+}
+
+export interface SensitivityAnalysisResult {
+  crew_member_id: number;
+  crew_member_name: string;
+  perturbation_pct: number;
+  perturbation_percentage: number;
+  baseline_assumptions: Record<string, number>;
+  adjusted_assumptions: Record<string, number>;
+  nominal_projections: Record<string, number>;
+  parameter_sensitivities: SensitivityParameterItem[];
+  most_influential_parameter: string;
+  ranking_stability_note: string;
+  scientific_label: string;
 }

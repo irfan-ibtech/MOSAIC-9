@@ -5,6 +5,13 @@ import {
   ASTRONAUT_SBAR_TEMPLATES,
   DEFAULT_SCENARIOS,
   DEFAULT_INCIDENTS,
+  DEFAULT_NASA_STUDIES,
+  DEFAULT_EVIDENCE_GRAPH_INC1,
+  DEFAULT_EVIDENCE_GRAPH_INC2,
+  DEFAULT_SCENARIO_COMPARISON,
+  DEFAULT_SENSITIVITY_ANALYSIS,
+  DEFAULT_RECONSTRUCTION_INC1,
+  DEFAULT_RECONSTRUCTION_INC2,
 } from '../data/initialData';
 
 describe('MOSAIC-9 Senior QA Feature Verification Suite', () => {
@@ -122,5 +129,76 @@ describe('MOSAIC-9 Senior QA Feature Verification Suite', () => {
 
     expect(incMarcus).toBeDefined();
     expect(incMarcus?.incident_code).toBe('INC-ARES4-118-002');
+  });
+
+  it('verifies NASA OSDR (OSD-575, OSD-635) and HRP evidence records and applicability notes', () => {
+    expect(DEFAULT_NASA_STUDIES.length).toBeGreaterThanOrEqual(7);
+    const osd575 = DEFAULT_NASA_STUDIES.find((s) => s.study_id === 'OSD-575');
+    const osd635 = DEFAULT_NASA_STUDIES.find((s) => s.study_id === 'OSD-635');
+
+    expect(osd575).toBeDefined();
+    expect(osd575?.title).toContain('Inspiration4');
+    expect(osd575?.applicability_note).toContain('NOT CONTINUOUS');
+    expect(osd575?.files_manifest.length).toBeGreaterThanOrEqual(2);
+
+    expect(osd635).toBeDefined();
+    expect(osd635?.title.toLowerCase()).toContain('vascular smooth muscle');
+    expect(osd635?.applicability_note).toContain('IN VITRO');
+    expect(osd635?.files_manifest.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('verifies Mission Evidence Graph links telemetry, domains, NASA studies, hypotheses, and missing evidence', () => {
+    expect(DEFAULT_EVIDENCE_GRAPH_INC1.incident_code).toBe('INC-ARES4-120-001');
+    expect(DEFAULT_EVIDENCE_GRAPH_INC1.nodes.length).toBeGreaterThanOrEqual(14);
+    expect(DEFAULT_EVIDENCE_GRAPH_INC1.edges.length).toBeGreaterThanOrEqual(14);
+
+    const nodeCategories = new Set(DEFAULT_EVIDENCE_GRAPH_INC1.nodes.map((n) => n.category));
+    expect(nodeCategories.has('DIRECT_OBSERVATION')).toBe(true);
+    expect(nodeCategories.has('NASA_RESEARCH_CONTEXT')).toBe(true);
+    expect(nodeCategories.has('DERIVED_TEMPORAL_ASSOCIATION')).toBe(true);
+    expect(nodeCategories.has('EXPLORATORY_HYPOTHESIS')).toBe(true);
+    expect(nodeCategories.has('MISSING_EVIDENCE')).toBe(true);
+
+    expect(DEFAULT_EVIDENCE_GRAPH_INC2.incident_code).toBe('INC-ARES4-118-002');
+    expect(DEFAULT_EVIDENCE_GRAPH_INC2.nodes.some((n) => n.id === 'NASA-HRP-ENV-CO2')).toBe(true);
+  });
+
+  it('verifies Multi-Scenario Trade-Off Engine evaluates 5 scenarios across 8 dimensions and Pareto frontier', () => {
+    expect(DEFAULT_SCENARIO_COMPARISON.scenario_count).toBe(5);
+    expect(DEFAULT_SCENARIO_COMPARISON.scenarios).toHaveLength(5);
+    expect(DEFAULT_SCENARIO_COMPARISON.pareto_frontier_ids.length).toBeGreaterThanOrEqual(2);
+    expect(DEFAULT_SCENARIO_COMPARISON.scientific_labels).toContain('SIMULATED DATA');
+    expect(DEFAULT_SCENARIO_COMPARISON.scientific_labels).toContain('NOT A CLINICAL RECOMMENDATION');
+
+    for (const sc of DEFAULT_SCENARIO_COMPARISON.scenarios) {
+      expect(sc.dimensions.recovery_trajectory_score).toBeGreaterThan(0);
+      expect(sc.dimensions.sleep_opportunity_score).toBeGreaterThan(0);
+      expect(sc.dimensions.workload_distribution_score).toBeGreaterThan(0);
+      expect(sc.dimensions.exercise_preservation_score).toBeGreaterThan(0);
+      expect(sc.dimensions.mission_schedule_disruption_pct).toBeGreaterThanOrEqual(0);
+      expect(sc.dimensions.environmental_constraint_score).toBeGreaterThan(0);
+      expect(sc.dimensions.data_completeness_score).toBeGreaterThan(0);
+      expect(sc.dimensions.uncertainty_band_pct).toBeGreaterThan(0);
+    }
+  });
+
+  it('verifies Parameter Sensitivity Analysis ranks 5 biological coefficients and checks replay order', () => {
+    expect(DEFAULT_SENSITIVITY_ANALYSIS.parameter_sensitivities).toHaveLength(5);
+    expect(DEFAULT_SENSITIVITY_ANALYSIS.most_influential_parameter).toContain('Sleep Restoration');
+    expect(DEFAULT_SENSITIVITY_ANALYSIS.scientific_label).toContain('NOT A CLINICAL RECOMMENDATION');
+
+    // Verify chronological event replay consistency (timestamps strictly non-decreasing)
+    const nodes1 = DEFAULT_RECONSTRUCTION_INC1.evidence_nodes;
+    for (let i = 1; i < nodes1.length; i++) {
+      expect(new Date(nodes1[i].timestamp).getTime()).toBeGreaterThanOrEqual(
+        new Date(nodes1[i - 1].timestamp).getTime()
+      );
+    }
+    const nodes2 = DEFAULT_RECONSTRUCTION_INC2.evidence_nodes;
+    for (let i = 1; i < nodes2.length; i++) {
+      expect(new Date(nodes2[i].timestamp).getTime()).toBeGreaterThanOrEqual(
+        new Date(nodes2[i - 1].timestamp).getTime()
+      );
+    }
   });
 });

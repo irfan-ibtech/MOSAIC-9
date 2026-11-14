@@ -15,13 +15,14 @@
 Following an independent engineering audit and targeted competition-hardening phase, **MOSAIC-9** has undergone end-to-end verification across its frontend interface (10 screens), Laravel 12 API control plane, Python 3.12 FastAPI analytical intelligence service, and offline resilience subsystems.
 
 ### Core Verified Metrics:
-- **Automated Test Results:** **26 / 26 automated tests passing** across 3 test frameworks:
-  - Python Pytest: 10/10 passed (0.71s)
-  - Laravel PHPUnit: 11/11 passed with **120 assertions** (0.50s)
-  - Frontend Vitest: 5/5 passed (0.27s)
-- **Frontend Production Build:** Compiles in **2.18s** via Vite with zero TypeScript compilation errors and zero lint warnings.
-- **Both Incidents Reconstructable:** Validated for both Commander Alex Morgan (`INC-ARES4-120-001`, Presyncope) and Lead Flight Engineer Marcus Vance (`INC-ARES4-118-002`, Workload Strain & Hypercapnic Cephalalgia) across all 4 lookback horizons (`6h`, `24h`, `72h`, `168h` / 7d).
-- **Truthful Claim Reconciliation:** Inaccurate claims identified in preliminary audit drafts (such as "encrypted JSON export" or "encrypted SQLite storage") have been corrected: exports are structured plaintext JSON telemetry archives, and local persistence operates via standard SQLite (WAL mode) and browser `localStorage`.
+- **Automated Test Results:** **50 / 50 automated tests passing** across 3 test frameworks:
+  - Python Pytest: **15/15 passed** (0.87s) — covers baseline stats, Z-scores, confidence penalties, lead-lag correlation, reconstruction, countermeasure simulation, NASA OSDR/HRP registry & 6-tier taxonomy, Mission Evidence Graph, 5-scenario multi-objective trade-offs & Pareto frontier, OAT parameter sensitivity analysis, boundary conditions, and FastAPI endpoints.
+  - Laravel PHPUnit: **19/19 passed** with **189 assertions** (0.68s) — covers mission, crew, ledger, both incident reconstructions across all 4 horizons, NASA Evidence Library (`OSD-575`, `OSD-635`), graceful handling of invalid/unavailable external OSDR study IDs, Mission Evidence Graph API, Multi-Scenario Trade-Off comparison, Sensitivity Analysis API, offline ground comms queueing, and DSN link state transitions.
+  - Frontend Vitest: **16/16 passed** (0.30s) — covers status logic, 6-tier evidence taxonomy, crew-specific simulation baselines, SBAR templates, `OSD-575` & `OSD-635` attribution/applicability boundaries, Mission Evidence Graph, 5-scenario trade-off dimensions, sensitivity analysis ranking, and chronological event replay consistency.
+- **Frontend Production Build:** Compiles in **2.28s** via Vite with zero TypeScript compilation errors and zero lint warnings.
+- **Both Incidents Reconstructable & Graph-Linked:** Validated for both Commander Alex Morgan (`INC-ARES4-120-001`, Presyncope) and Lead Flight Engineer Marcus Vance (`INC-ARES4-118-002`, Workload Strain & Hypercapnic Cephalalgia) across all 4 lookback horizons (`6h`, `24h`, `72h`, `168h` / 7d), complete with interactive **Mission Evidence Graph** and **Mission Event Replay**.
+- **NASA Evidence Fusion:** Integrates real published NASA Open Science Data Repository metadata (`OSD-575` SpaceX Inspiration4 venous serum metabolic/cytokine study, DOI `10.1038/s41586-024-07639-y`; `OSD-635` / `GLDS-608` *in vitro* human aortic smooth muscle cell spaceflight RNA-Seq study, DOI `10.26030/dc7p-2947`; `OSD-571` plasma proteomics) and 4 NASA HRP Evidence Reports with live REST API lookup, 3-second timeout, and verified offline cache fallback.
+- **Mission Countermeasure Trade-Off Engine & Sensitivity Analysis:** Evaluates 5 operational countermeasure scenarios side by side across 8 explicit dimensions, identifies the Pareto non-dominated frontier without declaring a single medically optimal prescription, performs One-at-a-Time (OAT) parameter sensitivity analysis across 5 physiological coefficients, and exports a structured Mission Decision Report.
 
 ---
 
@@ -99,29 +100,31 @@ The platform was tested under simulated deep-space communication blackout:
 ==========================================================
 
 >> [1/3] Running Python Intelligence Tests (Pytest)...
-tests/test_analytics.py::test_baseline_summary PASSED                    [ 10%]
-tests/test_analytics.py::test_z_score_calculation PASSED                 [ 20%]
-tests/test_analytics.py::test_confidence_evaluation_penalizes_missing_data PASSED [ 30%]
-tests/test_analytics.py::test_first_unusual_signal_detection PASSED      [ 40%]
-tests/test_analytics.py::test_lead_lag_cross_correlation PASSED          [ 50%]
-tests/test_analytics.py::test_reconstruct_incident_timeline_and_missing_evidence PASSED [ 60%]
-tests/test_analytics.py::test_simulate_countermeasure PASSED             [ 70%]
-tests/test_analytics.py::test_empty_and_edge_case_baseline PASSED        [ 80%]
-tests/test_analytics.py::test_comprehensive_confidence_penalties PASSED  [ 90%]
-tests/test_analytics.py::test_fastapi_temporal_endpoint PASSED           [100%]
-======================== 10 passed in 0.71s =========================
+tests/test_analytics.py::test_baseline_summary PASSED                    [  6%]
+tests/test_analytics.py::test_z_score_calculation PASSED                 [ 13%]
+tests/test_analytics.py::test_confidence_evaluation_penalizes_missing_data PASSED [ 20%]
+tests/test_analytics.py::test_first_unusual_signal_detection PASSED      [ 26%]
+tests/test_analytics.py::test_lead_lag_cross_correlation PASSED          [ 33%]
+tests/test_analytics.py::test_reconstruct_incident_timeline_and_missing_evidence PASSED [ 40%]
+tests/test_analytics.py::test_simulate_countermeasure PASSED             [ 46%]
+tests/test_analytics.py::test_empty_and_edge_case_baseline PASSED        [ 53%]
+tests/test_analytics.py::test_comprehensive_confidence_penalties PASSED  [ 60%]
+tests/test_analytics.py::test_fastapi_temporal_endpoint PASSED           [ 66%]
+tests/test_analytics.py::test_nasa_evidence_registry_and_taxonomy_v2 PASSED [ 73%]
+tests/test_analytics.py::test_build_mission_evidence_graph_alex_and_marcus PASSED [ 80%]
+tests/test_analytics.py::test_multi_scenario_tradeoffs_and_pareto_frontier PASSED [ 86%]
+tests/test_analytics.py::test_sensitivity_analysis_and_boundary_conditions PASSED [ 93%]
+tests/test_analytics.py::test_fastapi_new_evidence_and_simulation_endpoints PASSED [100%]
+======================== 15 passed in 0.87s =========================
 
 >> [2/3] Running Laravel API Tests (PHPUnit)...
-{"tool":"phpunit","result":"passed","tests":11,"passed":11,"assertions":120,"duration_ms":505}
+{"tool":"phpunit","result":"passed","tests":19,"passed":19,"assertions":189,"duration_ms":688}
 
 >> [3/3] Running Frontend Component & Logic Tests (Vitest)...
-✓ src/__tests__/status.test.ts (5)
-   ✓ MOSAIC-9 Status and Scientific Taxonomy Logic (5)
-     ✓ correctly validates scientific status classifications
-     ✓ ensures UNKNOWN status is distinct from unhealthy
-     ✓ validates evidence classification taxonomy
-     ✓ validates offline queue buffer serialization and extraction
-     ✓ verifies timeline lookback horizon windows
+ ✓ src/__tests__/status.test.ts (5)
+ ✓ src/__tests__/features.test.ts (11)
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
 ==========================================================
    ALL TEST SUITES PASSED — MOSAIC-9 VERIFIED NOMINAL     
 ==========================================================

@@ -5,9 +5,9 @@
 > **Team:** TESSERA FLIGHT LAB
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Build & Tests](https://img.shields.io/badge/Tests-35%20Passed%20(100%25)-emerald.svg)](scripts/run-tests.sh)
+[![Build & Tests](https://img.shields.io/badge/Tests-50%20Passed%20(100%25)-emerald.svg)](scripts/run-tests.sh)
 [![Architecture](https://img.shields.io/badge/Architecture-React%2018%20|%20Laravel%2012%20|%20FastAPI-06b6d4.svg)](documentation/ARCHITECTURE.md)
-[![Ethical Standards](https://img.shields.io/badge/Telemetry-100%25%20Synthetic%20HRP%20Model-purple.svg)](documentation/DATA_DICTIONARY.md)
+[![Ethical Standards](https://img.shields.io/badge/Telemetry-100%25%20Synthetic%20+%20NASA%20OSDR%2FHRP%20Context-purple.svg)](documentation/RESEARCH_SOURCES.md)
 
 ---
 
@@ -40,23 +40,24 @@ COLLECT ➔ VALIDATE ➔ CONTEXTUALIZE ➔ ANALYZE ➔ RECONSTRUCT ➔ EXPLAIN �
 | **Module B** | **Mission Health Intelligence Ledger** | Central immutable chronological event stream | Filter by crew, category, day range, severity, and quality; provenance metadata inspector; manual crew observation logging. |
 | **Module C** | **Personal Crew Health Twin** | Evolving individual baseline tracking | Individual resting baselines vs recent observations vs Z-score departures across 4 physiological domains. |
 | **Module D** | **Temporal Relationship Intelligence** | Multi-domain lead-lag analytical engine | Earliest signal detection (Day 117 06:30 sleep drop), 5-day sequence progression, lead-lag cross-correlations ($r = -0.89$). |
-| **Module E** | **Incident Reconstruction Workspace** | **Signature Feature of MOSAIC-9** | Interactive timeline reconstruction (-6h to -7d), evidence taxonomy tagging, missing data isolation, competing hypotheses. |
-| **Module F** | **Countermeasure Scenario Sandbox** | Hypothetical physiological simulation | Interactive sliders for sleep delta, workload delta, ergometer watts, hydration volume; 48h recovery curves. |
+| **Module E** | **Incident Reconstruction & Evidence Graph** | **Signature Feature of MOSAIC-9** | Interactive timeline reconstruction (-6h to -7d), chronological Mission Event Replay, interactive Mission Evidence Graph linking NASA OSDR/HRP studies, 6-tier taxonomy tagging, missing data isolation, competing hypotheses. |
+| **Module F** | **Scenario Sandbox & Trade-Off Engine** | Multi-objective simulation & sensitivity | Interactive sliders, 48h recovery curves, 5-scenario side-by-side comparison across 8 dimensions + Pareto frontier, OAT parameter sensitivity analysis, Mission Decision Report exporter. |
 | **Module G** | **Offline Mission Operations** | Local storage resilience & DSN simulator | SQLite local persistence, PWA service worker caching, simulated DSN loss-of-signal toggle, diagnostic snapshot export. |
 | **Module H** | **Mission Ground Communication** | Structured clinical consultation brief | SBAR format (Situation, Background, Assessment, Recommendation), linked ledger IDs, offline queueing (`QUEUED_LOCAL`). |
+| **Module I** | **NASA Evidence Library** | OSDR & HRP Spaceflight Research Hub | Searchable catalog of NASA OSDR (`OSD-575`, `OSD-635`, `OSD-571`), NASA HRP Evidence Reports, NASA CCMC DONKI context, live/cached OSDR REST API connector, and 8-parameter telemetry dictionary. |
 
 ---
 
-## 3. Scientific Evidence Taxonomy
+## 3. 6-Tier Scientific Evidence Taxonomy
 
 Every piece of evidence in MOSAIC-9 is strictly classified to maintain complete scientific integrity:
 
-- **`OBSERVED FACT`** *(Cyan/Emerald)*: Primary sensor observation or verified crew check-in.
-- **`DERIVED INDICATOR`** *(Blue)*: Algorithmic calculation from raw multi-sensor telemetry (e.g. ballistocardiographic sleep stage classification).
-- **`TEMPORAL ASSOCIATION`** *(Amber)*: Chronological proximity where event A preceded event B, without claiming confirmed clinical causation.
-- **`POSSIBLE EXPLANATION`** *(Purple)*: Medically plausible physiological hypothesis under onboard evaluation.
-- **`MISSING EVIDENCE`** *(Rose Dashed)*: Unacquired or degraded telemetry streams explicitly highlighted with diagnostic confidence penalty.
-- **`RECOMMENDED REVIEW`** *(Emerald)*: Actionable investigation steps for crew medical officers and ground flight surgeons.
+- **`DIRECT_OBSERVATION` (`OBSERVED_FACT`)** *(Cyan)*: Recorded telemetry, symptom report, mission event, or environmental measurement from the synthetic mission dataset.
+- **`NASA_RESEARCH_CONTEXT`** *(Indigo)*: Published or curated NASA OSDR (`OSD-575`, `OSD-635`, `OSD-571`) or NASA HRP spaceflight evidence relevant to the observed domain.
+- **`DERIVED_TEMPORAL_ASSOCIATION` (`DERIVED_INDICATOR` / `TEMPORAL_ASSOCIATION`)** *(Amber/Blue)*: Calculated baseline deviation, anomaly sequence, or lead-lag statistical relationship over finite lookback windows ($n=5$).
+- **`EXPLORATORY_HYPOTHESIS` (`POSSIBLE_EXPLANATION`)** *(Purple)*: Candidate non-diagnostic explanation supported by observed telemetry and published spaceflight evidence.
+- **`MISSING_EVIDENCE`** *(Rose Dashed)*: Unmeasured physiological or environmental variable that limits certainty and penalizes heuristic confidence.
+- **`SYNTHETIC_SIMULATION`** *(Teal)*: Scenario projection, multi-objective trade-off score, or parameter sensitivity curve (`SIMULATED DATA — NOT A CLINICAL RECOMMENDATION`).
 
 ---
 
@@ -118,41 +119,45 @@ Open your browser at **`http://127.0.0.1:5173`**.
 
 ## 6. Automated Verification & Test Suite
 
-MOSAIC-9 includes end-to-end automated testing across all layers:
+MOSAIC-9 includes end-to-end automated testing across all layers (**50 / 50 tests passing**):
 ```bash
 ./scripts/run-tests.sh
 ```
 This executes:
-1. **Python Intelligence Tests (Pytest):** 7/7 passed — tests baseline calculations, confidence penalties on missing data, lead-lag correlation, and scenario simulations.
-2. **Laravel Backend Tests (PHPUnit):** 7/7 passed (55 assertions) — tests mission overview, crew twins, ledger filtering, incident reconstruction taxonomy, and ground communications queueing.
-3. **Frontend Tests (Vitest):** 3/3 passed — tests status logic and scientific taxonomy boundaries.
+1. **Python Intelligence Tests (Pytest):** **15/15 passed** — tests baseline calculations, confidence penalties on missing data, lead-lag correlation, incident reconstruction, NASA OSDR/HRP evidence registry, Mission Evidence Graph, 5-scenario trade-off evaluation & Pareto frontier, OAT parameter sensitivity analysis, boundary conditions, and FastAPI endpoints.
+2. **Laravel Backend Tests (PHPUnit):** **19/19 passed (189 assertions)** — tests mission overview, crew twins, ledger filtering, both incident reconstructions across all 4 horizons, NASA Evidence Library (`OSD-575`, `OSD-635`), graceful fallback on invalid/unavailable external OSDR study IDs, Mission Evidence Graph API, Multi-Scenario Trade-Off comparison, Sensitivity Analysis API, and offline ground communications queueing.
+3. **Frontend Tests (Vitest):** **16/16 passed** — tests status logic, 6-tier evidence taxonomy, crew-specific simulation profiles, `OSD-575` & `OSD-635` attribution boundaries, Mission Evidence Graph, 5-scenario trade-offs, sensitivity ranking, and chronological replay consistency.
 
 ---
 
-## 7. The Demonstration Scenario (Commander Alex Morgan)
+## 7. The Demonstration Scenarios (Alex Morgan & Marcus Vance)
 
-MOSAIC-9 includes a coherent multi-day scenario calibrated to NASA HRP baseline models:
+MOSAIC-9 includes two coherent multi-day incident scenarios calibrated to NASA HRP baseline models:
 
+### Incident 1: Commander Alex Morgan (`INC-ARES4-120-001` — Day 120 Orthostatic Presyncope)
 - **Mission Day 116 (Baseline):** Sleep duration 7.8h, Resting HR 61 bpm, HRV RMSSD 58 ms, planned cycle ergometer session completed at 186W.
 - **Mission Day 117 (Onset):** ECLSS audio alarm drill at 02:45 curtails sleep to 5.4h (-2.6σ deviation). **Identified by MOSAIC-9 as the First Unusual Signal.**
 - **Mission Day 118 (Divergence):** Workload surge (10.5h); cycle ergometer session aborted after 28 min at 145W (-3.3σ deviation); cabin CO2 rises to 3.5 mmHg.
-- **Mission Day 119 (Vulnerability):** Fatigue self-reported at 7/10; PVT reaction latency spikes to 310 ms (+44%); cycle ergometer omitted; autonomic vagal tone severely suppressed (HRV 32 ms).
-- **Mission Day 120 (Acute Incident):** Acute orthostatic dizziness at 09:42 MET upon vertical egress in airlock; blood pressure collapses to 88/56 mmHg with compensatory tachycardia of 118 bpm.
+- **Mission Day 119 (Vulnerability):** Fatigue self-reported at 7/10; PVT reaction latency spikes to 310 ms (+44%); cycle ergometer omitted; autonomic vagal tone suppressed (HRV 32 ms).
+- **Mission Day 120 (Acute Incident):** Acute orthostatic dizziness at 09:42 MET upon vertical egress in airlock; blood pressure drops to 88/56 mmHg with compensatory tachycardia of 118 bpm.
+
+### Incident 2: Lead Flight Engineer Marcus Vance (`INC-ARES4-118-002` — Day 118 Hypercapnic Cephalalgia)
+- **Mission Days 116–118:** Extended 12-hour manual coolant loop overhaul in confined Node 2 with localized cabin $\text{CO}_2$ pocket reaching 3.5 mmHg and sleep curtailment (6.0h vs 7.5h baseline), culminating in bilateral temporal headache and ocular fatigue.
 
 ### Crew Condition Variants
 1. **Commander Alex Morgan (`REVIEW_REQUIRED`):** Focal acute presyncope episode with 72h multi-domain reconstruction.
 2. **Dr. Sarah Chen (`STABLE`):** 100% countermeasure adherence, normal autonomic sinus rhythm.
-3. **Marcus Vance (`WATCH`):** High maintenance workload and mild sleep restriction.
-4. **Elena Rostova (`UNKNOWN`):** Biometric patch telemetry offline. **Demonstrates that missing data reduces confidence (41%) rather than assuming false normality.**
+3. **Marcus Vance (`WATCH`):** High maintenance workload, localized $\text{CO}_2$ exposure, and mild sleep restriction.
+4. **Elena Rostova (`UNKNOWN`):** Biometric patch telemetry offline on Days 119–120. **Demonstrates that missing data reduces confidence (41%) rather than assuming false normality.**
 
 ---
 
 ## 8. Scientific Integrity & NASA Research Context
 
-- **NASA Human Research Program (HRP):** Directly addresses the *Risk of Orthostatic Intolerance*, *Risk of Performance Decrements from Sleep Loss*, and *In-Flight Countermeasure Adherence*.
-- **NASA Open Science Data Repository (OSDR):** Incorporates biomarker normalization conventions from GeneLab spaceflight datasets.
+- **NASA Open Science Data Repository (OSDR):** Integrates real published study metadata and file manifests from **`OSD-575`** (*SpaceX Inspiration4 Blood Serum Metabolic Panel and Cytokine Profiling Study*, *Nature* 2024, DOI `10.1038/s41586-024-07639-y`), **`OSD-635` (`GLDS-608`)** (*Spaceflight effects on human vascular smooth muscle cell phenotype and function*, DOI `10.26030/dc7p-2947`), and **`OSD-571`** (*SpaceX Inspiration4 Blood Plasma Proteomics & Metabolomics*). Explicitly distinguishes `OSD-575` (pre/post-flight human venous serum biomarkers across 4 astronauts) and `OSD-635` (*in vitro* vascular smooth muscle cell RNA-Seq on the ISS) from continuous wearable astronaut telemetry.
+- **NASA Human Research Program (HRP):** Directly addresses the *Risk of Orthostatic Intolerance*, *Risk of Performance Decrements from Sleep Loss, Circadian Desynchronization, and Work Overload*, *Reduced Cardiorespiratory/Musculoskeletal Fitness*, and *Elevated Spacecraft $\text{CO}_2$ Exposure*.
 - **NASA DONKI Context:** Distinguishes external space weather radiation alerts from an astronaut's tissue-absorbed internal dose.
-- **100% Synthetic Telemetry:** All astronaut names, telemetry streams, and incidents are synthetic models. No private medical records are accessed.
+- **100% Synthetic Crew Telemetry:** All astronaut names, mission telemetry streams, and incidents are synthetic models. No private medical records are accessed.
 
 ---
 

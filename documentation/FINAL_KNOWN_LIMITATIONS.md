@@ -17,6 +17,11 @@
 2. **Astronaut Identities:**
    - All crew members (Commander Alex Morgan, Dr. Sarah Chen, Marcus Vance, Elena Rostova) are fictional mission archetypes designed to demonstrate specific operational scenarios (`STABLE`, `WATCH`, `REVIEW_REQUIRED`, `UNKNOWN`).
 
+3. **NASA OSDR & HRP Contextual Evidence Boundaries:**
+   - While MOSAIC-9 integrates verified published metadata from NASA Open Science Data Repository (`OSD-575`, `OSD-635`, `OSD-571`) and NASA Human Research Program Evidence Reports, these studies serve strictly as **contextual scientific references** (`NASA_RESEARCH_CONTEXT`).
+   - **`OSD-575` (`GLDS-566`):** Profiles pre-flight and post-flight venous blood serum metabolic and cytokine panels across $n=4$ SpaceX Inspiration4 civilian astronauts (`10.1038/s41586-024-07639-y`). It does **not** represent continuous beat-to-beat wearable in-flight telemetry.
+   - **`OSD-635` (`GLDS-608`):** Profiles RNA-Seq transcriptomics of primary human aortic smooth muscle cells (HASMCs) cultured *in vitro* for 3 days aboard the ISS (`10.26030/dc7p-2947`). Cellular mechanotransduction findings *in vitro* do **not** equate to direct *in vivo* astronaut arterial blood pressure or baroreflex measurements.
+
 ---
 
 ## 2. Analytical Intelligence & Statistical Limits
@@ -32,9 +37,10 @@
      Where $C$ is data completeness, $Q$ is sensor provenance quality, and $S$ is sample adequacy.
    - These scores are heuristic approximations engineered for mission triage. They are **not calibrated against a gold-standard clinical diagnostic validation cohort**.
 
-3. **Countermeasure Trajectory Sandbox:**
-   - The Scenario Sandbox employs bounded linear and exponential recovery approximations based on aerospace physiology rules of thumb (e.g., $+1.0\text{h}$ sleep recovery yields $\sim 7.2\text{ ms}$ HRV restoration).
-   - It does not simulate full non-linear multi-scale hemodynamic finite-element models or individual pharmacokinetics. Projections are explicitly labeled `SIMULATED DATA` and `EXPLORATORY RECURRENCE INDEX`.
+3. **Countermeasure Trajectory Sandbox, Multi-Scenario Trade-Offs & Sensitivity Analysis:**
+   - The Scenario Sandbox and Multi-Scenario Trade-Off Engine employ bounded linear and saturation recovery approximations based on aerospace physiology rules of thumb (e.g., $+1.0\text{h}$ sleep recovery yields $\sim 7.2\text{ ms}$ HRV restoration; $+1000\text{ mL}$ oral rehydration yields $\sim 14.5\text{ mmHg}$ systolic BP support).
+   - Multi-objective trade-off scores (across 8 dimensions) and One-at-a-Time (OAT) parameter sensitivity rankings identify Pareto non-dominated operational options, but **never declare a single medically optimal prescription**.
+   - Projections do not simulate full non-linear multi-scale hemodynamic finite-element models or individual pharmacokinetics, and are explicitly labeled `SIMULATED DATA`, `EXPLORATORY SCENARIO`, and `NOT A CLINICAL RECOMMENDATION`.
 
 4. **No Automated Medical Diagnosis:**
    - MOSAIC-9 is an explainable intelligence and event-reconstruction platform, not an autonomous robotic medical officer.

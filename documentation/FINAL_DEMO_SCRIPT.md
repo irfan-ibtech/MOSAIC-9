@@ -89,44 +89,44 @@ flowchart LR
 
 ---
 
-### Step 6 & 7: Incident Reconstruction & Horizon Selection (2:10 – 2:45)
+### Step 6 & 7: Incident Reconstruction, Mission Evidence Graph & Replay (2:10 – 2:45)
 - **Action:** Click **"Incident Reconstruction"** in the left sidebar navigation.
 - **Action:** Verify `INC-ARES4-120-001` is selected.
 - **Action:** Click through the lookback horizon buttons: `6h` (3 nodes) ➔ `24h` (7 nodes) ➔ `72h` (12 nodes). Leave it on `72h`.
+- **Action:** Inspect the **MISSION EVIDENCE GRAPH** panel and click on node **`NASA-OSD-575`** and **`NASA-OSD-635`** to show source attribution, DOI, organism, and explicit applicability boundaries.
+- **Action:** Click **"START REPLAY"** on the **Mission Event Replay** bar to step chronologically through the stored precursor timestamps.
 - **Visual Callouts:**
-  - Chronological precursor sequence displays 12 evidence nodes spanning Day 117 alarm drill to Day 120 airlock egress.
-  - Evidence taxonomy pills: `OBSERVED_FACT`, `DERIVED_INDICATOR`, `TEMPORAL_ASSOCIATION`.
+  - 6-tier Evidence Classification Taxonomy pills: `DIRECT_OBSERVATION`, `NASA_RESEARCH_CONTEXT`, `DERIVED_TEMPORAL_ASSOCIATION`, `EXPLORATORY_HYPOTHESIS`, `MISSING_EVIDENCE`, `SYNTHETIC_SIMULATION`.
+  - Mission Evidence Graph connects precursor events, 4 health domains, `OSD-575` (Inspiration4 serum metabolic/cytokine study), `OSD-635` (ISS vascular smooth muscle cell RNA-Seq study), NASA HRP Evidence Reports, hypotheses, and missing measurements.
 - **Spoken Script:**
-  > *"This is MOSAIC-9’s signature capability: Incident Multi-Domain Reconstruction.
-  > By adjusting the lookback window from 6 hours to 72 hours, the platform reconstructs the complete chronological chain: the night drill on Day 117, heavy EVA prep on Day 118, skipping the cycle ergometer on Day 119, and the acute blood pressure drop to 88/56 upon egress on Day 120.
-  > Notice the scientific taxonomy pills: facts are facts, derived metrics are derived, and associations are never disguised as proven causality."*
+  > *"This is MOSAIC-9’s signature capability: Incident Multi-Domain Reconstruction and the Mission Evidence Graph.
+  > Adjusting the lookback window from 6 hours to 72 hours reconstructs all 12 precursor nodes. In the Mission Evidence Graph, we link onboard telemetry directly to published NASA Open Science Data Repository studies—such as OSD-575 from the Inspiration4 cohort and OSD-635 on human vascular smooth muscle cells in microgravity—while explicitly noting that OSD-575 is pre/post-flight serum data and OSD-635 is in vitro cellular transcriptomics, not continuous wearable telemetry.
+  > Using Mission Event Replay, we can also step chronologically through every stored timestamp to watch the anomaly chain unfold."*
 
 ---
 
-### Step 8 & 9: Evidence Inspection & Missing Evidence (2:45 – 3:15)
-- **Action:** Click on the node `EVT-119-1000-EXE` (*Daily Cardiovascular Countermeasure Omitted*). View modal and click **Close**.
-- **Action:** Scroll down to the **"Missing Evidence & Data Limitations"** panel.
+### Step 8 & 9: Evidence Library, Missing Evidence & Hypotheses (2:45 – 3:15)
+- **Action:** Scroll down to **"Missing Evidence & Data Limitations"** and **"Competing Physiological Hypotheses"**, then briefly click **"NASA EVIDENCE LIBRARY"** (`DataSourcesScreen`) to show search/filtering across NASA OSDR and HRP studies.
 - **Visual Callouts:**
-  - Node 1: *Intravascular Fluid Volume Direct Telemetry* (explains that hypovolemia was inferred from hydration logs; reduces confidence from 98% to 88%).
-  - Node 2: *Cerebral Tissue Oxygenation (NIRS)* (NIRS patch was inactive during equipment transit).
-  - Competing Hypotheses: `HYP-01` (Baroreflex Decompensation, Heuristic Ranking: 0.88) vs. `HYP-02` (CO2 Vasodilation, Heuristic Ranking: 0.62).
+  - Missing Evidence Node 1: *Intravascular Fluid Volume Direct Telemetry* (reduces confidence from 98% to 88%).
+  - Missing Evidence Node 2: *Cerebral Tissue Oxygenation (NIRS)* (forehead NIRS sensor unacquired).
+  - NASA Evidence Library: Filter by `NASA_OSDR`, `NASA_HRP`, domain, and organism; test live/cached OSDR lookup for `OSD-575` and `OSD-635`.
 - **Spoken Script:**
-  > *"Every node can be inspected for raw sensor telemetry. But equally important is what is missing.
-  > In the Missing Evidence panel, MOSAIC-9 explicitly discloses that continuous cerebral oximetry was offline, and intravascular fluid volume was inferred rather than directly measured. We also display competing scientific hypotheses with their explicit counter-evidence and physiological boundaries."*
+  > *"Equally important is what was not measured: MOSAIC-9 explicitly surfaces missing cerebral NIRS oximetry and direct plasma volume telemetry, penalizing confidence rather than guessing. And in our searchable NASA Evidence Library, flight surgeons can filter OSDR and HRP studies by health domain, organism, and study design with offline-resilient caching."*
 
 ---
 
-### Step 10: Countermeasure Scenario Sandbox (3:15 – 3:45)
+### Step 10: Countermeasure Scenario Sandbox, Trade-Off Engine & Sensitivity Analysis (3:15 – 3:45)
 - **Action:** Click **"Scenario Sandbox"** in the left sidebar navigation.
-- **Action:** Click **"PRESET ALPHA: ORTHO RECOVERY"**.
+- **Action:** Click **"LOAD ALPHA"** and **"EXECUTE SIMULATION MODEL"**.
+- **Action:** Scroll down to the **Multi-Objective Scenario Trade-Off Comparison Engine** (comparing 5 scenarios across 8 dimensions + Pareto frontier) and the **Parameter Sensitivity Analysis** table (`±25%` perturbation). Click **"DECISION REPORT"** and export the JSON package.
 - **Visual Callouts:**
-  - Sliders auto-adjust: Sleep Delta `+2.5h`, Workload `-35%`, Cycle Ergometer `140W`, Fluid Loading `1200 mL`, CO2 Target `2.0 mmHg`.
-  - Click **"RUN SIMULATION"**: Live 48-hour recovery chart renders.
-  - Projections: HRV recovers from 27 ms to 54 ms, blood pressure stabilizes to 112 mmHg, and the exploratory recurrence index drops from 65% to 14%.
-  - Chart badge clearly displays: `SIMULATED DATA` with scientific disclaimer.
+  - 5 canonical scenarios evaluated side by side across 8 dimensions (Recovery Trajectory, Sleep Opportunity, Workload Distribution, Exercise Preservation, Schedule Disruption, Environmental Constraints, Completeness, Uncertainty).
+  - Pareto non-dominated frontier badges (`PARETO FRONTIER`) without declaring a single medically optimal prescription.
+  - Sensitivity analysis ranks *Sleep Restoration -> HRV Coefficient* and *Electrolyte Fluid -> Systolic BP Gain* as the top drivers.
+  - Explicitly labeled: `SIMULATED DATA`, `EXPLORATORY SCENARIO`, `NOT A CLINICAL RECOMMENDATION`.
 - **Spoken Script:**
-  > *"How should the crew respond? In the Scenario Sandbox, we load Preset Alpha: 2.5 hours extra sleep, a 35% workload reduction, 1200 mL oral hydration, and graded cycle ergometer resumption at 140 Watts.
-  > Running the simulation generates a hypothetical 48-hour recovery trajectory. Notice the label: this is clearly demarcated as simulated exploratory data, never a guaranteed medical prognosis."*
+  > *"How should the crew respond? In the Scenario Sandbox and Trade-Off Engine, we compare five operational countermeasure configurations side by side across eight physiological and schedule-disruption dimensions. Rather than claiming a single medically optimal prescription, MOSAIC-9 identifies the Pareto frontier, runs One-at-a-Time parameter sensitivity analysis across uncertain biological coefficients, and exports a structured Mission Decision Report for Flight Surgeon review."*
 
 ---
 

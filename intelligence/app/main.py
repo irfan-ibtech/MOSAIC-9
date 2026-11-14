@@ -10,8 +10,17 @@ from typing import List, Dict, Any, Optional
 
 from app.baseline import calculate_baseline_summary, compute_z_score, evaluate_confidence
 from app.temporal import detect_first_unusual_signal, calculate_lead_lag_cross_correlation
-from app.reconstruction import reconstruct_incident_timeline
-from app.simulation import simulate_countermeasure_trajectory
+from app.reconstruction import (
+    reconstruct_incident_timeline,
+    build_mission_evidence_graph,
+    NASA_EVIDENCE_REGISTRY,
+    EVIDENCE_TAXONOMY_V2,
+)
+from app.simulation import (
+    simulate_countermeasure_trajectory,
+    evaluate_multi_scenario_tradeoffs,
+    analyze_parameter_sensitivity,
+)
 
 app = FastAPI(
     title="MOSAIC-9 Deep Space Intelligence Service",
@@ -55,6 +64,29 @@ class SimulationRequest(BaseModel):
     baseline: Dict[str, float]
     current_degraded: Dict[str, float]
     inputs: Dict[str, float]
+    assumptions: Optional[Dict[str, float]] = None
+
+
+class TradeoffRequest(BaseModel):
+    baseline: Dict[str, float]
+    current_degraded: Dict[str, float]
+    scenarios: Optional[List[Dict[str, Any]]] = None
+    assumptions: Optional[Dict[str, float]] = None
+    data_completeness: float = 0.88
+
+
+class SensitivityRequest(BaseModel):
+    baseline: Dict[str, float]
+    current_degraded: Dict[str, float]
+    inputs: Dict[str, float]
+    perturbation_pct: float = 0.20
+
+
+class EvidenceGraphRequest(BaseModel):
+    incident_code: str = "INC-ARES4-120-001"
+    preceding_events: Optional[List[Dict[str, Any]]] = None
+    hypotheses: Optional[List[Dict[str, Any]]] = None
+    missing_evidence: Optional[List[Dict[str, Any]]] = None
 
 
 class TemporalAnalysisRequest(BaseModel):
@@ -97,9 +129,49 @@ def api_reconstruct(req: ReconstructRequest):
     return reconstruct_incident_timeline(req.incident_timestamp, req.preceding_events, req.horizon_hours)
 
 
+@app.post("/reconstruct/evidence-graph")
+def api_evidence_graph(req: EvidenceGraphRequest):
+    return build_mission_evidence_graph(
+        incident_code=req.incident_code,
+        preceding_events=req.preceding_events,
+        hypotheses=req.hypotheses,
+        missing_evidence=req.missing_evidence,
+    )
+
+
+@app.get("/evidence/registry")
+def api_evidence_registry():
+    return {
+        "taxonomy_v2": EVIDENCE_TAXONOMY_V2,
+        "studies": NASA_EVIDENCE_REGISTRY,
+        "total_studies": len(NASA_EVIDENCE_REGISTRY),
+    }
+
+
 @app.post("/simulate/countermeasure")
 def api_simulate(req: SimulationRequest):
-    return simulate_countermeasure_trajectory(req.baseline, req.current_degraded, req.inputs)
+    return simulate_countermeasure_trajectory(req.baseline, req.current_degraded, req.inputs, req.assumptions)
+
+
+@app.post("/simulate/tradeoffs")
+def api_simulate_tradeoffs(req: TradeoffRequest):
+    return evaluate_multi_scenario_tradeoffs(
+        baseline=req.baseline,
+        current_degraded=req.current_degraded,
+        scenarios=req.scenarios,
+        assumptions=req.assumptions,
+        data_completeness=req.data_completeness,
+    )
+
+
+@app.post("/simulate/sensitivity")
+def api_simulate_sensitivity(req: SensitivityRequest):
+    return analyze_parameter_sensitivity(
+        baseline=req.baseline,
+        current_degraded=req.current_degraded,
+        inputs=req.inputs,
+        perturbation_pct=req.perturbation_pct,
+    )
 
 
 @app.post("/analyze/temporal-relationships")

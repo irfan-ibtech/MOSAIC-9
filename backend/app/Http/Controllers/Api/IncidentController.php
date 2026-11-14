@@ -55,21 +55,28 @@ class IncidentController extends Controller
         // OBSERVED FACT, DERIVED INDICATOR, TEMPORAL ASSOCIATION, POSSIBLE EXPLANATION, MISSING EVIDENCE, RECOMMENDED REVIEW
         $evidenceNodes = [];
 
+        $taxonomyV2 = NasaEvidenceController::getTaxonomyV2();
+
         foreach ($events as $event) {
             $classification = 'OBSERVED_FACT';
+            $taxonomyTier = 'DIRECT_OBSERVATION';
             $reasoning = 'Direct primary sensor record.';
 
             if (in_array($event->event_category, ['sleep_observation', 'workload_observation'])) {
                 $classification = 'DERIVED_INDICATOR';
+                $taxonomyTier = 'DERIVED_TEMPORAL_ASSOCIATION';
                 $reasoning = 'Algorithmic calculation from raw bunk micro-movement & task scheduler.';
             } elseif ($event->event_category === 'symptom_report' && $event->severity !== 'CRITICAL') {
                 $classification = 'OBSERVED_FACT';
+                $taxonomyTier = 'DIRECT_OBSERVATION';
                 $reasoning = 'Self-reported subjective symptom logged by crew member.';
             } elseif ($event->severity === 'CRITICAL') {
                 $classification = 'OBSERVED_FACT';
+                $taxonomyTier = 'DIRECT_OBSERVATION';
                 $reasoning = 'Target acute incident event.';
             } elseif ($event->event_category === 'environmental_event') {
                 $classification = 'TEMPORAL_ASSOCIATION';
+                $taxonomyTier = 'DERIVED_TEMPORAL_ASSOCIATION';
                 $reasoning = 'Ambient environmental factor coinciding with crew timeline.';
             }
 
@@ -83,6 +90,10 @@ class IncidentController extends Controller
                 'value' => $event->value,
                 'unit' => $event->unit,
                 'classification' => $classification,
+                'taxonomy_v2' => $taxonomyTier,
+                'source_attribution' => $taxonomyV2[$taxonomyTier]['source_attribution'],
+                'applicability_level' => $taxonomyV2[$taxonomyTier]['applicability_level'],
+                'limitations' => $taxonomyV2[$taxonomyTier]['limitations'],
                 'reasoning' => $reasoning,
                 'confidence' => $event->confidence_score,
                 'data_quality' => $event->data_quality,
@@ -194,6 +205,13 @@ class IncidentController extends Controller
             ];
         }
 
+        $evidenceGraph = NasaEvidenceController::buildEvidenceGraphForIncident(
+            $incident,
+            $evidenceNodes,
+            $hypotheses,
+            $missingEvidence
+        );
+
         return response()->json([
             'incident' => $incident,
             'horizon_hours' => $horizonHours,
@@ -205,6 +223,9 @@ class IncidentController extends Controller
             'missing_evidence' => $missingEvidence,
             'hypotheses' => $hypotheses,
             'recommended_reviews' => $recommendedReviews,
+            'evidence_taxonomy_v2' => $taxonomyV2,
+            'nasa_research_context' => NasaEvidenceController::getCuratedStudies(),
+            'evidence_graph' => $evidenceGraph,
             'scientific_disclaimer' => 'MOSAIC-9 outputs are experimental temporal reconstructions designed for mission intelligence. They do not constitute formal diagnostic medical determinations.',
         ]);
     }

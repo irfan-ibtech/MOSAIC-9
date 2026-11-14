@@ -1,6 +1,6 @@
 import React from 'react';
 import { EvidenceClassification } from '../../types';
-import { Eye, Cpu, GitFork, Lightbulb, AlertCircle, CheckSquare } from 'lucide-react';
+import { Eye, Cpu, GitFork, Lightbulb, AlertCircle, CheckSquare, BookOpen, FlaskConical } from 'lucide-react';
 
 interface EvidencePillProps {
   classification: EvidenceClassification;
@@ -16,11 +16,19 @@ export const EvidencePill: React.FC<EvidencePillProps> = ({
   const getMeta = () => {
     switch (classification) {
       case 'OBSERVED_FACT':
+      case 'DIRECT_OBSERVATION':
         return {
-          label: 'OBSERVED FACT',
+          label: classification === 'DIRECT_OBSERVATION' ? 'DIRECT OBSERVATION' : 'OBSERVED FACT',
           bg: 'bg-cyan-950/70 border-cyan-500/50 text-cyan-300',
           icon: Eye,
           desc: 'Direct primary sensor telemetry or verified crew log',
+        };
+      case 'NASA_RESEARCH_CONTEXT':
+        return {
+          label: 'NASA RESEARCH CONTEXT',
+          bg: 'bg-indigo-950/80 border-indigo-400/60 text-indigo-300',
+          icon: BookOpen,
+          desc: 'Published or curated NASA OSDR or NASA HRP spaceflight evidence relevant to the observed domain',
         };
       case 'DERIVED_INDICATOR':
         return {
@@ -30,25 +38,34 @@ export const EvidencePill: React.FC<EvidencePillProps> = ({
           desc: 'Computed biomarker calculated from multiple sensor records',
         };
       case 'TEMPORAL_ASSOCIATION':
+      case 'DERIVED_TEMPORAL_ASSOCIATION':
         return {
-          label: 'TEMPORAL ASSOCIATION',
+          label: classification === 'DERIVED_TEMPORAL_ASSOCIATION' ? 'DERIVED TEMPORAL ASSOCIATION' : 'TEMPORAL ASSOCIATION',
           bg: 'bg-amber-950/70 border-amber-500/50 text-amber-300',
           icon: GitFork,
-          desc: 'Observed temporal proximity (preceding event without proved causation)',
+          desc: 'Observed temporal proximity or lead-lag statistical relationship (not proved causation)',
         };
       case 'POSSIBLE_EXPLANATION':
+      case 'EXPLORATORY_HYPOTHESIS':
         return {
-          label: 'POSSIBLE EXPLANATION',
+          label: classification === 'EXPLORATORY_HYPOTHESIS' ? 'EXPLORATORY HYPOTHESIS' : 'POSSIBLE EXPLANATION',
           bg: 'bg-purple-950/70 border-purple-500/50 text-purple-300',
           icon: Lightbulb,
-          desc: 'Hypothesized physiological mechanism under medical review',
+          desc: 'Candidate explanation supported by observed telemetry and published spaceflight evidence',
         };
       case 'MISSING_EVIDENCE':
         return {
           label: 'MISSING EVIDENCE',
           bg: 'bg-rose-950/70 border-dashed border-rose-500/60 text-rose-300',
           icon: AlertCircle,
-          desc: 'Data gap: observation unacquired or sensor telemetry offline',
+          desc: 'Unmeasured physiological or environmental variable that limits certainty',
+        };
+      case 'SYNTHETIC_SIMULATION':
+        return {
+          label: 'SYNTHETIC SIMULATION',
+          bg: 'bg-teal-950/70 border-teal-500/50 text-teal-300',
+          icon: FlaskConical,
+          desc: 'Scenario projection or synthetic dataset element (not clinical recommendation)',
         };
       case 'RECOMMENDED_REVIEW':
         return {

@@ -24,8 +24,23 @@ MOSAIC-9 is built upon established aerospace medicine literature, NASA Human Res
 ## 2. NASA Open Science Data & Space Weather Integrations
 
 ### 2.1 NASA Open Science Data Repository (OSDR)
-- **Role in MOSAIC-9:** Provides reference statistical normalization distributions for astronaut phenotypic biomarkers across multi-day spaceflight missions (e.g. GeneLab, Ames Life Sciences Portal).
-- **Application:** Used to calibrate the personal baseline calculation engine (MAD, median, and Z-score boundaries).
+- **API Endpoints Integrated:**
+  - `https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/{OSD-ID}/`
+  - `https://osdr.nasa.gov/osdr/data/osd/files/{OSD_NUMBER}`
+- **Verified OSDR Studies Integrated in the Mission Evidence Graph & Evidence Library:**
+  1. **`OSD-575` (`GLDS-566`): *SpaceX Inspiration4 Blood Serum Metabolic Panel and Cytokine Profiling Study***
+     - *Organism / Cohort:* *Homo sapiens* (4 civilian astronauts on the 3-day SpaceX Inspiration4 orbital mission at 590 km altitude).
+     - *Assay Types:* Comprehensive Metabolic Panel (CMP — Quest Diagnostics) and Multiplex Cytokine/Chemokine Profiling (Eve Technologies HD71 / Alamar NULISAseq) across pre-flight (L-92, L-44, L-3) and post-flight (R+1, R+45, R+82) venous serum samples.
+     - *Publication & DOI:* *Nature* 632, 1145–1154 (2024), DOI `10.1038/s41586-024-07639-y` (Space Omics and Medical Atlas — SOMA).
+     - *Explicit Scientific Boundary:* **Human pre/post-flight venous serum biomarkers — NOT continuous wearable in-flight hemodynamic telemetry.**
+  2. **`OSD-635` (`GLDS-608`): *Spaceflight effects on human vascular smooth muscle cell phenotype and function***
+     - *Organism / System:* *Homo sapiens* (Primary Human Aortic Smooth Muscle Cells — HASMCs cultured in microgravity aboard the ISS for 3 days vs 1g ground controls).
+     - *Assay Types:* RNA Sequencing (RNA-Seq transcriptomics) and contractile/signaling pathway enrichment analysis (>4,400 differentially expressed genes including downregulation of contractile marker $\alpha\text{-SMA}$ and modulation of STAT3, NF$\kappa$B, PI3K/AKT, HIF-1$\alpha$, and endothelin signaling).
+     - *Reference:* NASA OSDR Dataset `OSD-635` / `GLDS-608` (DOI `10.26030/dc7p-2947`).
+     - *Explicit Scientific Boundary:* **In vitro cellular transcriptomics — NOT direct in vivo astronaut blood pressure or baroreflex monitoring.**
+  3. **`OSD-571` (`GLDS-562`): *SpaceX Inspiration4 Blood Plasma Proteomics, Metabolomics, and Extracellular Vesicle Profiling***
+     - *Organism / Cohort:* *Homo sapiens* (4 civilian astronauts, SpaceX Inspiration4), DOI `10.1038/s41586-024-07639-y`.
+     - *Explicit Scientific Boundary:* Pre/post-flight venous plasma multi-omics context, not real-time crew wearable telemetry.
 
 ### 2.2 NASA DONKI (Database Of Notifications, Knowledge, and Information)
 - **Role in MOSAIC-9:** Provides space weather event contexts (e.g., Coronal Mass Ejections, Solar Energetic Particle events).

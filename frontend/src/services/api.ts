@@ -8,6 +8,10 @@ import {
   CountermeasureScenario,
   GroundCommunication,
   SyncTelemetryData,
+  NasaStudyRecord,
+  MissionEvidenceGraph,
+  MultiScenarioComparisonResult,
+  SensitivityAnalysisResult,
 } from '../types';
 
 import {
@@ -23,6 +27,11 @@ import {
   DEFAULT_RECONSTRUCTION_INC1,
   DEFAULT_RECONSTRUCTION_INC2,
   DEFAULT_TEMPORAL_ANALYSIS,
+  DEFAULT_NASA_STUDIES,
+  DEFAULT_EVIDENCE_GRAPH_INC1,
+  DEFAULT_EVIDENCE_GRAPH_INC2,
+  DEFAULT_SCENARIO_COMPARISON,
+  DEFAULT_SENSITIVITY_ANALYSIS,
 } from '../data/initialData';
 
 const API_BASE = '/api';
@@ -80,13 +89,31 @@ function getFallbackData(cacheKey: string, _url: string): any {
     const incId = Number(parts[2]) || 1;
     return incId === 2 ? DEFAULT_RECONSTRUCTION_INC2 : DEFAULT_RECONSTRUCTION_INC1;
   }
+  if (cacheKey.startsWith('incident_graph_')) {
+    const parts = cacheKey.split('_');
+    const incId = Number(parts[2]) || 1;
+    return incId === 2 ? DEFAULT_EVIDENCE_GRAPH_INC2 : DEFAULT_EVIDENCE_GRAPH_INC1;
+  }
   if (cacheKey.startsWith('incident_')) {
     const parts = cacheKey.split('_');
     const incId = Number(parts[1]) || 1;
     return DEFAULT_INCIDENTS.find((i) => i.id === incId) || DEFAULT_INCIDENTS[0];
   }
+  if (cacheKey.startsWith('evidence_studies')) {
+    return {
+      total_studies: DEFAULT_NASA_STUDIES.length,
+      studies: DEFAULT_NASA_STUDIES,
+      scientific_disclaimer: 'NASA OSDR and HRP records provide contextual published spaceflight evidence.',
+    };
+  }
   if (cacheKey.startsWith('temporal_')) {
     return DEFAULT_TEMPORAL_ANALYSIS;
+  }
+  if (cacheKey.startsWith('scenario_compare_')) {
+    return DEFAULT_SCENARIO_COMPARISON;
+  }
+  if (cacheKey.startsWith('scenario_sens_')) {
+    return DEFAULT_SENSITIVITY_ANALYSIS;
   }
   if (cacheKey.startsWith('scenarios_')) {
     return DEFAULT_SCENARIOS;
@@ -275,6 +302,60 @@ export const mosaicApi = {
       `incident_rec_${id}_${horizonHours}`
     ),
 
+  getIncidentEvidenceGraph: (id: number, horizonHours: number = 72) =>
+    fetchWithFallback<MissionEvidenceGraph>(
+      `/incidents/${id}/evidence-graph?horizon_hours=${horizonHours}`,
+      `incident_graph_${id}_${horizonHours}`
+    ),
+
+  // NASA Evidence Library (OSDR + HRP)
+  getEvidenceStudies: (filters?: {
+    domain?: string;
+    source_type?: string;
+    study_category?: string;
+    search?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (filters?.domain && filters.domain !== 'ALL') searchParams.append('domain', filters.domain);
+    if (filters?.source_type && filters.source_type !== 'ALL') searchParams.append('source_type', filters.source_type);
+    if (filters?.study_category && filters.study_category !== 'ALL') searchParams.append('study_category', filters.study_category);
+    if (filters?.search) searchParams.append('search', filters.search);
+    const qs = searchParams.toString();
+    return fetchWithFallback<{
+      total_studies: number;
+      studies: NasaStudyRecord[];
+      taxonomy_v2?: Record<string, any>;
+      scientific_disclaimer: string;
+    }>(`/evidence/studies${qs ? `?${qs}` : ''}`, `evidence_studies_${qs}`);
+  },
+
+  lookupOsdrStudy: async (studyId: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/evidence/osdr-lookup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ study_id: studyId }),
+      });
+      return await res.json();
+    } catch {
+      const match = DEFAULT_NASA_STUDIES.find((s) => s.study_id.toUpperCase() === studyId.toUpperCase());
+      if (match) {
+        return {
+          study_id: match.study_id,
+          retrieval_mode: 'CACHED_VERIFIED_FALLBACK',
+          study: match,
+          offline_resilience_note: 'Served from onboard cached NASA OSDR registry.',
+        };
+      }
+      return {
+        status: 'UNAVAILABLE_OR_INVALID_STUDY',
+        study_id: studyId,
+        retrieval_mode: 'OFFLINE_UNAVAILABLE',
+        error: `Study ${studyId} is not cached in onboard storage.`,
+      };
+    }
+  },
+
   // Temporal Intelligence Analysis
   getTemporalAnalysis: (crewMemberId: number = 1) =>
     fetchWithFallback<{
@@ -290,7 +371,7 @@ export const mosaicApi = {
       body: JSON.stringify({ crew_member_id: crewMemberId }),
     }),
 
-  // Scenario Sandbox
+  // Scenario Sandbox & Multi-Scenario Trade-Off Engine
   getScenarios: async (crewMemberId?: number) => {
     const qs = crewMemberId ? `?crew_member_id=${crewMemberId}` : '';
     const res = await fetchWithFallback<CountermeasureScenario[]>(`/scenarios${qs}`, `scenarios_${crewMemberId || 'all'}`);
@@ -299,6 +380,36 @@ export const mosaicApi = {
     }
     return res;
   },
+
+  compareScenarios: (crewMemberId: number = 1, assumptions?: Record<string, number>) =>
+    fetchWithFallback<MultiScenarioComparisonResult>(
+      '/scenarios/compare',
+      `scenario_compare_${crewMemberId}_${JSON.stringify(assumptions || {})}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ crew_member_id: crewMemberId, assumptions }),
+      }
+    ),
+
+  analyzeScenarioSensitivity: (
+    crewMemberId: number = 1,
+    perturbationPct: number = 25,
+    assumptions?: Record<string, number>,
+    inputs?: Record<string, number>
+  ) =>
+    fetchWithFallback<SensitivityAnalysisResult>(
+      '/scenarios/sensitivity',
+      `scenario_sens_${crewMemberId}_${perturbationPct}_${JSON.stringify(assumptions || {})}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          crew_member_id: crewMemberId,
+          perturbation_pct: perturbationPct,
+          assumptions,
+          inputs,
+        }),
+      }
+    ),
 
   simulateScenario: async (payload: {
     crew_member_id: number;

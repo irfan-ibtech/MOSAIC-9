@@ -1,7 +1,13 @@
 """
 MOSAIC-9 Intelligence Engine Automated Unit Tests
-Tests: Baseline stats, Z-score bounds, Confidence penalties, Lead-lag correlation, Incident reconstruction, Simulation.
+Tests: Baseline stats, Z-score bounds, Confidence penalties, Lead-lag correlation, Incident reconstruction, Simulation,
+NASA Evidence Fusion, Mission Evidence Graph, Multi-Scenario Trade-off Evaluation, and Sensitivity Analysis.
 """
+
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
 from app.baseline import (
@@ -11,8 +17,18 @@ from app.baseline import (
     evaluate_comprehensive_confidence,
 )
 from app.temporal import detect_first_unusual_signal, calculate_lead_lag_cross_correlation
-from app.reconstruction import reconstruct_incident_timeline, TAXONOMY
-from app.simulation import simulate_countermeasure_trajectory
+from app.reconstruction import (
+    reconstruct_incident_timeline,
+    build_mission_evidence_graph,
+    TAXONOMY,
+    EVIDENCE_TAXONOMY_V2,
+    NASA_EVIDENCE_REGISTRY,
+)
+from app.simulation import (
+    simulate_countermeasure_trajectory,
+    evaluate_multi_scenario_tradeoffs,
+    analyze_parameter_sensitivity,
+)
 
 
 def test_baseline_summary():
@@ -190,3 +206,128 @@ def test_fastapi_temporal_endpoint():
     assert "first_unusual_signal" in data
     assert len(data["cross_domain_associations"]) >= 3
     assert len(data["anomaly_sequence"]) == 5
+
+
+def test_nasa_evidence_registry_and_taxonomy_v2():
+    # Verify all 6 required evidence classifications exist
+    required_tiers = [
+        "DIRECT_OBSERVATION",
+        "NASA_RESEARCH_CONTEXT",
+        "DERIVED_TEMPORAL_ASSOCIATION",
+        "EXPLORATORY_HYPOTHESIS",
+        "MISSING_EVIDENCE",
+        "SYNTHETIC_SIMULATION",
+    ]
+    for tier in required_tiers:
+        assert tier in EVIDENCE_TAXONOMY_V2
+        assert "source_attribution" in EVIDENCE_TAXONOMY_V2[tier]
+        assert "limitations" in EVIDENCE_TAXONOMY_V2[tier]
+
+    # Verify OSD-575 and OSD-635 are present with accurate scientific attribution and limitations
+    study_ids = {s["study_id"]: s for s in NASA_EVIDENCE_REGISTRY}
+    assert "OSD-575" in study_ids
+    assert "OSD-635" in study_ids
+    assert "Inspiration4" in study_ids["OSD-575"]["title"]
+    assert "NOT CONTINUOUS" in study_ids["OSD-575"]["applicability_note"]
+    assert "smooth muscle" in study_ids["OSD-635"]["title"].lower()
+    assert "IN VITRO" in study_ids["OSD-635"]["applicability_note"]
+
+
+def test_build_mission_evidence_graph_alex_and_marcus():
+    graph_alex = build_mission_evidence_graph("INC-ARES4-120-001")
+    assert graph_alex["incident_code"] == "INC-ARES4-120-001"
+    assert graph_alex["total_nodes"] >= 14
+    assert graph_alex["total_edges"] >= 14
+    node_ids_alex = {n["id"] for n in graph_alex["nodes"]}
+    assert "NASA-OSD-575" in node_ids_alex
+    assert "NASA-OSD-635" in node_ids_alex
+
+    graph_marcus = build_mission_evidence_graph("INC-ARES4-118-002")
+    assert graph_marcus["incident_code"] == "INC-ARES4-118-002"
+    assert any("CO2" in n["label"] for n in graph_marcus["nodes"])
+
+
+def test_multi_scenario_tradeoffs_and_pareto_frontier():
+    baseline = {"hrv_rmssd": 58.0, "resting_heart_rate": 60.0, "systolic_bp": 118.0, "pvt_reaction_time_ms": 215.0}
+    current = {"hrv_rmssd": 27.0, "resting_heart_rate": 78.0, "systolic_bp": 88.0, "pvt_reaction_time_ms": 310.0}
+    result = evaluate_multi_scenario_tradeoffs(baseline, current)
+    assert result["scenario_count"] == 5
+    assert len(result["pareto_frontier_ids"]) >= 1
+    assert "SIMULATED DATA" in result["scientific_labels"]
+    assert "NOT A CLINICAL RECOMMENDATION" in result["scientific_labels"]
+
+    # Check all 8 evaluation dimensions on each scenario
+    required_dims = [
+        "estimated_recovery_trajectory",
+        "sleep_opportunity",
+        "workload_distribution",
+        "exercise_schedule_preservation",
+        "mission_schedule_disruption",
+        "environmental_constraints",
+        "data_completeness",
+        "uncertainty",
+    ]
+    for sc in result["scenarios"]:
+        for dim in required_dims:
+            assert dim in sc["evaluation_dimensions"]
+
+
+def test_sensitivity_analysis_and_boundary_conditions():
+    baseline = {"hrv_rmssd": 58.0, "resting_heart_rate": 60.0, "systolic_bp": 118.0, "pvt_reaction_time_ms": 215.0}
+    current = {"hrv_rmssd": 27.0, "resting_heart_rate": 78.0, "systolic_bp": 88.0, "pvt_reaction_time_ms": 310.0}
+    inputs = {
+        "sleep_delta_hours": 2.5,
+        "workload_delta_pct": -35.0,
+        "cycle_ergometer_watts": 140.0,
+        "hydration_fluid_ml": 1200.0,
+    }
+    sens = analyze_parameter_sensitivity(baseline, current, inputs, perturbation_pct=0.25)
+    assert sens["perturbation_percentage"] == 25.0
+    assert len(sens["parameter_sensitivities"]) == 5
+    assert sens["most_influential_parameter"] != "NONE"
+
+    # Boundary condition test: extreme zero / negative inputs
+    extreme_sim = simulate_countermeasure_trajectory(
+        baseline,
+        current,
+        {"sleep_delta_hours": 0.0, "workload_delta_pct": 0.0, "cycle_ergometer_watts": 0.0, "hydration_fluid_ml": 0.0},
+    )
+    assert extreme_sim["projections"]["projected_hrv_rmssd"] >= current["hrv_rmssd"]
+    assert 5 <= extreme_sim["projections"]["risk_recurrence_pct"] <= 95
+
+
+def test_fastapi_new_evidence_and_simulation_endpoints():
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+
+    reg_res = client.get("/evidence/registry")
+    assert reg_res.status_code == 200
+    assert reg_res.json()["total_studies"] >= 6
+
+    graph_res = client.post("/reconstruct/evidence-graph", json={"incident_code": "INC-ARES4-120-001"})
+    assert graph_res.status_code == 200
+    assert graph_res.json()["total_nodes"] >= 14
+
+    tradeoff_res = client.post(
+        "/simulate/tradeoffs",
+        json={
+            "baseline": {"hrv_rmssd": 58.0, "resting_heart_rate": 60.0, "systolic_bp": 118.0, "pvt_reaction_time_ms": 215.0},
+            "current_degraded": {"hrv_rmssd": 27.0, "resting_heart_rate": 78.0, "systolic_bp": 88.0, "pvt_reaction_time_ms": 310.0},
+        },
+    )
+    assert tradeoff_res.status_code == 200
+    assert tradeoff_res.json()["scenario_count"] == 5
+
+    sens_res = client.post(
+        "/simulate/sensitivity",
+        json={
+            "baseline": {"hrv_rmssd": 58.0, "resting_heart_rate": 60.0, "systolic_bp": 118.0, "pvt_reaction_time_ms": 215.0},
+            "current_degraded": {"hrv_rmssd": 27.0, "resting_heart_rate": 78.0, "systolic_bp": 88.0, "pvt_reaction_time_ms": 310.0},
+            "inputs": {"sleep_delta_hours": 2.5, "workload_delta_pct": -35.0, "cycle_ergometer_watts": 140.0, "hydration_fluid_ml": 1200.0},
+            "perturbation_pct": 0.20,
+        },
+    )
+    assert sens_res.status_code == 200
+    assert "most_influential_parameter" in sens_res.json()

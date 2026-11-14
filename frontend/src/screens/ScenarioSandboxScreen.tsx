@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { CrewMember, CountermeasureScenario } from '../types';
+import {
+  CrewMember,
+  CountermeasureScenario,
+  MultiScenarioComparisonResult,
+  SensitivityAnalysisResult,
+} from '../types';
 import { mosaicApi } from '../services/api';
 import { TelemetryChart } from '../components/common/TelemetryChart';
-import { DEFAULT_CREW_MEMBERS, DEFAULT_SCENARIOS, CREW_SIMULATION_DEFAULTS } from '../data/initialData';
+import { EvidencePill } from '../components/common/EvidencePill';
+import {
+  DEFAULT_CREW_MEMBERS,
+  DEFAULT_SCENARIOS,
+  CREW_SIMULATION_DEFAULTS,
+  DEFAULT_SCENARIO_COMPARISON,
+  DEFAULT_SENSITIVITY_ANALYSIS,
+} from '../data/initialData';
 import {
   Sliders,
   Play,
@@ -10,6 +22,12 @@ import {
   ShieldAlert,
   TrendingUp,
   ChevronDown,
+  Scale,
+  Activity,
+  FileSpreadsheet,
+  Download,
+  X,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface ScenarioSandboxScreenProps {
@@ -42,6 +60,18 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
   const [activeSimulationResult, setActiveSimulationResult] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
+  // Phase 2: Multi-Scenario Trade-off Comparison & Sensitivity Analysis State
+  const [comparisonResult, setComparisonResult] = useState<MultiScenarioComparisonResult>(
+    DEFAULT_SCENARIO_COMPARISON
+  );
+  const [sensitivityResult, setSensitivityResult] = useState<SensitivityAnalysisResult>(
+    DEFAULT_SENSITIVITY_ANALYSIS
+  );
+  const [perturbationPct, setPerturbationPct] = useState<number>(25);
+  const [customSleepHrvCoeff, setCustomSleepHrvCoeff] = useState<number>(7.2);
+  const [customHydrationBpCoeff, setCustomHydrationBpCoeff] = useState<number>(14.5);
+  const [showDecisionReportModal, setShowDecisionReportModal] = useState<boolean>(false);
+
   // Sync state whenever the active astronaut changes
   useEffect(() => {
     const config = CREW_SIMULATION_DEFAULTS[crew.id] || CREW_SIMULATION_DEFAULTS[1];
@@ -53,7 +83,6 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
     setHydrationMl(config.alpha.hydrationMl);
     setAmbientCo2(config.alpha.ambientCo2);
 
-    // Fetch astronaut-specific scenarios from backend or local fallback
     mosaicApi.getScenarios(crew.id).then((resList) => {
       if (resList && resList.length > 0) {
         setScenarios(resList.filter((s) => s.crew_member_id === crew.id));
@@ -62,7 +91,6 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
       }
     });
 
-    // Run baseline simulation for this astronaut's Alpha preset
     mosaicApi
       .simulateScenario({
         crew_member_id: crew.id,
@@ -77,7 +105,6 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
         setActiveSimulationResult(sim);
       })
       .catch(() => {
-        // Safe fallback matching crew config
         setActiveSimulationResult({
           scenario: {
             id: Date.now(),
@@ -113,6 +140,42 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
       });
   }, [crew.id]);
 
+  // Fetch multi-scenario trade-offs and sensitivity analysis when crew or assumptions change
+  useEffect(() => {
+    const activeAssumptions = {
+      sleep_hrv_coeff: customSleepHrvCoeff,
+      hydration_bp_coeff: customHydrationBpCoeff,
+    };
+
+    mosaicApi
+      .compareScenarios(crew.id, activeAssumptions)
+      .then((res) => {
+        if (res && Array.isArray(res.scenarios)) {
+          setComparisonResult(res);
+        }
+      })
+      .catch(() => {
+        setComparisonResult(DEFAULT_SCENARIO_COMPARISON);
+      });
+
+    mosaicApi
+      .analyzeScenarioSensitivity(crew.id, perturbationPct, activeAssumptions, {
+        sleep_delta_hours: sleepDelta,
+        workload_delta_pct: workloadDelta,
+        cycle_ergometer_watts: ergoWatts,
+        hydration_fluid_ml: hydrationMl,
+        ambient_co2_target_mmhg: ambientCo2,
+      })
+      .then((res) => {
+        if (res && Array.isArray(res.parameter_sensitivities)) {
+          setSensitivityResult(res);
+        }
+      })
+      .catch(() => {
+        setSensitivityResult(DEFAULT_SENSITIVITY_ANALYSIS);
+      });
+  }, [crew.id, perturbationPct, customSleepHrvCoeff, customHydrationBpCoeff]);
+
   const handleRunSimulation = async () => {
     setIsSimulating(true);
     try {
@@ -126,14 +189,13 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
         ambient_co2_target_mmhg: ambientCo2,
       });
       setActiveSimulationResult(res);
-      // Reload list
       mosaicApi.getScenarios(crew.id).then((resList) => {
         if (resList && resList.length > 0) {
           setScenarios(resList.filter((s) => s.crew_member_id === crew.id));
         }
       });
-    } catch (err) {
-      alert('Simulation error');
+    } catch {
+      // Handled by api fallback
     } finally {
       setIsSimulating(false);
     }
@@ -160,22 +222,62 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
     setAmbientCo2(target.ambientCo2);
   };
 
+  const handleExportDecisionReport = () => {
+    const reportPayload = {
+      report_type: 'MOSAIC-9_MISSION_COUNTERMEASURE_DECISION_REPORT',
+      generated_at: new Date().toISOString(),
+      scientific_labels: ['SIMULATED DATA', 'EXPLORATORY SCENARIO', 'NOT A CLINICAL RECOMMENDATION'],
+      crew_member: { id: crew.id, name: crew.name, callsign: crew.callsign, status: crew.status },
+      active_scenario_inputs: {
+        name: scenarioName,
+        sleep_delta_hours: sleepDelta,
+        workload_delta_pct: workloadDelta,
+        cycle_ergometer_watts: ergoWatts,
+        hydration_fluid_ml: hydrationMl,
+        ambient_co2_target_mmhg: ambientCo2,
+      },
+      active_projections: activeSimulationResult?.scenario?.projections || {},
+      multi_scenario_tradeoff_comparison: comparisonResult,
+      parameter_sensitivity_analysis: sensitivityResult,
+      limitations_and_governance:
+        'Deterministic parametric aerospace simulation. Does not constitute an autonomous clinical prescription. Human Flight Surgeon and Mission Director review required.',
+    };
+
+    const blob = new Blob([JSON.stringify(reportPayload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `MOSAIC9_Decision_Report_${crew.callsign}_Day120.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Trajectory Recovery Chart Data
   const currentHrv = activeSimulationResult?.baseline_comparison?.hrv?.current ?? crewConfig.currentHrv;
-  const projHrv = activeSimulationResult?.scenario?.projections?.projected_hrv_rmssd ?? activeSimulationResult?.baseline_comparison?.hrv?.projected ?? crewConfig.baseHrv;
-  const baseHrv = activeSimulationResult?.baseline_comparison?.hrv?.baseline ?? crewConfig.baseHrv;
+  const projHrv =
+    activeSimulationResult?.scenario?.projections?.projected_hrv_rmssd ??
+    activeSimulationResult?.baseline_comparison?.hrv?.projected ??
+    crewConfig.baseHrv;
   const diffHrv = Math.round(((projHrv - currentHrv) / (currentHrv || 1)) * 100);
 
   const currentBp = activeSimulationResult?.baseline_comparison?.bp?.current ?? crewConfig.currentBp;
-  const projBp = activeSimulationResult?.scenario?.projections?.projected_systolic_bp ?? activeSimulationResult?.baseline_comparison?.bp?.projected ?? crewConfig.baseBp;
+  const projBp =
+    activeSimulationResult?.scenario?.projections?.projected_systolic_bp ??
+    activeSimulationResult?.baseline_comparison?.bp?.projected ??
+    crewConfig.baseBp;
   const baseBp = activeSimulationResult?.baseline_comparison?.bp?.baseline ?? crewConfig.baseBp;
 
   const currentHr = activeSimulationResult?.baseline_comparison?.hr?.current ?? crewConfig.currentHr;
-  const projHr = activeSimulationResult?.scenario?.projections?.projected_resting_hr ?? activeSimulationResult?.baseline_comparison?.hr?.projected ?? crewConfig.baseHr;
-  const baseHr = activeSimulationResult?.baseline_comparison?.hr?.baseline ?? crewConfig.baseHr;
+  const projHr =
+    activeSimulationResult?.scenario?.projections?.projected_resting_hr ??
+    activeSimulationResult?.baseline_comparison?.hr?.projected ??
+    crewConfig.baseHr;
 
   const currentPvt = activeSimulationResult?.baseline_comparison?.pvt?.current ?? crewConfig.currentPvt;
-  const projPvt = activeSimulationResult?.scenario?.projections?.projected_pvt_latency_ms ?? activeSimulationResult?.baseline_comparison?.pvt?.projected ?? crewConfig.basePvt;
+  const projPvt =
+    activeSimulationResult?.scenario?.projections?.projected_pvt_latency_ms ??
+    activeSimulationResult?.baseline_comparison?.pvt?.projected ??
+    crewConfig.basePvt;
   const basePvt = activeSimulationResult?.baseline_comparison?.pvt?.baseline ?? crewConfig.basePvt;
 
   const timeToStability = activeSimulationResult?.scenario?.projections?.time_to_stability_hours ?? 24;
@@ -183,8 +285,20 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
 
   const trajectoryData = activeSimulationResult?.scenario?.projections?.trajectory_hourly || [
     { hour: 0, hrv: currentHrv, hr: currentHr, bp: currentBp, pvt: currentPvt },
-    { hour: 12, hrv: Math.round(currentHrv + (projHrv - currentHrv) * 0.35), hr: Math.round(currentHr + (projHr - currentHr) * 0.35), bp: Math.round(currentBp + (projBp - currentBp) * 0.45), pvt: Math.round(currentPvt + (projPvt - currentPvt) * 0.3) },
-    { hour: 24, hrv: Math.round(currentHrv + (projHrv - currentHrv) * 0.70), hr: Math.round(currentHr + (projHr - currentHr) * 0.70), bp: Math.round(currentBp + (projBp - currentBp) * 0.80), pvt: Math.round(currentPvt + (projPvt - currentPvt) * 0.7) },
+    {
+      hour: 12,
+      hrv: Math.round(currentHrv + (projHrv - currentHrv) * 0.35),
+      hr: Math.round(currentHr + (projHr - currentHr) * 0.35),
+      bp: Math.round(currentBp + (projBp - currentBp) * 0.45),
+      pvt: Math.round(currentPvt + (projPvt - currentPvt) * 0.3),
+    },
+    {
+      hour: 24,
+      hrv: Math.round(currentHrv + (projHrv - currentHrv) * 0.7),
+      hr: Math.round(currentHr + (projHr - currentHr) * 0.7),
+      bp: Math.round(currentBp + (projBp - currentBp) * 0.8),
+      pvt: Math.round(currentPvt + (projPvt - currentPvt) * 0.7),
+    },
     { hour: 48, hrv: projHrv, hr: projHr, bp: projBp, pvt: projPvt },
   ];
 
@@ -230,28 +344,74 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
     ],
   };
 
+  // Pareto Multi-Scenario Trade-Off Chart Options
+  const paretoChartOptions = {
+    tooltip: { trigger: 'axis' },
+    legend: {
+      data: [
+        'Physiological Recovery Score (0-100)',
+        'Operational Continuity Score (0-100)',
+        'Exercise Preservation Score (0-100)',
+      ],
+      textStyle: { color: '#94a3b8' },
+    },
+    xAxis: {
+      type: 'category',
+      data: comparisonResult.scenarios.map((s) => s.scenario_id.replace('SC-', '')),
+      axisLine: { lineStyle: { color: '#1e2c4c' } },
+      axisLabel: { color: '#94a3b8', fontSize: 10 },
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: 100,
+      splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.05)' } },
+      axisLabel: { color: '#64748b' },
+    },
+    series: [
+      {
+        name: 'Physiological Recovery Score (0-100)',
+        type: 'bar',
+        data: comparisonResult.scenarios.map((s) => s.dimensions.recovery_trajectory_score),
+        itemStyle: { color: '#06b6d4' },
+      },
+      {
+        name: 'Operational Continuity Score (0-100)',
+        type: 'bar',
+        data: comparisonResult.scenarios.map((s) => s.dimensions.operational_continuity_score),
+        itemStyle: { color: '#10b981' },
+      },
+      {
+        name: 'Exercise Preservation Score (0-100)',
+        type: 'bar',
+        data: comparisonResult.scenarios.map((s) => s.dimensions.exercise_preservation_score),
+        itemStyle: { color: '#a855f7' },
+      },
+    ],
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-space-700/60 pb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-400">
-              MODULE F — COUNTERMEASURE SCENARIO SANDBOX
+              MODULE F — COUNTERMEASURE SCENARIO SANDBOX & TRADE-OFF ENGINE
             </span>
-            <span className="text-xs font-mono text-slate-400">HYPOTHETICAL PHYSIOLOGICAL SIMULATION</span>
+            <EvidencePill classification="SYNTHETIC_SIMULATION" />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
-            <span>Countermeasure Exploration & Trajectory Sandbox</span>
+            <span>Countermeasure Exploration, Multi-Objective Trade-Offs & Sensitivity Sandbox</span>
             <span className="text-cyan-400 font-mono text-base">({crew.name})</span>
           </h1>
           <p className="text-xs text-slate-400">
-            Model hypothetical recovery trajectories across sleep extensions, workload shifts, and fluid loading protocols.
+            Model hypothetical recovery trajectories across sleep extensions, workload shifts, and fluid loading protocols, and evaluate operational schedule trade-offs.
           </p>
         </div>
 
-        {/* Crew & Preset Switchers */}
-        <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
+        {/* Crew, Preset Switchers & Decision Report Button */}
+        <div className="flex items-center gap-2.5 self-start md:self-auto flex-wrap">
           {onSelectCrew && list.length > 0 && (
             <div className="flex items-center bg-space-900 border border-space-700 rounded-lg px-2.5 py-1">
               <span className="text-[11px] text-slate-400 font-mono mr-2">CREW:</span>
@@ -296,15 +456,35 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
             >
               LOAD BRAVO
             </button>
+            <button
+              onClick={() => setShowDecisionReportModal(true)}
+              className="px-3 py-1.5 rounded-lg bg-emerald-950/90 hover:bg-emerald-900 border border-emerald-600/70 text-emerald-300 text-xs font-mono font-bold flex items-center gap-1.5 transition-all"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>DECISION REPORT</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Strict Scientific Disclaimers */}
-      <div className="p-4 rounded-xl bg-space-900 border border-space-700 text-xs text-slate-300 font-mono space-y-1">
-        <div className="flex items-center gap-2 text-amber-400 font-bold">
-          <ShieldAlert className="w-4 h-4 shrink-0" />
-          <span>SCIENTIFIC RESTRICTION: SIMULATION IS NOT A CLINICALLY VALIDATED PROGNOSTIC GUARANTEE</span>
+      <div className="p-4 rounded-xl bg-space-900 border border-space-700 text-xs text-slate-300 font-mono space-y-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2 text-amber-400 font-bold">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
+            <span>SCIENTIFIC RESTRICTION: SIMULATION IS NOT A CLINICALLY VALIDATED PROGNOSTIC GUARANTEE</span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-cyan-950 border border-cyan-700 text-cyan-300">
+              SIMULATED DATA
+            </span>
+            <span className="px-2 py-0.5 rounded bg-purple-950 border border-purple-700 text-purple-300">
+              EXPLORATORY SCENARIO
+            </span>
+            <span className="px-2 py-0.5 rounded bg-rose-950 border border-rose-700 text-rose-300">
+              NOT A CLINICAL RECOMMENDATION
+            </span>
+          </div>
         </div>
         <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
           Projections represent simplified deterministic aerospace physiological approximations. Never represent simulated outcomes as guaranteed clinical medical outcomes. Historical observations remain completely distinct from hypothetical simulated futures.
@@ -348,7 +528,8 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Sleep Schedule Delta:</span>
                 <span className="font-bold text-cyan-400">
-                  {sleepDelta > 0 ? `+${sleepDelta}h` : `${sleepDelta}h`} (Total: {((crew.baseline_profile?.sleep_target_hours || 8.0) + sleepDelta).toFixed(1)}h)
+                  {sleepDelta > 0 ? `+${sleepDelta}h` : `${sleepDelta}h`} (Total:{' '}
+                  {((crew.baseline_profile?.sleep_target_hours || 8.0) + sleepDelta).toFixed(1)}h)
                 </span>
               </div>
               <input
@@ -369,7 +550,11 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
             <div className="space-y-1.5 p-3 rounded-lg bg-space-900 border border-space-800">
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Flight Workload Delta:</span>
-                <span className={`font-bold ${workloadDelta < 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                <span
+                  className={`font-bold ${
+                    workloadDelta < 0 ? 'text-emerald-400' : 'text-amber-400'
+                  }`}
+                >
                   {workloadDelta > 0 ? `+${workloadDelta}%` : `${workloadDelta}%`}
                 </span>
               </div>
@@ -434,7 +619,9 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
             className="w-full py-2.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-mono font-bold text-xs flex items-center justify-center gap-2 shadow-panel transition-all"
           >
             <Play className="w-4 h-4 fill-current" />
-            <span>{isSimulating ? 'SIMULATING RECOVERY TRAJECTORY...' : 'EXECUTE SIMULATION MODEL'}</span>
+            <span>
+              {isSimulating ? 'SIMULATING RECOVERY TRAJECTORY...' : 'EXECUTE SIMULATION MODEL'}
+            </span>
           </button>
         </div>
 
@@ -444,9 +631,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono">
             <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
               <div className="text-[10px] text-slate-400 uppercase">PROJECTED HRV</div>
-              <div className="text-lg font-bold text-cyan-300 mt-1">
-                {projHrv} ms
-              </div>
+              <div className="text-lg font-bold text-cyan-300 mt-1">{projHrv} ms</div>
               <div className="text-[9px] text-emerald-400 flex items-center gap-1 mt-0.5">
                 <TrendingUp className="w-3 h-3" />
                 <span>
@@ -457,9 +642,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
 
             <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
               <div className="text-[10px] text-slate-400 uppercase">PROJECTED BP</div>
-              <div className="text-lg font-bold text-emerald-400 mt-1">
-                {projBp} mmHg
-              </div>
+              <div className="text-lg font-bold text-emerald-400 mt-1">{projBp} mmHg</div>
               <div className="text-[9px] text-slate-300 flex items-center gap-1 mt-0.5">
                 <span>
                   {currentBp < baseBp - 5
@@ -473,19 +656,21 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
 
             <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
               <div className="text-[10px] text-slate-400 uppercase">RESTING HR</div>
-              <div className="text-lg font-bold text-white mt-1">
-                {projHr} bpm
-              </div>
-              <div className={`text-[9px] mt-0.5 ${currentHr > 75 ? 'text-emerald-400' : 'text-slate-400'}`}>
-                {currentHr > 75 ? `Tachycardia Resolved (from ${currentHr} bpm)` : `Current: ${currentHr} bpm (Nominal)`}
+              <div className="text-lg font-bold text-white mt-1">{projHr} bpm</div>
+              <div
+                className={`text-[9px] mt-0.5 ${
+                  currentHr > 75 ? 'text-emerald-400' : 'text-slate-400'
+                }`}
+              >
+                {currentHr > 75
+                  ? `Tachycardia Resolved (from ${currentHr} bpm)`
+                  : `Current: ${currentHr} bpm (Nominal)`}
               </div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
               <div className="text-[10px] text-slate-400 uppercase">PVT REACTION TIME</div>
-              <div className="text-lg font-bold text-amber-300 mt-1">
-                {projPvt} ms
-              </div>
+              <div className="text-lg font-bold text-amber-300 mt-1">{projPvt} ms</div>
               <div className="text-[9px] text-slate-400 mt-0.5">
                 Baseline: {basePvt} ms (Current: {currentPvt} ms)
               </div>
@@ -493,19 +678,15 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
 
             <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
               <div className="text-[10px] text-slate-400 uppercase">TIME TO STABILITY</div>
-              <div className="text-lg font-bold text-cyan-400 mt-1">
-                {timeToStability} Hours
-              </div>
-              <div className="text-[9px] text-slate-400 mt-0.5">
-                Projected Rest Window
-              </div>
+              <div className="text-lg font-bold text-cyan-400 mt-1">{timeToStability} Hours</div>
+              <div className="text-[9px] text-slate-400 mt-0.5">Projected Rest Window</div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
-              <div className="text-[10px] text-slate-400 uppercase">EXPLORATORY RECURRENCE INDEX</div>
-              <div className="text-lg font-bold text-emerald-400 mt-1">
-                {riskRecurrence}%
+              <div className="text-[10px] text-slate-400 uppercase">
+                EXPLORATORY RECURRENCE INDEX
               </div>
+              <div className="text-lg font-bold text-emerald-400 mt-1">{riskRecurrence}%</div>
               <div className="text-[9px] text-slate-400 mt-0.5">
                 Hypothetical index (not clinical diagnosis)
               </div>
@@ -550,7 +731,9 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
                 >
                   <div>
                     <div className="font-bold text-white font-sans">{sc.name}</div>
-                    <div className="text-[11px] text-slate-400 font-sans mt-0.5">{sc.description}</div>
+                    <div className="text-[11px] text-slate-400 font-sans mt-0.5">
+                      {sc.description}
+                    </div>
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-cyan-400 font-bold">
@@ -566,6 +749,364 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
           </div>
         </div>
       </div>
+
+      {/* PHASE 2.1: MULTI-SCENARIO TRADE-OFF COMPARISON ENGINE (5 SCENARIOS × 8 DIMENSIONS) */}
+      <div className="bg-space-850 border border-cyan-500/40 rounded-xl p-5 shadow-panel space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-space-700/60 pb-3">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Scale className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-sm font-bold text-white uppercase font-mono">
+                MULTI-OBJECTIVE SCENARIO TRADE-OFF COMPARISON ENGINE (5 CONFIGURATIONS · 8 DIMENSIONS)
+              </h3>
+              <span className="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700 text-emerald-300 text-[10px] font-mono">
+                {comparisonResult.pareto_frontier_ids.length} PARETO NON-DOMINATED OPTIONS
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Compares Baseline Schedule, Sleep Protection, Workload Redistribution, Exercise Adjustment, and Combined Adjustments without claiming a single medically optimal prescription.
+            </p>
+          </div>
+        </div>
+
+        {/* Pareto Trade-off Bar Chart */}
+        <div className="bg-space-900 border border-space-800 rounded-xl p-4">
+          <div className="text-[11px] font-mono text-slate-400 mb-2 flex items-center justify-between flex-wrap gap-2">
+            <span>
+              MULTI-OBJECTIVE PARETO FRONTIER: PHYSIOLOGICAL RECOVERY VS OPERATIONAL CONTINUITY VS EXERCISE PRESERVATION
+            </span>
+            <span className="text-cyan-400">SIMULATED DATA · NOT A CLINICAL RECOMMENDATION</span>
+          </div>
+          <TelemetryChart options={paretoChartOptions} height={220} />
+        </div>
+
+        {/* 8-Dimension Side-by-Side Comparison Matrix */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs font-mono">
+            <thead>
+              <tr className="border-b border-space-700 text-slate-400 bg-space-900/90 text-[10px]">
+                <th className="py-2.5 px-3">SCENARIO CONFIGURATION</th>
+                <th className="py-2.5 px-2.5">PARETO STATUS</th>
+                <th className="py-2.5 px-2.5">1. RECOVERY SCORE</th>
+                <th className="py-2.5 px-2.5">2. SLEEP OPP.</th>
+                <th className="py-2.5 px-2.5">3. WORKLOAD DIST.</th>
+                <th className="py-2.5 px-2.5">4. EXERCISE PRES.</th>
+                <th className="py-2.5 px-2.5">5. SCHED. DISRUPTION</th>
+                <th className="py-2.5 px-2.5">6. ENV/CONSUMABLE</th>
+                <th className="py-2.5 px-2.5">7. COMPLETENESS</th>
+                <th className="py-2.5 px-2.5">8. UNCERTAINTY</th>
+                <th className="py-2.5 px-2.5">ACTION</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-space-800">
+              {comparisonResult.scenarios.map((sc) => (
+                <tr key={sc.scenario_id} className="hover:bg-space-800/40 transition-colors">
+                  <td className="py-3 px-3">
+                    <div className="font-bold text-white font-sans text-xs">{sc.name}</div>
+                    <div className="text-[10px] text-slate-400">
+                      Sleep {sc.inputs.sleep_delta_hours >= 0 ? `+${sc.inputs.sleep_delta_hours}h` : `${sc.inputs.sleep_delta_hours}h`} ·{' '}
+                      Load {sc.inputs.workload_delta_pct}% · {sc.inputs.cycle_ergometer_watts}W ·{' '}
+                      {sc.inputs.hydration_fluid_ml}mL
+                    </div>
+                  </td>
+                  <td className="py-3 px-2.5">
+                    {sc.is_pareto_non_dominated ? (
+                      <span className="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700 text-emerald-300 text-[10px] font-bold">
+                        PARETO FRONTIER
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded bg-space-900 border border-space-700 text-slate-400 text-[10px]">
+                        DOMINATED
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3 px-2.5 font-bold text-cyan-300">
+                    {sc.dimensions.recovery_trajectory_score}/100
+                  </td>
+                  <td className="py-3 px-2.5 text-slate-200">
+                    {sc.dimensions.sleep_opportunity_score}/100
+                  </td>
+                  <td className="py-3 px-2.5 text-slate-200">
+                    {sc.dimensions.workload_distribution_score}/100
+                  </td>
+                  <td className="py-3 px-2.5 text-purple-300">
+                    {sc.dimensions.exercise_preservation_score}/100
+                  </td>
+                  <td className="py-3 px-2.5 text-amber-300">
+                    {sc.dimensions.mission_schedule_disruption_pct}%
+                  </td>
+                  <td className="py-3 px-2.5 text-emerald-300">
+                    {sc.dimensions.environmental_constraint_score}/100
+                  </td>
+                  <td className="py-3 px-2.5 text-slate-300">
+                    {sc.dimensions.data_completeness_score}%
+                  </td>
+                  <td className="py-3 px-2.5 text-rose-300">
+                    ±{sc.dimensions.uncertainty_band_pct}%
+                  </td>
+                  <td className="py-3 px-2.5">
+                    <button
+                      onClick={() => {
+                        setScenarioName(sc.name);
+                        setSleepDelta(sc.inputs.sleep_delta_hours);
+                        setWorkloadDelta(sc.inputs.workload_delta_pct);
+                        setErgoWatts(sc.inputs.cycle_ergometer_watts);
+                        setHydrationMl(sc.inputs.hydration_fluid_ml);
+                        setAmbientCo2(sc.inputs.ambient_co2_target_mmhg);
+                      }}
+                      className="px-2.5 py-1 rounded bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 text-[10px] font-bold"
+                    >
+                      LOAD INPUTS
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* PHASE 2.2: INTERACTIVE PARAMETER SENSITIVITY ANALYSIS PANEL */}
+      <div className="bg-space-850 border border-purple-500/40 rounded-xl p-5 shadow-panel space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-space-700/60 pb-3">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Activity className="w-4 h-4 text-purple-400" />
+              <h3 className="text-sm font-bold text-white uppercase font-mono">
+                PARAMETER SENSITIVITY & BIOLOGICAL ASSUMPTION ROBUSTNESS ANALYSIS
+              </h3>
+              <span className="px-2 py-0.5 rounded bg-purple-950 border border-purple-700 text-purple-300 text-[10px] font-mono">
+                TOP DRIVER: {sensitivityResult.most_influential_parameter}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              One-at-a-Time (OAT) perturbation analysis testing how uncertain physiological response coefficients affect projected outcomes and scenario rankings.
+            </p>
+          </div>
+
+          {/* Perturbation Range Controls */}
+          <div className="flex items-center gap-2 font-mono text-xs flex-wrap">
+            <span className="text-slate-400 text-[11px]">PERTURBATION RANGE:</span>
+            {[10, 20, 25, 40].map((pct) => (
+              <button
+                key={pct}
+                onClick={() => setPerturbationPct(pct)}
+                className={`px-2.5 py-1 rounded border text-xs transition-all ${
+                  perturbationPct === pct
+                    ? 'bg-purple-950 border-purple-500 text-purple-200 font-bold'
+                    : 'bg-space-900 border-space-700 text-slate-400 hover:text-white'
+                }`}
+              >
+                ±{pct}%
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Interactive Assumption Sliders */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+          <div className="p-3.5 rounded-xl bg-space-900 border border-space-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">
+                Assumed Sleep → HRV Gain Coefficient (Baseline: 7.2 ms/h):
+              </span>
+              <span className="text-purple-300 font-bold">{customSleepHrvCoeff} ms/h</span>
+            </div>
+            <input
+              type="range"
+              min="4.0"
+              max="10.5"
+              step="0.2"
+              value={customSleepHrvCoeff}
+              onChange={(e) => setCustomSleepHrvCoeff(Number(e.target.value))}
+              className="w-full accent-purple-500 cursor-pointer"
+            />
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-space-900 border border-space-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">
+                Assumed Fluid → Systolic BP Gain Coefficient (Baseline: 14.5 mmHg/L):
+              </span>
+              <span className="text-purple-300 font-bold">{customHydrationBpCoeff} mmHg/L</span>
+            </div>
+            <input
+              type="range"
+              min="8.0"
+              max="21.0"
+              step="0.5"
+              value={customHydrationBpCoeff}
+              onChange={(e) => setCustomHydrationBpCoeff(Number(e.target.value))}
+              className="w-full accent-purple-500 cursor-pointer"
+            />
+          </div>
+        </div>
+
+        {/* Sensitivity Ranking Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs font-mono">
+            <thead>
+              <tr className="border-b border-space-700 text-slate-400 bg-space-900/90 text-[10px]">
+                <th className="py-2 px-3">RANK</th>
+                <th className="py-2 px-3">MODEL ASSUMPTION PARAMETER</th>
+                <th className="py-2 px-3">BASELINE ASSUMPTION</th>
+                <th className="py-2 px-3">ADJUSTED ASSUMPTION</th>
+                <th className="py-2 px-3">SENSITIVITY BOUND (±{sensitivityResult.perturbation_percentage}%)</th>
+                <th className="py-2 px-3">OUTCOME RANGE (LOW → HIGH)</th>
+                <th className="py-2 px-3">TOTAL SWING</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-space-800">
+              {sensitivityResult.parameter_sensitivities.map((param) => (
+                <tr key={param.parameter_key} className="hover:bg-space-800/40">
+                  <td className="py-2.5 px-3 font-bold text-purple-300">#{param.influence_rank}</td>
+                  <td className="py-2.5 px-3 text-white font-sans font-medium">
+                    {param.parameter_name}
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-400">
+                    {param.baseline_assumption} {param.unit}
+                  </td>
+                  <td className="py-2.5 px-3 text-cyan-300">
+                    {param.adjusted_assumption} {param.unit}
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-300">
+                    [{param.low_bound_assumption} .. {param.high_bound_assumption}]
+                  </td>
+                  <td className="py-2.5 px-3 text-emerald-300">
+                    {param.outcome_at_low} → {param.outcome_at_high} {param.target_unit}
+                  </td>
+                  <td className="py-2.5 px-3 font-bold text-amber-300">
+                    Δ {param.outcome_swing} {param.target_unit}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="p-3 rounded-lg bg-space-950 border border-space-800 text-xs font-sans text-slate-300 flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <strong className="text-purple-300 font-mono">Scenario Ranking Stability:</strong>{' '}
+            {sensitivityResult.ranking_stability_note}
+          </div>
+          <span className="text-[10px] font-mono text-slate-400">
+            {sensitivityResult.scientific_label}
+          </span>
+        </div>
+      </div>
+
+      {/* PHASE 2.3: MISSION DECISION REPORT MODAL */}
+      {showDecisionReportModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-space-900 border border-emerald-500/60 rounded-xl max-w-3xl w-full p-6 shadow-panel space-y-4 font-mono max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-space-700 pb-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded bg-emerald-950 border border-emerald-600 text-emerald-300 text-xs font-bold">
+                  MISSION COUNTERMEASURE DECISION REPORT
+                </span>
+                <EvidencePill classification="SYNTHETIC_SIMULATION" />
+              </div>
+              <button
+                onClick={() => setShowDecisionReportModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs font-sans">
+              <div className="p-3.5 rounded-lg bg-space-950 border border-space-800 space-y-1">
+                <div className="font-mono text-cyan-400 font-bold uppercase">
+                  1. Subject & Active Scenario Inputs
+                </div>
+                <p className="text-slate-200">
+                  <strong>Astronaut:</strong> {crew.name} ({crew.callsign}) ·{' '}
+                  <strong>Active Scenario:</strong> {scenarioName}
+                </p>
+                <p className="text-slate-300 font-mono text-[11px]">
+                  Sleep Delta: {sleepDelta >= 0 ? `+${sleepDelta}h` : `${sleepDelta}h`} | Workload Delta:{' '}
+                  {workloadDelta}% | Ergometer: {ergoWatts}W | Oral Fluid: {hydrationMl}mL | Cabin CO2 Target:{' '}
+                  {ambientCo2} mmHg
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-lg bg-space-950 border border-space-800 space-y-1">
+                <div className="font-mono text-emerald-400 font-bold uppercase">
+                  2. Projected 48-Hour Physiological Outcomes (Simulated)
+                </div>
+                <p className="text-slate-200 font-mono text-[11px]">
+                  HRV RMSSD: {currentHrv}ms → {projHrv}ms | Systolic BP: {currentBp} → {projBp} mmHg | Resting HR:{' '}
+                  {currentHr} → {projHr} bpm | PVT Latency: {currentPvt} → {projPvt} ms | Time to Stability:{' '}
+                  {timeToStability}h
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-lg bg-space-950 border border-space-800 space-y-1.5">
+                <div className="font-mono text-amber-400 font-bold uppercase">
+                  3. Multi-Objective Operational Trade-Off Summary
+                </div>
+                {comparisonResult.scenarios.map((sc) => (
+                  <div
+                    key={sc.scenario_id}
+                    className="border-t border-space-800 pt-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1"
+                  >
+                    <span className="text-white font-medium">
+                      {sc.name}{' '}
+                      {sc.is_pareto_non_dominated && (
+                        <strong className="text-emerald-400 font-mono text-[10px]">
+                          [PARETO FRONTIER]
+                        </strong>
+                      )}
+                    </span>
+                    <span className="font-mono text-[11px] text-slate-300">
+                      Recovery: {sc.dimensions.recovery_trajectory_score}/100 · Disruption:{' '}
+                      {sc.dimensions.mission_schedule_disruption_pct}% · Uncertainty: ±
+                      {sc.dimensions.uncertainty_band_pct}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-3.5 rounded-lg bg-space-950 border border-space-800 space-y-1">
+                <div className="font-mono text-purple-400 font-bold uppercase">
+                  4. Model Assumptions, Sensitivity & Epistemic Uncertainty
+                </div>
+                <p className="text-slate-300">
+                  Most influential assumption parameter: <strong>{sensitivityResult.most_influential_parameter}</strong>{' '}
+                  (tested at ±{sensitivityResult.perturbation_percentage}% OAT perturbation).{' '}
+                  {sensitivityResult.ranking_stability_note}
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-lg bg-rose-950/30 border border-rose-700/60 space-y-1">
+                <div className="font-mono text-rose-300 font-bold uppercase flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>5. Limitations & Suggested Human Flight Surgeon Review</span>
+                </div>
+                <p className="text-slate-200">
+                  SIMULATED DATA — EXPLORATORY SCENARIO — NOT A CLINICAL RECOMMENDATION. Projections are generated by a deterministic linear-saturation model and do not account for idiosyncratic pharmacogenomics or unmeasured cerebral oximetry (NIRS). Submit selected trade-off package via SBAR Ground Brief for Flight Surgeon &amp; Mission Director concurrence.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-space-800">
+              <button
+                onClick={handleExportDecisionReport}
+                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>EXPORT DECISION REPORT (.JSON)</span>
+              </button>
+              <button
+                onClick={() => setShowDecisionReportModal(false)}
+                className="px-4 py-2 rounded-lg bg-space-800 hover:bg-space-700 text-slate-200 text-xs font-mono"
+              >
+                CLOSE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
