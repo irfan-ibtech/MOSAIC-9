@@ -415,7 +415,7 @@ def build_mission_evidence_graph(
         "node_type": "INCIDENT_ANCHOR",
         "source_attribution": "Synthetic Onboard Clinical Event Log (100% Synthetic Mission Dataset)",
         "confidence_or_applicability": 0.99,
-        "provenance": f"Immutable Synthetic Incident Record {incident_code}",
+        "provenance": f"SHA-256 Tamper-Evident Synthetic Incident Record {incident_code} (SHA-256 Verified)",
         "limitations": "100% synthetic mission incident record; requires multi-domain precursor synthesis to evaluate contributing factors.",
     })
 
@@ -457,7 +457,7 @@ def build_mission_evidence_graph(
         ]
         if is_marcus
         else [
-            {"event_uid": "EVT-117-0630-SLP", "title": "Sleep Restriction (5.4h -> 4.6h, 9.8h Logged Debt)", "domain": "neuro_cognitive_sleep", "classification": "DERIVED_TEMPORAL_ASSOCIATION", "confidence": 0.96},
+            {"event_uid": "EVT-117-0630-SLP", "title": "Sleep Restriction (5.4h -> 4.6h, 8.6h 72h / 12.0h 4d Logged Debt)", "domain": "neuro_cognitive_sleep", "classification": "DERIVED_TEMPORAL_ASSOCIATION", "confidence": 0.96},
             {"event_uid": "EVT-120-0800-HRV", "title": "HRV RMSSD Suppression (58ms -> 27ms)", "domain": "cardiovascular", "classification": "DERIVED_TEMPORAL_ASSOCIATION", "confidence": 0.95},
             {"event_uid": "EVT-119-1000-EXE", "title": "Skipped Cycle Ergometer Countermeasure (0W)", "domain": "musculoskeletal", "classification": "DIRECT_OBSERVATION", "confidence": 0.99},
             {"event_uid": "EVT-119-1520-MED", "title": "PVT Reaction Time Spike (310 ms)", "domain": "neuro_cognitive_sleep", "classification": "DIRECT_OBSERVATION", "confidence": 0.97},

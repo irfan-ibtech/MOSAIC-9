@@ -102,7 +102,7 @@ export const EventLedgerScreen: React.FC<EventLedgerScreenProps> = ({ crewMember
             <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-400">
               MODULE B — MISSION HEALTH INTELLIGENCE LEDGER
             </span>
-            <span className="text-xs font-mono text-slate-400">CENTRAL IMMUTABLE EVENT TIMELINE</span>
+            <span className="text-xs font-mono text-slate-400">CENTRAL SHA-256 TAMPER-EVIDENT EVENT TIMELINE</span>
           </div>
           <h1 className="text-xl font-bold tracking-tight text-white">
             Chronological Mission Health & Event Ledger

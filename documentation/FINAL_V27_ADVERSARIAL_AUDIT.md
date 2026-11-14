@@ -64,7 +64,7 @@ A direct `git diff v2.6-competition-baseline..HEAD` audit was performed across `
 | :--- | :--- | :--- | :---: |
 | **Mission Day & MET** | Day 120 at **`09:42 MET`** (`2026-11-15T09:42:00Z`) | Day 118 at **`19:15 MET`** (`2026-11-13T19:15:00Z`) | **100% Exact** |
 | **Title** | *Acute Transient Orthostatic Dizziness and Presyncope Episode* | *Acute Workload Strain & Cephalic Tension Episode* | **100% Exact** |
-| **Operational Context** | Rapid vertical egress from Equipment Bay / Airlock Node after 72h cumulative sleep debt (`9.8h`) and skipped Day 119 cycle ergometer workout (`0W`). | Continuous **12-hour manual overhaul on Node 2 coolant loop** (`EVT-118-1630-WRK`) after curtailed sleep (`6.0h` vs `7.5h` baseline). | **100% Exact** |
+| **Operational Context** | Rapid vertical egress from Equipment Bay / Airlock Node after 72h cumulative sleep debt (`8.6h`; `12.0h` 4-day cumulative) and skipped Day 119 cycle ergometer workout (`0W`). | Continuous **12-hour manual overhaul on Node 2 coolant loop** (`EVT-118-1630-WRK`) after curtailed sleep (`6.0h` vs `7.5h` baseline). | **100% Exact** |
 | **Environmental / Vitals** | BP drop to **`88/56 mmHg`**, compensatory HR **`118 bpm`**, pre-incident HRV RMSSD nadir **`27 ms`**, PVT **`310 ms`**, ambient $\text{CO}_2$ **`3.2 mmHg`**. | Localized Node 2 pocket $\text{CO}_2$ **`3.5 mmHg`** (`EVT-118-1200-ENV`), systemic BP **`124/80 mmHg`** (normal), resting HR **`66 bpm`**. | **100% Exact** |
 | **Lookback Horizon Counts** | `6h` = 3, `24h` = 7, `72h` = 12, `168h` = 17 nodes | `6h` = 2, `24h` = 4, `72h` = 7, `168h` = 7 nodes | **100% Exact** |
 

@@ -46,8 +46,22 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
 
   const crewConfig = CREW_SIMULATION_DEFAULTS[crew.id] || CREW_SIMULATION_DEFAULTS[1];
 
+  const dedupeScenarios = (items: CountermeasureScenario[], targetCrewId: number): CountermeasureScenario[] => {
+    const seen = new Set<string>();
+    const result: CountermeasureScenario[] = [];
+    for (const item of items) {
+      if (item.crew_member_id !== targetCrewId) continue;
+      const key = item.name.trim().toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(item);
+      }
+    }
+    return result;
+  };
+
   const [scenarios, setScenarios] = useState<CountermeasureScenario[]>(() =>
-    DEFAULT_SCENARIOS.filter((s) => s.crew_member_id === crew.id)
+    dedupeScenarios(DEFAULT_SCENARIOS, crew.id)
   );
 
   const [scenarioName, setScenarioName] = useState(crewConfig.alpha.name);
@@ -85,9 +99,9 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
 
     mosaicApi.getScenarios(crew.id).then((resList) => {
       if (resList && resList.length > 0) {
-        setScenarios(resList.filter((s) => s.crew_member_id === crew.id));
+        setScenarios(dedupeScenarios(resList, crew.id));
       } else {
-        setScenarios(DEFAULT_SCENARIOS.filter((s) => s.crew_member_id === crew.id));
+        setScenarios(dedupeScenarios(DEFAULT_SCENARIOS, crew.id));
       }
     });
 
@@ -191,7 +205,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
       setActiveSimulationResult(res);
       mosaicApi.getScenarios(crew.id).then((resList) => {
         if (resList && resList.length > 0) {
-          setScenarios(resList.filter((s) => s.crew_member_id === crew.id));
+          setScenarios(dedupeScenarios(resList, crew.id));
         }
       });
     } catch {

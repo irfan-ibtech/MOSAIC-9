@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CrewMember } from '../types';
 import { mosaicApi } from '../services/api';
 import { TelemetryChart } from '../components/common/TelemetryChart';
-import { DEFAULT_CREW_MEMBERS, DEFAULT_TEMPORAL_ANALYSIS } from '../data/initialData';
+import { DEFAULT_CREW_MEMBERS, DEFAULT_TEMPORAL_ANALYSIS, DEFAULT_TEMPORAL_ANALYSIS_BY_CREW } from '../data/initialData';
 import {
   Clock,
   GitFork,
@@ -115,6 +115,19 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
 
   const signalDetails = getSignalDetails();
 
+  const fallbackData = DEFAULT_TEMPORAL_ANALYSIS_BY_CREW[crew.id] || DEFAULT_TEMPORAL_ANALYSIS;
+  const activeData = (temporalData && (temporalData.anomaly_sequence || temporalData.cross_domain_associations))
+    ? temporalData
+    : fallbackData;
+
+  const anomalySequence = (activeData.anomaly_sequence && activeData.anomaly_sequence.length > 0)
+    ? activeData.anomaly_sequence
+    : fallbackData.anomaly_sequence;
+
+  const crossAssociations = (activeData.cross_domain_associations && activeData.cross_domain_associations.length > 0)
+    ? activeData.cross_domain_associations
+    : fallbackData.cross_domain_associations;
+
   const anomalyChartOptions = {
     tooltip: { trigger: 'axis' },
     xAxis: {
@@ -178,7 +191,13 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
             <span className="text-cyan-400 font-mono text-base">({crew.name})</span>
           </h1>
           <p className="text-xs text-slate-400">
-            Deterministic time-series analysis reconstructing how preceding sleep debt, workload spikes, and autonomic suppression converged prior to the acute episode.
+            {crew.callsign === 'CADUCEUS'
+              ? 'Multi-domain tracking showing complete baseline compliance, zero precursor threshold departures, and sustained autonomic stability.'
+              : crew.callsign === 'VULCAN'
+              ? 'Time-series analysis demonstrating how Day 118 coolant loop maintenance and localized CO2 elevation preceded acute cephalalgia.'
+              : crew.callsign === 'AURORA'
+              ? 'Time-series analysis reflecting nominal pre-dropout baseline followed by Day 119-120 RF packet loss and UNKNOWN telemetry.'
+              : 'Deterministic time-series analysis reconstructing how preceding sleep debt, workload spikes, and autonomic suppression converged prior to the acute episode.'}
           </p>
         </div>
 
@@ -262,50 +281,59 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
 
       {/* Chronological Sequence Progression Stepper */}
       <div className="bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-4">
-        <h2 className="text-sm font-bold text-white uppercase font-mono">
-          5-DAY MULTI-DOMAIN ANOMALY SEQUENCE
-        </h2>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h2 className="text-sm font-bold text-white uppercase font-mono">
+            5-DAY MULTI-DOMAIN SEQUENCE — {crew.callsign}
+          </h2>
+          <span className="text-[10px] font-mono text-slate-400">
+            {crew.callsign === 'CADUCEUS' ? '100% NOMINAL ADHERENCE (0 PRECURSOR ANOMALIES)' : 'CHRONOLOGICAL DOMAIN DIVERGENCE'}
+          </span>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3 font-mono text-xs">
-          <div className="p-3.5 rounded-lg bg-space-900 border border-space-700 space-y-1.5">
-            <div className="text-[10px] text-emerald-400 font-bold uppercase">DAY 116 — BASELINE</div>
-            <div className="font-semibold text-white">Nominal State</div>
-            <div className="text-[11px] text-slate-400 font-sans">
-              HR 61 bpm, HRV 58ms, Sleep 7.8h. All domains within 1-sigma baseline.
-            </div>
-          </div>
+          {anomalySequence.map((step: any, idx: number) => {
+            const isIncident = step.state === 'ACUTE_INCIDENT' || step.state === 'OVERHAUL_CO2_STRAIN';
+            const isVulnerability = step.state === 'COMPOSITE_VULNERABILITY' || step.state === 'TELEMETRY_DROPOUT' || step.state === 'TELEMETRY_UNKNOWN';
+            const isOnset = step.state === 'FIRST_UNUSUAL_SIGNAL' || step.state === 'SHIFT_EXTENSION';
+            const isDivergence = step.state === 'MULTI_DOMAIN_DIVERGENCE';
 
-          <div className="p-3.5 rounded-lg bg-space-900 border border-cyan-700/80 space-y-1.5 shadow-panel">
-            <div className="text-[10px] text-cyan-400 font-bold uppercase">DAY 117 — ONSET</div>
-            <div className="font-semibold text-white">Sleep Curtailment</div>
-            <div className="text-[11px] text-slate-400 font-sans">
-              Night alarm interruption. Sleep 5.4h (-2.6σ). First abnormal indicator.
-            </div>
-          </div>
+            const borderClass = isIncident
+              ? 'bg-rose-950/40 border-rose-500 shadow-glow-rose'
+              : isVulnerability
+              ? 'bg-space-900 border-rose-800/80'
+              : isDivergence
+              ? 'bg-space-900 border-amber-700/80'
+              : isOnset
+              ? 'bg-space-900 border-cyan-700/80 shadow-panel'
+              : 'bg-space-900 border-space-700';
 
-          <div className="p-3.5 rounded-lg bg-space-900 border border-amber-700/80 space-y-1.5">
-            <div className="text-[10px] text-amber-400 font-bold uppercase">DAY 118 — DIVERGENCE</div>
-            <div className="font-semibold text-white">Workload & Ergo Drop</div>
-            <div className="text-[11px] text-slate-400 font-sans">
-              Workload surge (10.5h); cycle ergometer aborted at 145W (-3.3σ).
-            </div>
-          </div>
+            const tagColor = isIncident
+              ? 'text-rose-300'
+              : isVulnerability
+              ? 'text-rose-400'
+              : isDivergence
+              ? 'text-amber-400'
+              : isOnset
+              ? 'text-cyan-400'
+              : 'text-emerald-400';
 
-          <div className="p-3.5 rounded-lg bg-space-900 border border-rose-800/80 space-y-1.5">
-            <div className="text-[10px] text-rose-400 font-bold uppercase">DAY 119 — VULNERABILITY</div>
-            <div className="font-semibold text-white">Fatigue & PVT Spike</div>
-            <div className="text-[11px] text-slate-400 font-sans">
-              Fatigue 7/10; PVT latency 310ms (+44%); exercise omitted completely.
-            </div>
-          </div>
+            const dayNumber = step.mission_day || step.day || (116 + idx);
+            const stateLabel = step.state ? step.state.replace(/_/g, ' ') : (step.status || 'NOMINAL');
 
-          <div className="p-3.5 rounded-lg bg-rose-950/40 border border-rose-500 space-y-1.5 shadow-glow-rose">
-            <div className="text-[10px] text-rose-300 font-bold uppercase">DAY 120 — INCIDENT</div>
-            <div className="font-semibold text-white">Presyncopal Episode</div>
-            <div className="text-[11px] text-slate-200 font-sans">
-              Post-egress dizziness: BP drops to 88/56 mmHg, transient HR 118 bpm.
-            </div>
-          </div>
+            return (
+              <div key={idx} className={`p-3.5 rounded-lg border space-y-1.5 ${borderClass}`}>
+                <div className={`text-[10px] font-bold uppercase ${tagColor}`}>
+                  DAY {dayNumber} — {stateLabel}
+                </div>
+                <div className="font-semibold text-white truncate">
+                  {step.domain || (step.z_score_composite !== null && step.z_score_composite !== undefined ? `Z: ${typeof step.z_score_composite === 'number' ? step.z_score_composite.toFixed(2) : step.z_score_composite}σ` : 'Nominal State')}
+                </div>
+                <div className="text-[11px] text-slate-300 font-sans leading-relaxed">
+                  {step.summary || step.notes || 'Signals within nominal baseline bounds.'}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -322,77 +350,78 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
 
       {/* Lead-Lag Association Pairs */}
       <div className="bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-4">
-        <h2 className="text-sm font-bold text-white uppercase font-mono">
-          DISCOVERED CROSS-DOMAIN TEMPORAL ASSOCIATIONS
-        </h2>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h2 className="text-sm font-bold text-white uppercase font-mono">
+            DISCOVERED CROSS-DOMAIN TEMPORAL ASSOCIATIONS ({crew.callsign})
+          </h2>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-space-900 border border-space-700 text-slate-400">
+            EXPLORATORY LINEAR ASSOCIATIONS (n=5 DAYS, df=3)
+          </span>
+        </div>
 
         <div className="space-y-3">
-          <div className="p-4 rounded-xl bg-space-900 border border-space-700 space-y-2">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
-              <span className="text-xs font-bold text-cyan-300 flex items-center gap-2">
-                <GitFork className="w-4 h-4 text-cyan-400" />
-                Sleep Curtailment ➔ Autonomic Tone Suppression (HRV RMSSD Drop)
-              </span>
-              <div className="flex items-center gap-2 text-[11px]">
-                <span className="px-2 py-0.5 rounded bg-space-800 text-slate-300 border border-space-700">
-                  Lead Time: 24h
-                </span>
-                <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold">
-                  r = -0.89 (p &lt; 0.005)
-                </span>
-              </div>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed font-sans">
-              Sleep reduction below 6.0 hours induced progressive vagal withdrawal and sympathetic overdrive, manifesting in lower HRV RMSSD within 18–24 hours.
-            </p>
-          </div>
+          {crossAssociations.map((assoc: any, idx: number) => {
+            const rVal = assoc.correlation_coefficient ?? assoc.pearson_r ?? 0;
+            const isNominal = crew.callsign === 'CADUCEUS';
+            const isDropout = crew.callsign === 'AURORA';
 
-          <div className="p-4 rounded-xl bg-space-900 border border-space-700 space-y-2">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
-              <span className="text-xs font-bold text-amber-300 flex items-center gap-2">
-                <GitFork className="w-4 h-4 text-amber-400" />
-                Workload Task Extension ➔ Countermeasure Omission
-              </span>
-              <div className="flex items-center gap-2 text-[11px]">
-                <span className="px-2 py-0.5 rounded bg-space-800 text-slate-300 border border-space-700">
-                  Lead Time: 12h
-                </span>
-                <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 font-bold">
-                  r = -0.82 (p = 0.012)
-                </span>
-              </div>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed font-sans">
-              Physical troubleshooting on station equipment bays directly displaced allocated daily cycle ergometer windows, predisposing vascular deconditioning.
-            </p>
-          </div>
+            const accentColor = isNominal
+              ? 'text-emerald-300'
+              : isDropout
+              ? 'text-slate-300'
+              : idx === 0
+              ? 'text-cyan-300'
+              : idx === 1
+              ? 'text-amber-300'
+              : 'text-rose-300';
 
-          <div className="p-4 rounded-xl bg-space-900 border border-space-700 space-y-2">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
-              <span className="text-xs font-bold text-rose-300 flex items-center gap-2">
-                <GitFork className="w-4 h-4 text-rose-400" />
-                Cumulative 72h Sleep Debt ➔ Neurocognitive Vigilance Lapses
-              </span>
-              <div className="flex items-center gap-2 text-[11px]">
-                <span className="px-2 py-0.5 rounded bg-space-800 text-slate-300 border border-space-700">
-                  Lead Time: 48h
-                </span>
-                <span className="px-2 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-800 font-bold">
-                  r = +0.93 (p &lt; 0.001)
-                </span>
+            const pillBadge = isNominal
+              ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
+              : isDropout
+              ? 'bg-slate-800 text-slate-300 border-slate-700'
+              : idx === 0
+              ? 'bg-cyan-950 text-cyan-400 border-cyan-800'
+              : idx === 1
+              ? 'bg-amber-950 text-amber-400 border-amber-800'
+              : 'bg-rose-950 text-rose-400 border-rose-800';
+
+            const leadTime = assoc.lag_time_hours ?? assoc.lead_time_hours ?? 0;
+
+            return (
+              <div key={idx} className="p-4 rounded-xl bg-space-900 border border-space-700 space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
+                  <span className={`text-xs font-bold flex items-center gap-2 ${accentColor}`}>
+                    <GitFork className="w-4 h-4 shrink-0" />
+                    <span>{assoc.pair}</span>
+                  </span>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="px-2 py-0.5 rounded bg-space-800 text-slate-300 border border-space-700">
+                      {leadTime > 0 ? `Lead Time: ${leadTime}h` : 'Synchronous / Nominal'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded border font-bold ${pillBadge}`}>
+                      r = {rVal > 0 ? `+${rVal.toFixed(2)}` : rVal.toFixed(2)} (n=5, df=3)
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                  {assoc.evidence}
+                </p>
+                {assoc.causality_qualification && (
+                  <p className="text-[11px] text-slate-400 italic font-sans border-t border-space-800/80 pt-1.5 mt-1">
+                    <span className="text-slate-500 font-mono not-italic uppercase text-[10px] mr-1">Causality Note:</span>
+                    {assoc.causality_qualification}
+                  </p>
+                )}
               </div>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed font-sans">
-              Cumulative sleep debt exceeding 9 hours correlated with a 44% increase in psychomotor vigilance response latency and attentional lapses on flight deck consoles.
-            </p>
-          </div>
+            );
+          })}
         </div>
 
         {/* Statistical & Scientific Integrity Notice */}
         <div className="p-3.5 rounded-lg bg-space-950 border border-space-800 text-[11px] text-slate-400 font-sans flex items-start gap-2.5">
           <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
           <div>
-            <strong className="text-slate-200">Statistical & Methodological Limitations:</strong> Pearson correlation coefficients (<em>r</em>) reflect linear co-movement across discrete observation windows (<em>n=5, df=3</em>). Statistical correlation does not establish physiological causality. Calculated confidence scores represent heuristic empirical estimates based on data completeness and sensor provenance.
+            <strong className="text-slate-200">Statistical & Methodological Limitations:</strong> Exploratory descriptive linear associations across discrete observation windows (<em>n=5 days, df=3</em>). Statistical correlation describes chronological co-variation and does NOT establish physiological causation. Calculated confidence scores represent heuristic empirical estimates based on data completeness and sensor provenance.
           </div>
         </div>
       </div>

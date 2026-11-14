@@ -82,7 +82,7 @@ export const CrewHealthTwinScreen: React.FC<CrewHealthTwinScreenProps> = ({
     if (crew.callsign === 'AURORA') {
       return { badge: 'DATA PACKET LOSS', badgeColor: 'bg-slate-800 text-slate-300 border-slate-700', note: 'Smart bunk transponder dropped packets on Days 119-120. Completeness penalized.' };
     }
-    return { badge: '9.8h DEFICIT', badgeColor: 'bg-rose-950 text-rose-300 border-rose-800', note: 'Consecutive sub-6h sleep deprivation on Days 117, 118, 119, and 120.' };
+    return { badge: '8.6h 72h / 12.0h 4d DEBT', badgeColor: 'bg-rose-950 text-rose-300 border-rose-800', note: 'Pre-incident 72-hour sleep debt reached 8.6h (Day 117 5.4h, Day 118 4.9h, Day 119 5.1h vs 8.0h target); 4-day cumulative reached 12.0h.' };
   };
 
   const getHrvAnnotation = () => {
@@ -100,6 +100,50 @@ export const CrewHealthTwinScreen: React.FC<CrewHealthTwinScreenProps> = ({
 
   const sleepAnnot = getSleepAnnotation();
   const hrvAnnot = getHrvAnnotation();
+
+  const getCurrentProfile = () => {
+    if (crew.callsign === 'CADUCEUS') {
+      return {
+        hr: { val: '57 bpm', status: 'text-emerald-400', note: 'Nominal (+1 bpm)' },
+        hrv: { val: '62 ms', status: 'text-emerald-400', note: 'Stable (-2 ms)' },
+        sleep: { val: '7.6 hrs', status: 'text-emerald-400', note: '7.8h 5d avg' },
+        exercise: { val: '185 W', status: 'text-emerald-400', note: '100% dose' },
+        pvt: { val: '212 ms', status: 'text-emerald-400', note: 'Nominal speed' },
+        rad: { val: '138 mSv', status: 'text-slate-400', note: 'Career safe' },
+      };
+    }
+    if (crew.callsign === 'VULCAN') {
+      return {
+        hr: { val: '66 bpm', status: 'text-amber-400', note: 'Mild elevation' },
+        hrv: { val: '43 ms', status: 'text-amber-400', note: 'Vagal strain (z = -1.4)' },
+        sleep: { val: '6.5 hrs', status: 'text-amber-400', note: 'Day 118: 6.0h / 5d: 6.1h' },
+        exercise: { val: '165 W', status: 'text-amber-400', note: 'Abbreviated' },
+        pvt: { val: '250 ms', status: 'text-amber-400', note: 'Moderate fatigue' },
+        rad: { val: '142 mSv', status: 'text-slate-400', note: 'Career safe' },
+      };
+    }
+    if (crew.callsign === 'AURORA') {
+      return {
+        hr: { val: 'UNKNOWN', status: 'text-slate-400', note: 'Dropout Days 119-120' },
+        hrv: { val: 'UNKNOWN', status: 'text-slate-400', note: 'Dropout Days 119-120' },
+        sleep: { val: 'UNKNOWN', status: 'text-slate-400', note: 'Smart bunk unverified' },
+        exercise: { val: '165 W', status: 'text-slate-400', note: 'Manual log only' },
+        pvt: { val: 'UNKNOWN', status: 'text-slate-400', note: 'Missing telemetry' },
+        rad: { val: '140 mSv', status: 'text-slate-400', note: 'Career safe' },
+      };
+    }
+    // Alex Morgan
+    return {
+      hr: { val: '78 bpm (118 peak)', status: 'text-rose-400', note: 'Acute tachycardia' },
+      hrv: { val: '27 ms', status: 'text-rose-400', note: 'Autonomic nadir (z = -4.1)' },
+      sleep: { val: '4.6 hrs', status: 'text-rose-400', note: '8.6h 72h / 12.0h 4d debt' },
+      exercise: { val: '0 W', status: 'text-rose-400', note: 'Day 119 omitted' },
+      pvt: { val: '310 ms', status: 'text-rose-400', note: '+44% latency spike' },
+      rad: { val: '140 mSv', status: 'text-slate-400', note: 'Career safe' },
+    };
+  };
+
+  const curr = getCurrentProfile();
 
   const sleepChartOptions = {
     tooltip: { trigger: 'axis' },
@@ -263,52 +307,82 @@ export const CrewHealthTwinScreen: React.FC<CrewHealthTwinScreenProps> = ({
 
       {/* Baseline Metric Matrix - Responsive Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono">
-        <div className="bg-space-850 border border-space-700 rounded-xl p-3">
-          <div className="text-[10px] text-slate-400 uppercase">Resting HR</div>
-          <div className="text-base font-bold text-white mt-1">
-            {restingHrBaseline} <span className="text-xs font-normal text-slate-400">bpm</span>
+        <div className="bg-space-850 border border-space-700 rounded-xl p-3 space-y-1">
+          <div className="text-[10px] text-slate-400 uppercase font-semibold">Resting HR</div>
+          <div className="text-[11px] text-slate-300">
+            <span className="text-slate-400 text-[10px]">μ_base: </span>
+            <strong className="text-white">{restingHrBaseline}</strong> bpm
           </div>
-          <div className="text-[9px] text-emerald-400 mt-0.5">Personal Baseline</div>
+          <div className="text-xs font-bold pt-0.5 border-t border-space-800">
+            <span className="text-slate-400 text-[10px]">x_curr: </span>
+            <span className={curr.hr.status}>{curr.hr.val}</span>
+          </div>
+          <div className="text-[9px] text-slate-400 truncate">{curr.hr.note}</div>
         </div>
 
-        <div className="bg-space-850 border border-space-700 rounded-xl p-3">
-          <div className="text-[10px] text-slate-400 uppercase">HRV RMSSD</div>
-          <div className="text-base font-bold text-white mt-1">
-            {hrvBaseline} <span className="text-xs font-normal text-slate-400">ms</span>
+        <div className="bg-space-850 border border-space-700 rounded-xl p-3 space-y-1">
+          <div className="text-[10px] text-slate-400 uppercase font-semibold">HRV RMSSD</div>
+          <div className="text-[11px] text-slate-300">
+            <span className="text-slate-400 text-[10px]">μ_base: </span>
+            <strong className="text-white">{hrvBaseline}</strong> ms
           </div>
-          <div className="text-[9px] text-emerald-400 mt-0.5">Autonomic Tone</div>
+          <div className="text-xs font-bold pt-0.5 border-t border-space-800">
+            <span className="text-slate-400 text-[10px]">x_curr: </span>
+            <span className={curr.hrv.status}>{curr.hrv.val}</span>
+          </div>
+          <div className="text-[9px] text-slate-400 truncate">{curr.hrv.note}</div>
         </div>
 
-        <div className="bg-space-850 border border-space-700 rounded-xl p-3">
-          <div className="text-[10px] text-slate-400 uppercase">Target Sleep</div>
-          <div className="text-base font-bold text-white mt-1">
-            {sleepBaseline} <span className="text-xs font-normal text-slate-400">hrs</span>
+        <div className="bg-space-850 border border-space-700 rounded-xl p-3 space-y-1">
+          <div className="text-[10px] text-slate-400 uppercase font-semibold">Sleep Allocation</div>
+          <div className="text-[11px] text-slate-300">
+            <span className="text-slate-400 text-[10px]">μ_base: </span>
+            <strong className="text-white">{sleepBaseline}</strong> hrs
           </div>
-          <div className="text-[9px] text-cyan-400 mt-0.5">Daily Allocation</div>
+          <div className="text-xs font-bold pt-0.5 border-t border-space-800">
+            <span className="text-slate-400 text-[10px]">x_curr: </span>
+            <span className={curr.sleep.status}>{curr.sleep.val}</span>
+          </div>
+          <div className="text-[9px] text-slate-400 truncate">{curr.sleep.note}</div>
         </div>
 
-        <div className="bg-space-850 border border-space-700 rounded-xl p-3">
-          <div className="text-[10px] text-slate-400 uppercase">Cycle Target</div>
-          <div className="text-base font-bold text-white mt-1">
-            {exerciseBaseline} <span className="text-xs font-normal text-slate-400">W</span>
+        <div className="bg-space-850 border border-space-700 rounded-xl p-3 space-y-1">
+          <div className="text-[10px] text-slate-400 uppercase font-semibold">Cycle Ergometer</div>
+          <div className="text-[11px] text-slate-300">
+            <span className="text-slate-400 text-[10px]">μ_base: </span>
+            <strong className="text-white">{exerciseBaseline}</strong> W
           </div>
-          <div className="text-[9px] text-purple-400 mt-0.5">Prescribed Dose</div>
+          <div className="text-xs font-bold pt-0.5 border-t border-space-800">
+            <span className="text-slate-400 text-[10px]">x_curr: </span>
+            <span className={curr.exercise.status}>{curr.exercise.val}</span>
+          </div>
+          <div className="text-[9px] text-slate-400 truncate">{curr.exercise.note}</div>
         </div>
 
-        <div className="bg-space-850 border border-space-700 rounded-xl p-3">
-          <div className="text-[10px] text-slate-400 uppercase">PVT Latency</div>
-          <div className="text-base font-bold text-white mt-1">
-            {pvtBaseline} <span className="text-xs font-normal text-slate-400">ms</span>
+        <div className="bg-space-850 border border-space-700 rounded-xl p-3 space-y-1">
+          <div className="text-[10px] text-slate-400 uppercase font-semibold">PVT Latency</div>
+          <div className="text-[11px] text-slate-300">
+            <span className="text-slate-400 text-[10px]">μ_base: </span>
+            <strong className="text-white">{pvtBaseline}</strong> ms
           </div>
-          <div className="text-[9px] text-cyan-400 mt-0.5">Cognitive Baseline</div>
+          <div className="text-xs font-bold pt-0.5 border-t border-space-800">
+            <span className="text-slate-400 text-[10px]">x_curr: </span>
+            <span className={curr.pvt.status}>{curr.pvt.val}</span>
+          </div>
+          <div className="text-[9px] text-slate-400 truncate">{curr.pvt.note}</div>
         </div>
 
-        <div className="bg-space-850 border border-space-700 rounded-xl p-3">
-          <div className="text-[10px] text-slate-400 uppercase">Cumulative Dose</div>
-          <div className="text-base font-bold text-white mt-1">
-            {radBaseline} <span className="text-xs font-normal text-slate-400">mSv</span>
+        <div className="bg-space-850 border border-space-700 rounded-xl p-3 space-y-1">
+          <div className="text-[10px] text-slate-400 uppercase font-semibold">Radiation Dose</div>
+          <div className="text-[11px] text-slate-300">
+            <span className="text-slate-400 text-[10px]">μ_base: </span>
+            <strong className="text-white">{radBaseline}</strong> mSv
           </div>
-          <div className="text-[9px] text-slate-400 mt-0.5">Career Limit &lt; 600</div>
+          <div className="text-xs font-bold pt-0.5 border-t border-space-800">
+            <span className="text-slate-400 text-[10px]">x_curr: </span>
+            <span className={curr.rad.status}>{curr.rad.val}</span>
+          </div>
+          <div className="text-[9px] text-slate-400 truncate">{curr.rad.note}</div>
         </div>
       </div>
 

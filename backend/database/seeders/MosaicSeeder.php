@@ -61,7 +61,7 @@ class MosaicSeeder extends Seeder
                 'cumulative_radiation_msv' => 142.5,
             ],
             'domain_status' => [
-                'cardiovascular' => ['status' => 'WATCH', 'summary' => 'Transient orthostatic hypotension (88/58 mmHg) & compensatory tachycardia (118 bpm) post-egress.'],
+                'cardiovascular' => ['status' => 'WATCH', 'summary' => 'Transient orthostatic hypotension (88/56 mmHg) & compensatory tachycardia (118 bpm) post-egress.'],
                 'musculoskeletal' => ['status' => 'WATCH', 'summary' => 'Exercise target missed on Day 118 (145W achieved vs 185W protocol). Muscle fatigue noted.'],
                 'neuro_cognitive_sleep' => ['status' => 'REVIEW_REQUIRED', 'summary' => 'Severe acute sleep debt (3 consecutive nights < 5.5h) with PVT latency increase to 310ms.'],
                 'radiation_environment' => ['status' => 'STABLE', 'summary' => 'Personal dosimeter within acceptable transit corridor (54 uSv/h). No acute solar particle events.'],
@@ -763,7 +763,7 @@ class MosaicSeeder extends Seeder
                 'crew_id' => $alex->id,
                 'cat' => 'sleep_observation',
                 'title' => 'Sleep Fragmentation & Deficit (4.6h)',
-                'desc' => 'Resting HR upon waking 78 bpm. Cumulative 4-day sleep deficit totals 9.8 hours.',
+                'desc' => 'Resting HR upon waking 78 bpm. Pre-incident 72-hour sleep deficit reached 8.6 hours (12.0 hours 4-day cumulative).',
                 'day' => 120,
                 'hour' => 6,
                 'minute' => 10,
@@ -882,7 +882,7 @@ class MosaicSeeder extends Seeder
             'status' => 'INVESTIGATING',
             'reconstruction_summary' => [
                 'primary_factors' => [
-                    'Cumulative sleep curtailment (9.8 hours total deficit over Days 117-120)',
+                    'Cumulative sleep curtailment (8.6 hours 72h pre-incident deficit; 12.0 hours 4-day cumulative over Days 117-120)',
                     'Omission of daily cycle ergometer countermeasure on Day 119',
                     'Sympathetic autonomic strain (HRV RMSSD drop from 58ms to 27ms)',
                     'Mild elevated ambient CO2 exposure during equipment rearrangement (3.5 mmHg)',
@@ -962,8 +962,8 @@ class MosaicSeeder extends Seeder
         CountermeasureScenario::create([
             'crew_member_id' => $alex->id,
             'incident_id' => $incident->id,
-            'name' => 'Scenario Bravo: Workload Maintenance with Pharmacological Sleep Aid',
-            'description' => 'Maintains standard flight duties (-10% workload adjustment only) with zolpidem tartrate 5mg for sleep induction and aggressive compression garment use.',
+            'name' => 'Scenario Bravo: Workload Maintenance with Circadian Sleep Optimization',
+            'description' => 'Maintains standard flight duties (-10% workload adjustment only) with circadian sleep window alignment and countermeasure compression garments.',
             'inputs' => [
                 'sleep_delta_hours' => 1.5,
                 'workload_delta_pct' => -10,
@@ -1143,11 +1143,11 @@ class MosaicSeeder extends Seeder
             'crew_member_id' => $alex->id,
             'incident_id' => $incident->id,
             'title' => 'Clinical & Operational Incident Brief: Commander Alex Morgan Day 120 Presyncope',
-            'clinical_summary' => 'On Mission Day 120 at 09:42 MET, Commander Morgan experienced a transient orthostatic presyncope episode during rapid positional transfer in Airlock Node. Multi-day timeline analysis reconstructs a 9.8-hour cumulative sleep deficit, an omitted cycle ergometer countermeasure session, and elevated sympathetic drive as converging predisposing factors.',
-            'sbar_situation' => 'Commander Alex Morgan (42yo female) suffered a transient near-syncopal episode with documented blood pressure drop to 88/56 mmHg and reflex tachycardia of 118 bpm. Patient is currently conscious, oriented x4, and resting in crew quarters.',
-            'sbar_background' => 'Baseline resting HR 60 bpm, BP 118/76 mmHg. Over the past 72 hours, night-time emergency drills and heavy cargo stowage tasks resulted in sleep curtailment (5.4h, 4.9h, 5.1h vs 8.0h baseline). Day 119 aerobic countermeasure was missed.',
+            'clinical_summary' => 'On Mission Day 120 at 09:42 MET, Commander Morgan experienced a transient orthostatic presyncope episode during rapid positional transfer in Airlock Node. Multi-day timeline analysis reconstructs an 8.6-hour 72-hour pre-incident sleep deficit (12.0-hour 4-day cumulative), an omitted cycle ergometer countermeasure session, and elevated sympathetic drive as converging predisposing factors.',
+            'sbar_situation' => 'Commander Alex Morgan suffered a transient near-syncopal episode with documented blood pressure drop to 88/56 mmHg and reflex tachycardia of 118 bpm upon standing in the Airlock Node. Patient is currently conscious, oriented x4, and resting in crew quarters.',
+            'sbar_background' => 'Baseline resting HR 60 bpm, BP 118/76 mmHg. Over the preceding 72 hours, cumulative sleep debt reached 8.6 hours (12.0 hours 4-day cumulative across Days 117-120) following night-time emergency drills and heavy cargo stowage tasks. Day 119 aerobic countermeasure was missed.',
             'sbar_assessment' => 'Probable multi-factorial neuro-vascular and autonomic decompensation: orthostatic hypotension secondary to microgravity cephalad fluid redistribution, exacerbated by acute-on-chronic sleep deprivation and skipped cardiovascular countermeasure.',
-            'sbar_recommendation' => 'Request ground flight surgeon concurrence on Scenario Alpha: 36-hour light duty schedule, mandatory 8.5h sleep window, 1200 mL oral electrolyte loading, and resumption of graded cycle ergometer exercise at 140W under telemetry supervision.',
+            'sbar_recommendation' => 'Request ground flight surgeon concurrence on proposed Scenario Alpha: 36-hour light duty schedule, mandatory 8.5h sleep window, 1200 mL oral electrolyte loading (following acute 1000 mL post-event oral rehydration administered on Day 120), and resumption of graded cycle ergometer exercise at 140W under telemetry supervision.',
             'evidence_ledger_ids' => [
                 'EVT-117-0630-SLP',
                 'EVT-118-0615-SLP',
@@ -1168,7 +1168,7 @@ class MosaicSeeder extends Seeder
             'packet_id' => 'GND-COM-ARES4-118-002',
             'crew_member_id' => $marcus->id,
             'incident_id' => $incidentMarcus->id,
-            'title' => 'Operational Health Brief: Lead Engineer Marcus Vance Hypercapnia & Cephalalgia',
+            'title' => 'Operational Health Brief: Lead Engineer Marcus Vance Cabin CO2 Exposure and Headache During Maintenance',
             'clinical_summary' => 'Lead Flight Engineer Marcus Vance reported severe bilateral temporal throbbing headache and ocular fatigue during 12-hour continuous coolant loop maintenance under elevated cabin CO2 (3.5 mmHg).',
             'sbar_situation' => 'Marcus Vance reported bilateral temporal throbbing cephalalgia and ocular fatigue on Day 118 at 19:15 MET following a continuous 12-hour coolant loop overhaul in Node 2.',
             'sbar_background' => 'Localized cabin CO2 concentration rose to 3.5 mmHg behind the maintenance rack. Sleep duration was curtailed to 6.0 hours (vs 7.5h baseline). Blood pressure remained normal at 124/80 mmHg with resting HR 66 bpm.',

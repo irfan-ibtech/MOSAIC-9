@@ -27,6 +27,7 @@ import {
   DEFAULT_RECONSTRUCTION_INC1,
   DEFAULT_RECONSTRUCTION_INC2,
   DEFAULT_TEMPORAL_ANALYSIS,
+  DEFAULT_TEMPORAL_ANALYSIS_BY_CREW,
   DEFAULT_NASA_STUDIES,
   DEFAULT_EVIDENCE_GRAPH_INC1,
   DEFAULT_EVIDENCE_GRAPH_INC2,
@@ -107,7 +108,8 @@ function getFallbackData(cacheKey: string, _url: string): any {
     };
   }
   if (cacheKey.startsWith('temporal_')) {
-    return DEFAULT_TEMPORAL_ANALYSIS;
+    const cid = Number(cacheKey.replace('temporal_', ''));
+    return DEFAULT_TEMPORAL_ANALYSIS_BY_CREW[cid] || DEFAULT_TEMPORAL_ANALYSIS;
   }
   if (cacheKey.startsWith('scenario_compare_')) {
     return DEFAULT_SCENARIO_COMPARISON;

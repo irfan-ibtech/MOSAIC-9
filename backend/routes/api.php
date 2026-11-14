@@ -63,5 +63,6 @@ Route::prefix('sync')->group(function () {
 });
 
 Route::prefix('intelligence')->group(function () {
-    Route::post('/temporal-analysis', [IntelligenceBridgeController::class, 'analyzeTemporalRelationships']);
+    Route::match(['get', 'post'], '/temporal-analysis', [IntelligenceBridgeController::class, 'analyzeTemporalRelationships']);
+    Route::match(['get', 'post'], '/temporal-relationships', [IntelligenceBridgeController::class, 'analyzeTemporalRelationships']);
 });

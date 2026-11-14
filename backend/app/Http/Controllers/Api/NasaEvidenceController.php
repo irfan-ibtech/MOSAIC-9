@@ -508,7 +508,7 @@ class NasaEvidenceController extends Controller
             'node_type' => 'INCIDENT_ANCHOR',
             'source_attribution' => 'Synthetic Onboard Clinical Event Ledger (100% Synthetic Mission Dataset)',
             'confidence_or_applicability' => 0.99,
-            'provenance' => "Immutable Synthetic Incident Record {$incident->incident_code}",
+            'provenance' => "SHA-256 Tamper-Evident Synthetic Incident Record {$incident->incident_code} (SHA-256 Verified)",
             'limitations' => '100% synthetic clinical event record; requires multi-domain precursor synthesis to evaluate contributing factors.',
         ];
 

@@ -18,7 +18,13 @@ class ScenarioController extends Controller
             $query->where('crew_member_id', $request->query('crew_member_id'));
         }
 
-        $scenarios = $query->orderBy('created_at', 'desc')->get();
+        $scenarios = $query
+            ->orderBy('updated_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->unique(fn (CountermeasureScenario $s) => $s->crew_member_id . '::' . mb_strtolower(trim($s->name)))
+            ->values();
+
         return response()->json($scenarios);
     }
 
@@ -133,22 +139,54 @@ class ScenarioController extends Controller
             ]
         ];
 
-        $scenario = CountermeasureScenario::create([
-            'crew_member_id' => $validated['crew_member_id'],
-            'incident_id' => null,
-            'name' => $validated['name'],
-            'description' => "Exploratory countermeasure scenario testing sleep delta {$validated['sleep_delta_hours']}h and workload delta {$validated['workload_delta_pct']}%.",
-            'inputs' => [
-                'sleep_delta_hours' => $validated['sleep_delta_hours'],
-                'workload_delta_pct' => $validated['workload_delta_pct'],
-                'cycle_ergometer_watts' => $validated['cycle_ergometer_watts'],
-                'hydration_fluid_ml' => $validated['hydration_fluid_ml'],
-                'ambient_co2_target_mmhg' => $validated['ambient_co2_target_mmhg'] ?? 2.8,
-            ],
-            'projections' => $projections,
-            'assumptions' => 'Deterministic countermeasure simulation using linear autonomic decay and recovery constants calibrated to NASA HRP flight protocols. Demonstrates hypothetical trends only; not a validated clinical prognostic guarantee.',
-            'is_active' => false,
-        ]);
+        $trimmedName = trim($validated['name']);
+        $existing = CountermeasureScenario::where('crew_member_id', $validated['crew_member_id'])
+            ->where('name', $trimmedName)
+            ->orderBy('id', 'asc')
+            ->first();
+
+        $defaultDescription = "Exploratory countermeasure scenario testing sleep delta {$validated['sleep_delta_hours']}h and workload delta {$validated['workload_delta_pct']}%.";
+        $descriptionToUse = ($existing && !empty($existing->description) && !str_starts_with($existing->description, 'Exploratory countermeasure scenario'))
+            ? $existing->description
+            : $defaultDescription;
+
+        if ($existing) {
+            $existing->update([
+                'description' => $descriptionToUse,
+                'inputs' => [
+                    'sleep_delta_hours' => $validated['sleep_delta_hours'],
+                    'workload_delta_pct' => $validated['workload_delta_pct'],
+                    'cycle_ergometer_watts' => $validated['cycle_ergometer_watts'],
+                    'hydration_fluid_ml' => $validated['hydration_fluid_ml'],
+                    'ambient_co2_target_mmhg' => $validated['ambient_co2_target_mmhg'] ?? 2.8,
+                ],
+                'projections' => $projections,
+            ]);
+            $scenario = $existing->fresh();
+
+            // Clean up any duplicate rows for the same crew member and scenario name
+            CountermeasureScenario::where('crew_member_id', $validated['crew_member_id'])
+                ->where('name', $trimmedName)
+                ->where('id', '!=', $scenario->id)
+                ->delete();
+        } else {
+            $scenario = CountermeasureScenario::create([
+                'crew_member_id' => $validated['crew_member_id'],
+                'incident_id' => null,
+                'name' => $trimmedName,
+                'description' => $defaultDescription,
+                'inputs' => [
+                    'sleep_delta_hours' => $validated['sleep_delta_hours'],
+                    'workload_delta_pct' => $validated['workload_delta_pct'],
+                    'cycle_ergometer_watts' => $validated['cycle_ergometer_watts'],
+                    'hydration_fluid_ml' => $validated['hydration_fluid_ml'],
+                    'ambient_co2_target_mmhg' => $validated['ambient_co2_target_mmhg'] ?? 2.8,
+                ],
+                'projections' => $projections,
+                'assumptions' => 'Deterministic countermeasure simulation using linear autonomic decay and recovery constants calibrated to NASA HRP flight protocols. Demonstrates hypothetical trends only; not a validated clinical prognostic guarantee.',
+                'is_active' => false,
+            ]);
+        }
 
         return response()->json([
             'message' => 'Scenario simulated and recorded',
