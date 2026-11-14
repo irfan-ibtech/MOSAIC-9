@@ -355,7 +355,7 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
             DISCOVERED CROSS-DOMAIN TEMPORAL ASSOCIATIONS ({crew.callsign})
           </h2>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-space-900 border border-space-700 text-slate-400">
-            EXPLORATORY LINEAR ASSOCIATIONS (n=5 DAYS, df=3)
+            EXPLORATORY LINEAR ASSOCIATIONS (n=4–5 DAYS, df=2–3)
           </span>
         </div>
 
@@ -399,7 +399,7 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
                       {leadTime > 0 ? `Lead Time: ${leadTime}h` : 'Synchronous / Nominal'}
                     </span>
                     <span className={`px-2 py-0.5 rounded border font-bold ${pillBadge}`}>
-                      r = {rVal > 0 ? `+${rVal.toFixed(2)}` : rVal.toFixed(2)} (n=5, df=3)
+                      r = {rVal > 0 ? `+${rVal.toFixed(2)}` : rVal.toFixed(2)} (n={assoc.sample_size_n ?? 5}, df={assoc.degrees_of_freedom ?? 3})
                     </span>
                   </div>
                 </div>
@@ -421,7 +421,7 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
         <div className="p-3.5 rounded-lg bg-space-950 border border-space-800 text-[11px] text-slate-400 font-sans flex items-start gap-2.5">
           <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
           <div>
-            <strong className="text-slate-200">Statistical & Methodological Limitations:</strong> Exploratory descriptive linear associations across discrete observation windows (<em>n=5 days, df=3</em>). Statistical correlation describes chronological co-variation and does NOT establish physiological causation. Calculated confidence scores represent heuristic empirical estimates based on data completeness and sensor provenance.
+            <strong className="text-slate-200">Statistical & Methodological Limitations:</strong> Exploratory descriptive linear associations across discrete observation windows (<em>n=4–5 days, df=2–3</em>). Statistical correlation describes chronological co-variation and does NOT establish physiological causation. Calculated confidence scores represent heuristic empirical estimates based on data completeness and sensor provenance.
           </div>
         </div>
       </div>

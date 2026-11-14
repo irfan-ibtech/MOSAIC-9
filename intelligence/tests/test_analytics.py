@@ -207,6 +207,12 @@ def test_fastapi_temporal_endpoint():
     assert len(data["cross_domain_associations"]) >= 3
     assert len(data["anomaly_sequence"]) == 5
 
+    # Verify Workload Task Extension association matches actual calculated coefficient (r = -0.38, n=4, df=2)
+    workload_assoc = next(a for a in data["cross_domain_associations"] if "Workload" in a["pair"])
+    assert workload_assoc["correlation_coefficient"] == -0.38
+    assert workload_assoc["sample_size_n"] == 4
+    assert workload_assoc["degrees_of_freedom"] == 2
+
 
 def test_nasa_evidence_registry_and_taxonomy_v2():
     # Verify all 6 required evidence classifications exist

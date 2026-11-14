@@ -1207,12 +1207,12 @@ export const DEFAULT_TEMPORAL_ANALYSIS = {
     {
       pair: 'Workload Task Extension ➔ Countermeasure Non-Compliance',
       lead_time_hours: 12,
-      correlation_coefficient: -0.82,
-      sample_size_n: 5,
-      degrees_of_freedom: 3,
-      confidence: 0.91,
-      evidence: 'Day 117 cargo relocation task extension (10.5h) preceded abbreviated workout (145W) on Day 118 and total workout omission on Day 119.',
-      causality_qualification: 'Operational timeline interaction: extended duty tasks temporally coincided with scheduled cycle ergometer windows.',
+      correlation_coefficient: -0.38,
+      sample_size_n: 4,
+      degrees_of_freedom: 2,
+      confidence: 0.88,
+      evidence: 'Day 117 cargo relocation task extension (10.5h) preceded abbreviated workout (145W) on Day 118 and total workout omission (0W) on Day 119.',
+      causality_qualification: 'Operational timeline interaction (r = -0.38, n=4, df=2): extended duty tasks temporally coincided with scheduled cycle ergometer windows, reflecting operational schedule competition rather than physiological degradation.',
     },
     {
       pair: 'Cumulative Sleep Debt ➔ Neurocognitive Vigilance Lapses',

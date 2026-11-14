@@ -70,7 +70,7 @@ flowchart LR
   - **Composite Z-Score Deviation Chart:** Traces multi-sigma divergence leading up to Day 120.
   - **Discovered Cross-Domain Associations:**
     - Sleep Restriction ➔ Autonomic Tone Alteration (Lead time: 24h, $r = -0.89$).
-    - Workload Task Extension ➔ Countermeasure Omission (Lead time: 12h, $r = -0.82$).
+    - Workload Task Extension ➔ Countermeasure Omission (Lead time: 12h, $r = -0.38$, $n=4, df=2$).
     - Cumulative Sleep Debt ➔ Vigilance Lapses ($r = +0.93$).
 - **Spoken Script:**
   > *"In Temporal Intelligence, our analytical engine pinpoints the exact earliest signal: Day 117 at 06:30 MET, when an ECLSS false alarm drill curtailed Alex's sleep.

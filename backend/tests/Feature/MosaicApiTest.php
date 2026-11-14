@@ -154,6 +154,13 @@ class MosaicApiTest extends TestCase
                 'anomaly_sequence',
                 'confidence_evaluation',
             ]);
+
+        $assocs = $response->json('cross_domain_associations');
+        $workloadAssoc = collect($assocs)->first(fn ($a) => str_contains($a['pair'], 'Workload'));
+        $this->assertNotNull($workloadAssoc);
+        $this->assertEquals(-0.38, $workloadAssoc['correlation_coefficient']);
+        $this->assertEquals(4, $workloadAssoc['sample_size_n']);
+        $this->assertEquals(2, $workloadAssoc['degrees_of_freedom']);
     }
 
     public function test_second_incident_marcus_vance_reconstruction(): void

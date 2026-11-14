@@ -12,6 +12,7 @@ import {
   DEFAULT_SENSITIVITY_ANALYSIS,
   DEFAULT_RECONSTRUCTION_INC1,
   DEFAULT_RECONSTRUCTION_INC2,
+  DEFAULT_TEMPORAL_ANALYSIS,
 } from '../data/initialData';
 
 describe('MOSAIC-9 Senior QA Feature Verification Suite', () => {
@@ -129,6 +130,16 @@ describe('MOSAIC-9 Senior QA Feature Verification Suite', () => {
 
     expect(incMarcus).toBeDefined();
     expect(incMarcus?.incident_code).toBe('INC-ARES4-118-002');
+  });
+
+  it('verifies Workload Task Extension association reflects actual n=4 duty window correlation', () => {
+    const workloadAssoc = DEFAULT_TEMPORAL_ANALYSIS.cross_domain_associations.find((a: any) =>
+      a.pair.includes('Workload Task Extension')
+    );
+    expect(workloadAssoc).toBeDefined();
+    expect(workloadAssoc?.correlation_coefficient).toBe(-0.38);
+    expect(workloadAssoc?.sample_size_n).toBe(4);
+    expect(workloadAssoc?.degrees_of_freedom).toBe(2);
   });
 
   it('verifies NASA OSDR (OSD-575, OSD-571, OSD-635) and HRP evidence records and applicability notes', () => {
