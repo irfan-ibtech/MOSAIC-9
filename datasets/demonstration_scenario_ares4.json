@@ -1,0 +1,83 @@
+{
+  "scenario_metadata": {
+    "mission_name": "ARES-IV Deep Space Mars Transit",
+    "mission_day": 120,
+    "focal_astronaut": "Commander Alex Morgan",
+    "callsign": "ARES-LEAD",
+    "incident_code": "INC-ARES4-120-001",
+    "incident_type": "Acute Transient Orthostatic Dizziness",
+    "classification": "100% SYNTHETIC RESEARCH TELEMETRY"
+  },
+  "precursor_evolution": [
+    {
+      "mission_day": 116,
+      "stage": "Baseline",
+      "sleep_hours": 7.8,
+      "resting_hr": 61,
+      "hrv_rmssd": 58,
+      "exercise_watts": 186,
+      "pvt_latency_ms": 215,
+      "event": "Nominal personal baseline. Cycle ergometer countermeasure protocol adhered to without deviations."
+    },
+    {
+      "mission_day": 117,
+      "stage": "Onset / First Signal",
+      "sleep_hours": 5.4,
+      "resting_hr": 66,
+      "hrv_rmssd": 46,
+      "exercise_watts": 174,
+      "pvt_latency_ms": 242,
+      "event": "Nocturnal false alarm drill in crew quarters Alpha at 02:45. Sleep curtailed by 2.6 hours (-2.6 sigma)."
+    },
+    {
+      "mission_day": 118,
+      "stage": "Divergence",
+      "sleep_hours": 4.9,
+      "resting_hr": 71,
+      "hrv_rmssd": 38,
+      "exercise_watts": 145,
+      "pvt_latency_ms": 275,
+      "event": "Workload surge for cargo stowage (10.5h). Cycle ergometer aborted after 28 min at 145W (-3.3 sigma)."
+    },
+    {
+      "mission_day": 119,
+      "stage": "Vulnerability",
+      "sleep_hours": 5.1,
+      "resting_hr": 74,
+      "hrv_rmssd": 32,
+      "exercise_watts": 0,
+      "pvt_latency_ms": 310,
+      "event": "Self-reported fatigue 7/10. Daily exercise omitted. PVT latency +44%. Autonomic vagal tone severely suppressed."
+    },
+    {
+      "mission_day": 120,
+      "stage": "Acute Episode",
+      "sleep_hours": 4.6,
+      "resting_hr": 78,
+      "hrv_rmssd": 27,
+      "exercise_watts": 0,
+      "pvt_latency_ms": 320,
+      "event": "Acute orthostatic presyncope at 09:42 upon standing in airlock. BP dropped to 88/56 mmHg, peak HR 118 bpm."
+    }
+  ],
+  "crew_variants": [
+    {
+      "name": "Dr. Sarah Chen",
+      "callsign": "CADUCEUS",
+      "status": "STABLE",
+      "condition": "Nominal baseline with 100% countermeasure adherence."
+    },
+    {
+      "name": "Marcus Vance",
+      "callsign": "VULCAN",
+      "status": "WATCH",
+      "condition": "Elevated maintenance workload and mild sleep reduction."
+    },
+    {
+      "name": "Elena Rostova",
+      "callsign": "AURORA",
+      "status": "UNKNOWN",
+      "condition": "Sensor packet loss Day 119-120. Confidence penalized to 41%. Demonstrates missing data handling without false normal assumptions."
+    }
+  ]
+}

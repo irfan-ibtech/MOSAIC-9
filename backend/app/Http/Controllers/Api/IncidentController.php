@@ -1,0 +1,160 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Incident;
+use App\Models\LedgerEvent;
+use App\Models\HealthObservation;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class IncidentController extends Controller
+{
+    public function index(): JsonResponse
+    {
+        $incidents = Incident::with('crewMember')->orderBy('incident_timestamp', 'desc')->get();
+        return response()->json($incidents);
+    }
+
+    public function show(int $id): JsonResponse
+    {
+        $incident = Incident::with(['crewMember', 'scenarios', 'groundCommunications'])->find($id);
+
+        if (!$incident) {
+            return response()->json(['error' => 'Incident record not found'], 404);
+        }
+
+        return response()->json($incident);
+    }
+
+    public function reconstruct(int $id, Request $request): JsonResponse
+    {
+        $incident = Incident::with('crewMember')->find($id);
+
+        if (!$incident) {
+            return response()->json(['error' => 'Incident not found'], 404);
+        }
+
+        // Horizon window in hours (default 72h, options: 6, 24, 72, 168)
+        $horizonHours = (int) $request->query('horizon_hours', 72);
+        $incidentTime = $incident->incident_timestamp;
+        $startTime = $incidentTime->copy()->subHours($horizonHours);
+
+        // Fetch preceding ledger events for this crew member & shipwide within the window
+        $events = LedgerEvent::where(function ($query) use ($incident) {
+                $query->where('crew_member_id', $incident->crew_member_id)
+                      ->orWhereNull('crew_member_id');
+            })
+            ->where('event_timestamp', '>=', $startTime)
+            ->where('event_timestamp', '<=', $incidentTime)
+            ->orderBy('event_timestamp', 'asc')
+            ->get();
+
+        // Categorize evidence according to MOSAIC-9 scientific taxonomy:
+        // OBSERVED FACT, DERIVED INDICATOR, TEMPORAL ASSOCIATION, POSSIBLE EXPLANATION, MISSING EVIDENCE, RECOMMENDED REVIEW
+        $evidenceNodes = [];
+
+        foreach ($events as $event) {
+            $classification = 'OBSERVED_FACT';
+            $reasoning = 'Direct primary sensor record.';
+
+            if (in_array($event->event_category, ['sleep_observation', 'workload_observation'])) {
+                $classification = 'DERIVED_INDICATOR';
+                $reasoning = 'Algorithmic calculation from raw bunk micro-movement & task scheduler.';
+            } elseif ($event->event_category === 'symptom_report' && $event->severity !== 'CRITICAL') {
+                $classification = 'OBSERVED_FACT';
+                $reasoning = 'Self-reported subjective symptom logged by crew member.';
+            } elseif ($event->severity === 'CRITICAL') {
+                $classification = 'OBSERVED_FACT';
+                $reasoning = 'Target acute incident event.';
+            } elseif ($event->event_category === 'environmental_event') {
+                $classification = 'TEMPORAL_ASSOCIATION';
+                $reasoning = 'Ambient environmental factor coinciding with crew timeline.';
+            }
+
+            $evidenceNodes[] = [
+                'event_id' => $event->id,
+                'event_uid' => $event->event_uid,
+                'title' => $event->title,
+                'category' => $event->event_category,
+                'timestamp' => $event->event_timestamp->toIso8601String(),
+                'relative_hours' => round($event->event_timestamp->diffInMinutes($incidentTime, false) / 60, 1),
+                'value' => $event->value,
+                'unit' => $event->unit,
+                'classification' => $classification,
+                'reasoning' => $reasoning,
+                'confidence' => $event->confidence_score,
+                'data_quality' => $event->data_quality,
+            ];
+        }
+
+        // Add explicit Missing Evidence nodes (Crucial MOSAIC-9 scientific principle!)
+        $missingEvidence = [
+            [
+                'node_type' => 'MISSING_EVIDENCE',
+                'title' => 'Intravascular Fluid Volume Direct Telemetry',
+                'description' => 'Direct continuous hematocrit / plasma volume measurement was not acquired prior to the event. Hypovolemia inferred from indirect hydration logs.',
+                'impact_on_confidence' => 'Reduces certainty of primary hypovolemic vs neurogenic origin from 98% to 88%.',
+                'suggested_investigation' => 'Perform ultrasound assessment of inferior vena cava collapsibility index.',
+            ],
+            [
+                'node_type' => 'MISSING_EVIDENCE',
+                'title' => 'Cerebral Tissue Oxygenation (NIRS)',
+                'description' => 'Forehead near-infrared spectroscopy patch was not active during equipment bay transit.',
+                'impact_on_confidence' => 'Cerebral perfusion drop during transition confirmed via symptoms and blood pressure collapse, but microvascular brain tissue oxygenation is inferred.',
+                'suggested_investigation' => 'Review transcranial Doppler flow velocity if orthostatic challenge is repeated.',
+            ]
+        ];
+
+        // Temporal Hypotheses (distinct from facts)
+        $hypotheses = [
+            [
+                'hypothesis_id' => 'HYP-01',
+                'type' => 'POSSIBLE_EXPLANATION',
+                'title' => 'Deconditioning-Exacerbated Baroreflex Decompensation',
+                'plausibility' => 'HIGH (Plausibility Score: 0.88)',
+                'supporting_facts' => [
+                    '72-hour sleep debt of 9.8 hours suppressed parasympathetic autonomic tone (HRV dropped to 27 ms).',
+                    'Missed cycle ergometer session on Day 119 eliminated expected daily cardiovascular baroreceptor conditioning.',
+                    'Rapid vertical translation in microgravity challenged fluid redistribution.',
+                ],
+                'counter_evidence' => 'No prior orthostatic intolerance during initial mission weeks.',
+                'scientific_boundary' => 'Observed temporal sequence demonstrates strong association, but definitive physiological causality cannot be established without invasive hemodynamic monitoring.',
+            ],
+            [
+                'hypothesis_id' => 'HYP-02',
+                'type' => 'POSSIBLE_EXPLANATION',
+                'title' => 'Mild CO2 Induced Cephalic Vasodilation',
+                'plausibility' => 'MODERATE (Plausibility Score: 0.62)',
+                'supporting_facts' => [
+                    'Cabin CO2 elevated to 3.5 mmHg during cargo movements in Module B.',
+                ],
+                'counter_evidence' => 'CO2 concentration remained below acute toxicity threshold (< 5.0 mmHg).',
+                'scientific_boundary' => 'Elevated CO2 is a known sensitizer in microgravity but unlikely to be the sole trigger.',
+            ]
+        ];
+
+        // Recommended Reviews for Ground and Crew
+        $recommendedReviews = [
+            'Immediate: Enforce 24-48h light-duty operational restriction on Commander Alex Morgan.',
+            'Countermeasure: Initiate Oral Rehydration Salts protocol (1200 mL saline equivalent) prior to upright tasks.',
+            'Diagnostic: Measure orthostatic vital signs (lying vs stand test) with continuous arterial tonometry when safe.',
+            'Ground Review: Transmit structured SBAR packet GND-COM-ARES4-120-001 once Earth link is re-established.',
+        ];
+
+        return response()->json([
+            'incident' => $incident,
+            'horizon_hours' => $horizonHours,
+            'timeline_window' => [
+                'start' => $startTime->toIso8601String(),
+                'incident' => $incidentTime->toIso8601String(),
+            ],
+            'evidence_nodes' => $evidenceNodes,
+            'missing_evidence' => $missingEvidence,
+            'hypotheses' => $hypotheses,
+            'recommended_reviews' => $recommendedReviews,
+            'scientific_disclaimer' => 'MOSAIC-9 outputs are experimental temporal reconstructions designed for mission intelligence. They do not constitute formal diagnostic medical determinations.',
+        ]);
+    }
+}
