@@ -171,6 +171,8 @@ export default function App() {
               <GroundCommunicationScreen
                 crewMembers={crewMembers}
                 selectedCrew={selectedCrew}
+                earthLinkState={earthLinkState}
+                onToggleCommLink={handleToggleCommLink}
               />
             )}
 

@@ -8,22 +8,28 @@ import {
   Save,
   CheckCircle2,
   Clock,
+  Wifi,
   WifiOff,
   FileText,
   ShieldCheck,
   ChevronDown,
   Download,
   RotateCcw,
+  RefreshCw,
 } from 'lucide-react';
 
 interface GroundCommunicationScreenProps {
   crewMembers: CrewMember[];
   selectedCrew?: CrewMember | null;
+  earthLinkState?: 'LOSS_OF_SIGNAL' | 'DEGRADED_COMM' | 'HIGH_GAIN_ESTABLISHED';
+  onToggleCommLink?: (state: 'LOSS_OF_SIGNAL' | 'DEGRADED_COMM' | 'HIGH_GAIN_ESTABLISHED') => void;
 }
 
 export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps> = ({
   crewMembers,
   selectedCrew,
+  earthLinkState = 'LOSS_OF_SIGNAL',
+  onToggleCommLink,
 }) => {
   const displayCrew = crewMembers && crewMembers.length > 0 ? crewMembers : DEFAULT_CREW_MEMBERS;
   const initialCrewId = selectedCrew?.id || 1;
@@ -94,7 +100,11 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
         questions_for_ground: questions,
         review_priority: priority,
       });
-      setSuccessBanner('Ground communication brief successfully queued in onboard storage (QUEUED_LOCAL).');
+      const statusNote =
+        earthLinkState === 'HIGH_GAIN_ESTABLISHED'
+          ? 'Ground communication brief saved and ready for ground sync transmission.'
+          : 'Ground communication brief successfully queued in onboard storage (QUEUED_LOCAL).';
+      setSuccessBanner(statusNote);
       fetchComms();
       setTimeout(() => setSuccessBanner(null), 5000);
     } catch (err) {
@@ -104,15 +114,77 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
     }
   };
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleTriggerSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await mosaicApi.triggerSync();
+      setSuccessBanner(res.message || 'Ground synchronization completed: all queued packets delivered to Earth flight surgeon console.');
+      fetchComms();
+      setTimeout(() => setSuccessBanner(null), 5000);
+    } catch (err: any) {
+      alert(err.message || 'Ground sync failed: Deep Space Network link is currently in LOSS OF SIGNAL.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleTransmit = async (id: number) => {
+    if (earthLinkState === 'LOSS_OF_SIGNAL') {
+      alert(
+        'Transmission Blocked: Deep Space Network link is currently in LOSS OF SIGNAL (Mars occultation). Packet remains safely buffered in local onboard SQLite (QUEUED_LOCAL). Toggle High Gain link to transmit.'
+      );
+      return;
+    }
     try {
       const res = await mosaicApi.transmitGroundCommunication(id);
-      alert(res.message || 'Transmission initiated');
+      setSuccessBanner(res.message || 'Transmission initiated via active DSN link.');
       fetchComms();
+      setTimeout(() => setSuccessBanner(null), 5000);
     } catch (err) {
       alert('Transmission error');
     }
   };
+
+  const getLinkBanner = () => {
+    switch (earthLinkState) {
+      case 'HIGH_GAIN_ESTABLISHED':
+        return {
+          icon: <Wifi className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />,
+          title: 'DEEP SPACE NETWORK LINK: HIGH GAIN PASS ACTIVE',
+          badge: 'HIGH GAIN ESTABLISHED',
+          badgeColor: 'bg-emerald-950 text-emerald-300 border-emerald-800',
+          borderColor: 'border-emerald-500/50 bg-emerald-950/20 shadow-glow-cyan',
+          description:
+            'Scheduled High-Gain directional antenna pass established. Outgoing SBAR consultation packets transmit to Earth ground flight surgeon console with 21.0-minute one-way light delay.',
+        };
+      case 'DEGRADED_COMM':
+        return {
+          icon: <Radio className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 animate-pulse" />,
+          title: 'DEEP SPACE NETWORK LINK: DEGRADED COMM (BURST MODE)',
+          badge: 'LOW BANDWIDTH (21m)',
+          badgeColor: 'bg-amber-950 text-amber-300 border-amber-800',
+          borderColor: 'border-amber-500/50 bg-amber-950/20',
+          description:
+            'Low-gain antenna active with 21.0-minute one-way light delay. High-bandwidth streaming is throttled; SBAR text packets queued for compressed burst transmission.',
+        };
+      case 'LOSS_OF_SIGNAL':
+      default:
+        return {
+          icon: <WifiOff className="w-5 h-5 text-rose-400 shrink-0 mt-0.5 animate-pulse" />,
+          title: 'DEEP SPACE NETWORK LINK: LOSS OF SIGNAL (OCCULTATION)',
+          badge: 'OFFLINE RESILIENT',
+          badgeColor: 'bg-rose-950 text-rose-300 border-rose-800',
+          borderColor: 'border-rose-500/50 bg-rose-950/20 shadow-glow-rose',
+          description:
+            'Earth is currently occluded behind Mars. Prepared briefs are automatically queued in local onboard SQLite storage and browser buffer. When High Gain link resumes, queued packets will synchronize with the simulated Earth ground operations terminal.',
+        };
+    }
+  };
+
+  const linkBanner = getLinkBanner();
+  const queuedCount = comms.filter((p) => p.sync_status === 'QUEUED_LOCAL').length;
 
   const handleExportSBAR = () => {
     const sbarPayload = {
@@ -172,26 +244,81 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
         </button>
       </div>
 
-      {/* Offline Status / Mars Latency Callout */}
-      <div className="p-4 rounded-xl bg-space-850 border border-amber-500/50 shadow-panel flex flex-col md:flex-row md:items-center justify-between gap-4 font-mono text-xs">
+      {/* Dynamic DSN Link Status Callout */}
+      <div className={`p-4 rounded-xl bg-space-850 border shadow-panel flex flex-col md:flex-row md:items-center justify-between gap-4 font-mono text-xs ${linkBanner.borderColor}`}>
         <div className="flex items-start gap-3">
-          <WifiOff className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+          {linkBanner.icon}
           <div>
-            <div className="font-bold text-white flex items-center gap-2">
-              <span>DEEP SPACE NETWORK LINK: LOSS OF SIGNAL (OCCULTATION)</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-800">
-                OFFLINE RESILIENT
+            <div className="font-bold text-white flex items-center gap-2 flex-wrap">
+              <span>{linkBanner.title}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded border ${linkBanner.badgeColor}`}>
+                {linkBanner.badge}
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 font-sans mt-0.5">
-              Earth is currently occluded behind Mars. Prepared briefs are automatically queued in local onboard SQLite storage and browser buffer. When High Gain link resumes, queued packets will synchronize with the simulated Earth ground operations terminal.
+            <p className="text-[11px] text-slate-300 font-sans mt-0.5 leading-relaxed max-w-2xl">
+              {linkBanner.description}
             </p>
+
+            {/* In-Screen Link State Switcher */}
+            {onToggleCommLink && (
+              <div className="flex items-center gap-1.5 flex-wrap pt-2.5">
+                <span className="text-[10px] text-slate-400 uppercase font-semibold">SIMULATE LINK:</span>
+                <button
+                  type="button"
+                  onClick={() => onToggleCommLink('LOSS_OF_SIGNAL')}
+                  className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
+                    earthLinkState === 'LOSS_OF_SIGNAL'
+                      ? 'bg-rose-950 border-rose-600 text-rose-300 font-bold'
+                      : 'bg-space-900 border-space-700 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  LOSS OF SIGNAL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onToggleCommLink('DEGRADED_COMM')}
+                  className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
+                    earthLinkState === 'DEGRADED_COMM'
+                      ? 'bg-amber-950 border-amber-600 text-amber-300 font-bold'
+                      : 'bg-space-900 border-space-700 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  DEGRADED COMM
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onToggleCommLink('HIGH_GAIN_ESTABLISHED')}
+                  className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
+                    earthLinkState === 'HIGH_GAIN_ESTABLISHED'
+                      ? 'bg-emerald-950 border-emerald-600 text-emerald-300 font-bold'
+                      : 'bg-space-900 border-space-700 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  HIGH GAIN PASS
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="text-right shrink-0">
-          <span className="text-[10px] text-slate-400 uppercase">ONE-WAY LIGHT TIME</span>
-          <div className="text-base font-bold text-amber-300">21.0 MINUTES</div>
+        <div className="flex flex-col sm:items-end justify-between gap-2 shrink-0">
+          <div className="text-right">
+            <span className="text-[10px] text-slate-400 uppercase">ONE-WAY LIGHT TIME</span>
+            <div className={`text-base font-bold ${earthLinkState === 'HIGH_GAIN_ESTABLISHED' ? 'text-emerald-300' : 'text-amber-300'}`}>
+              21.0 MINUTES
+            </div>
+          </div>
+
+          {earthLinkState === 'HIGH_GAIN_ESTABLISHED' && queuedCount > 0 && (
+            <button
+              onClick={handleTriggerSync}
+              disabled={isSyncing}
+              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-xs flex items-center gap-1.5 shadow-panel transition-all"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'SYNCING...' : `SYNC ${queuedCount} QUEUED BRIEF${queuedCount > 1 ? 'S' : ''}`}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -391,12 +518,26 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
         {/* Right 5 Cols: Queued & Historical Ground Packets */}
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-3">
-            <h3 className="text-sm font-bold text-white uppercase font-mono flex items-center gap-2">
-              <Radio className="w-4 h-4 text-cyan-400" />
-              <span>ONBOARD PACKET TRANSMISSION QUEUE</span>
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white uppercase font-mono flex items-center gap-2">
+                <Radio className="w-4 h-4 text-cyan-400" />
+                <span>ONBOARD PACKET TRANSMISSION QUEUE</span>
+              </h3>
+              {earthLinkState === 'HIGH_GAIN_ESTABLISHED' && queuedCount > 0 && (
+                <button
+                  onClick={handleTriggerSync}
+                  disabled={isSyncing}
+                  className="px-2 py-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 hover:bg-emerald-900 text-[10px] font-mono flex items-center gap-1 transition-all"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>FLUSH QUEUE</span>
+                </button>
+              )}
+            </div>
             <p className="text-xs text-slate-400">
-              Honest status: Packets marked QUEUED_LOCAL remain safely in local SQLite until link establishment.
+              {earthLinkState === 'HIGH_GAIN_ESTABLISHED'
+                ? 'High Gain link active: Packets synchronize directly with Earth operations receiver.'
+                : 'Honest status: Packets marked QUEUED_LOCAL remain safely in local SQLite until link establishment.'}
             </p>
 
             <div className="space-y-3 pt-2">
@@ -430,10 +571,14 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
                     {pkt.sync_status === 'QUEUED_LOCAL' && (
                       <button
                         onClick={() => handleTransmit(pkt.id)}
-                        className="px-2 py-1 rounded bg-space-800 hover:bg-space-700 text-cyan-400 border border-space-700 flex items-center gap-1 font-mono"
+                        className={`px-2 py-1 rounded border flex items-center gap-1 font-mono transition-colors ${
+                          earthLinkState === 'HIGH_GAIN_ESTABLISHED'
+                            ? 'bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border-emerald-700'
+                            : 'bg-space-800 hover:bg-space-700 text-cyan-400 border-space-700'
+                        }`}
                       >
                         <Send className="w-3 h-3" />
-                        <span>BUFFER TRANSMIT</span>
+                        <span>{earthLinkState === 'HIGH_GAIN_ESTABLISHED' ? 'TRANSMIT VIA HIGH GAIN' : 'BUFFER TRANSMIT'}</span>
                       </button>
                     )}
                   </div>
