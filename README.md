@@ -5,7 +5,7 @@
 > **Team:** TESSERA FLIGHT LAB
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Build & Tests](https://img.shields.io/badge/Tests-17%20Passed%20(100%25)-emerald.svg)](scripts/run-tests.sh)
+[![Build & Tests](https://img.shields.io/badge/Tests-35%20Passed%20(100%25)-emerald.svg)](scripts/run-tests.sh)
 [![Architecture](https://img.shields.io/badge/Architecture-React%2018%20|%20Laravel%2012%20|%20FastAPI-06b6d4.svg)](documentation/ARCHITECTURE.md)
 [![Ethical Standards](https://img.shields.io/badge/Telemetry-100%25%20Synthetic%20HRP%20Model-purple.svg)](documentation/DATA_DICTIONARY.md)
 
