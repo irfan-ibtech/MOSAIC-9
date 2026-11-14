@@ -52,7 +52,14 @@ def calculate_lead_lag_cross_correlation(lead_series: List[float], lag_series: L
             correlations.append({"lag": lag, "r": float(r), "p_value": float(p)})
 
     if not correlations:
-        return {"best_lag": 0, "max_correlation": 0.0, "p_value": 1.0}
+        return {
+            "best_lag": 0,
+            "max_correlation": 0.0,
+            "p_value": 1.0,
+            "sample_size_n": len(lead_series),
+            "degrees_of_freedom": max(1, len(lead_series) - 2),
+            "statistical_limitation": "Insufficient variance or sample size for Pearson correlation analysis.",
+        }
 
     # Pick the lag with largest absolute correlation
     best = max(correlations, key=lambda x: abs(x["r"]))
@@ -60,6 +67,9 @@ def calculate_lead_lag_cross_correlation(lead_series: List[float], lag_series: L
         "best_lag": best["lag"],
         "max_correlation": round(best["r"], 3),
         "p_value": round(best["p_value"], 4),
+        "sample_size_n": len(lead_series),
+        "degrees_of_freedom": max(1, len(lead_series) - 2),
+        "statistical_limitation": "Pearson correlation indicates observed linear co-movement only. Small sample sizes (n < 30) carry elevated variance; mechanistic causality is not implied.",
     }
 
 

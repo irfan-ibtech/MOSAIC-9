@@ -279,36 +279,65 @@ export const mosaicApi = {
     }>('/sync/status', 'sync_status'),
 
   triggerSync: async () => {
-    // Flush client offline buffer to server if online
-    try {
-      const offlineComms = JSON.parse(localStorage.getItem('mosaic_offline_ground_comms') || '[]');
-      for (const pkt of offlineComms) {
-        await fetch(`${API_BASE}/ground-comms`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(pkt),
-        });
-      }
-      localStorage.removeItem('mosaic_offline_ground_comms');
-
-      const offlineLedger = JSON.parse(localStorage.getItem('mosaic_offline_ledger_events') || '[]');
-      for (const evt of offlineLedger) {
-        await fetch(`${API_BASE}/ledger`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(evt),
-        });
-      }
-      localStorage.removeItem('mosaic_offline_ledger_events');
-    } catch {
-      // ignore sync network errors
-    }
-
+    // 1. First verify with server that communication link is capable of receiving sync
     const res = await fetch(`${API_BASE}/sync/trigger`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     });
-    return res.json();
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || `Ground synchronization rejected by station controller (HTTP ${res.status})`);
+    }
+
+    const syncResult = await res.json();
+
+    // 2. Link is established: flush client offline buffer to server
+    try {
+      const offlineComms = JSON.parse(localStorage.getItem('mosaic_offline_ground_comms') || '[]');
+      const retainedComms = [];
+      for (const pkt of offlineComms) {
+        try {
+          const pushRes = await fetch(`${API_BASE}/ground-comms`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ ...pkt, sync_status: 'DELIVERED' }),
+          });
+          if (!pushRes.ok) retainedComms.push(pkt);
+        } catch {
+          retainedComms.push(pkt);
+        }
+      }
+      if (retainedComms.length === 0) {
+        localStorage.removeItem('mosaic_offline_ground_comms');
+      } else {
+        localStorage.setItem('mosaic_offline_ground_comms', JSON.stringify(retainedComms));
+      }
+
+      const offlineLedger = JSON.parse(localStorage.getItem('mosaic_offline_ledger_events') || '[]');
+      const retainedLedger = [];
+      for (const evt of offlineLedger) {
+        try {
+          const pushRes = await fetch(`${API_BASE}/ledger`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(evt),
+          });
+          if (!pushRes.ok) retainedLedger.push(evt);
+        } catch {
+          retainedLedger.push(evt);
+        }
+      }
+      if (retainedLedger.length === 0) {
+        localStorage.removeItem('mosaic_offline_ledger_events');
+      } else {
+        localStorage.setItem('mosaic_offline_ledger_events', JSON.stringify(retainedLedger));
+      }
+    } catch {
+      // ignore client buffer flushing errors
+    }
+
+    return syncResult;
   },
 
   toggleCommLink: async (state: 'LOSS_OF_SIGNAL' | 'DEGRADED_COMM' | 'HIGH_GAIN_ESTABLISHED') => {

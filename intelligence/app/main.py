@@ -135,8 +135,11 @@ def api_temporal_relationships(req: TemporalAnalysisRequest):
             "correlation_coefficient": corr_result.get("max_correlation", -0.89),
             "p_value_estimated": corr_result.get("p_value", 0.003),
             "confidence": 0.94,
+            "sample_size_n": 5,
+            "degrees_of_freedom": 3,
+            "statistical_limitation": "Pearson correlation r reflects linear co-movement only; small sample size (n=5) carries elevated variance and does not establish mechanistic causality.",
             "evidence": "Sleep duration dropped to 5.4h on Day 117; HRV RMSSD drop followed with 18-24h latency, bottoming at 27ms on Day 120.",
-            "causality_qualification": "Strong temporal precedence and established aerospace physiological plausibility; causal mechanism consistent with sympathetic hyper-reactivity.",
+            "causality_qualification": "Temporal association and physiological plausibility observed; definitive mechanistic causality is not established without invasive monitoring.",
         },
         {
             "pair": "High Workload -> Countermeasure Non-Compliance",
@@ -146,8 +149,11 @@ def api_temporal_relationships(req: TemporalAnalysisRequest):
             "correlation_coefficient": -0.82,
             "p_value_estimated": 0.012,
             "confidence": 0.91,
+            "sample_size_n": 5,
+            "degrees_of_freedom": 3,
+            "statistical_limitation": "Pearson correlation r reflects operational co-occurrence over the observation window; causation is behavioral.",
             "evidence": "Hatch repair task extension on Day 117-118 preceded abbreviated workout (145W) and subsequent total workout omission on Day 119.",
-            "causality_qualification": "Direct behavioral interaction: operational time pressure displaced allocated exercise countermeasure window.",
+            "causality_qualification": "Observed behavioral timeline interaction: operational workload hours displaced scheduled exercise countermeasure window.",
         },
         {
             "pair": "Cumulative Sleep Debt -> Neurocognitive Vigilance Lapses",
@@ -157,8 +163,11 @@ def api_temporal_relationships(req: TemporalAnalysisRequest):
             "correlation_coefficient": 0.93,
             "p_value_estimated": 0.001,
             "confidence": 0.97,
+            "sample_size_n": 5,
+            "degrees_of_freedom": 3,
+            "statistical_limitation": "Correlation reflects time-lagged statistical association between sleep debt and reaction time.",
             "evidence": "PVT reaction time increased by 44% (215ms baseline to 310ms on Day 119) following 48h of cumulative sleep debt (>5.5 hours).",
-            "causality_qualification": "Established neurobiological relationship; psychomotor slowing is a validated benchmark of sleep deprivation.",
+            "causality_qualification": "Established neurobiological relationship in spaceflight literature; psychomotor slowing is a validated correlate of acute sleep debt.",
         },
     ]
 
@@ -179,8 +188,10 @@ def api_temporal_relationships(req: TemporalAnalysisRequest):
         "anomaly_sequence": anomaly_sequence,
         "confidence_evaluation": {
             "overall_confidence": 0.94,
+            "heuristic_confidence_score": 0.94,
             "completeness_factor": 0.98,
             "provenance_factor": 0.96,
-            "scientific_rigor_notes": "Correlation does not establish causation. Relationships represent temporally ordered observations supported by aerospace physiological models.",
+            "calibration_status": "HEURISTIC_EMPIRICAL",
+            "scientific_rigor_notes": "Correlation does not establish causation. Pearson coefficients are based on small operational observation samples (n=5). Relationships represent temporally ordered observations supported by aerospace physiological models.",
         },
     }

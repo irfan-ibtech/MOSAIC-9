@@ -152,8 +152,10 @@ export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreen
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <StatusBadge status="REVIEW_REQUIRED" size="sm" />
-                <span className="text-slate-400">Day {reconstruction.incident.mission_day} 09:42 MET</span>
+                <StatusBadge status={reconstruction.incident.severity as any} size="sm" />
+                <span className="text-slate-400">
+                  Day {reconstruction.incident.mission_day} {reconstruction.incident.incident_timestamp ? reconstruction.incident.incident_timestamp.slice(11, 16) : '00:00'} MET
+                </span>
               </div>
             </div>
 

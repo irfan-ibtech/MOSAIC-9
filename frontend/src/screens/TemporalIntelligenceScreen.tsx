@@ -298,6 +298,14 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
             </p>
           </div>
         </div>
+
+        {/* Statistical & Scientific Integrity Notice */}
+        <div className="p-3.5 rounded-lg bg-space-950 border border-space-800 text-[11px] text-slate-400 font-sans flex items-start gap-2.5">
+          <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+          <div>
+            <strong className="text-slate-200">Statistical & Methodological Limitations:</strong> Pearson correlation coefficients (<em>r</em>) reflect linear co-movement across discrete observation windows (<em>n=5, df=3</em>). Statistical correlation does not establish physiological causality. Calculated confidence scores represent heuristic empirical estimates based on data completeness and sensor provenance.
+          </div>
+        </div>
       </div>
     </div>
   );

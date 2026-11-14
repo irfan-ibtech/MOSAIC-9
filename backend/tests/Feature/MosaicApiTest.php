@@ -146,17 +146,35 @@ class MosaicApiTest extends TestCase
         $incident = Incident::where('incident_code', 'INC-ARES4-118-002')->first();
         $this->assertNotNull($incident);
 
-        $response = $this->getJson("/api/incidents/{$incident->id}/reconstruct?horizon_hours=24");
-        $response->assertStatus(200)
-            ->assertJsonPath('incident.incident_code', 'INC-ARES4-118-002')
-            ->assertJsonStructure([
-                'incident',
-                'horizon_hours',
-                'evidence_nodes',
-                'missing_evidence',
-                'hypotheses',
-                'recommended_reviews',
-            ]);
+        // Test all four lookback horizons: 6h, 24h, 72h, 168h
+        $horizons = [6, 24, 72, 168];
+        $prevCount = 0;
+
+        foreach ($horizons as $h) {
+            $response = $this->getJson("/api/incidents/{$incident->id}/reconstruct?horizon_hours={$h}");
+            $response->assertStatus(200)
+                ->assertJsonPath('incident.incident_code', 'INC-ARES4-118-002')
+                ->assertJsonPath('horizon_hours', $h)
+                ->assertJsonStructure([
+                    'incident',
+                    'horizon_hours',
+                    'evidence_nodes',
+                    'missing_evidence',
+                    'hypotheses',
+                    'recommended_reviews',
+                ]);
+
+            $nodes = $response->json('evidence_nodes');
+            $this->assertGreaterThanOrEqual($prevCount, count($nodes), "Horizon {$h}h should have at least as many nodes as previous horizon");
+            $prevCount = count($nodes);
+        }
+
+        // Verify that Marcus Vance has incident-specific hypotheses distinct from Alex Morgan
+        $resp = $this->getJson("/api/incidents/{$incident->id}/reconstruct?horizon_hours=24");
+        $hypotheses = $resp->json('hypotheses');
+        $this->assertNotEmpty($hypotheses);
+        $hypIds = array_column($hypotheses, 'hypothesis_id');
+        $this->assertContains('HYP-MV-01', $hypIds);
     }
 
     public function test_sarah_chen_nominal_observations_and_baseline(): void

@@ -208,7 +208,7 @@ export const SystemStatusScreen: React.FC = () => {
               LOCAL TELEMETRY ARCHIVE & DIAGNOSTIC EXPORT
             </h3>
             <p className="text-xs text-slate-400 font-sans">
-              Export complete onboard state, queued communication briefs, and temporal analyses as an encrypted JSON archive.
+              Export complete onboard state, queued communication briefs, and temporal analyses as a structured JSON telemetry archive.
             </p>
           </div>
 

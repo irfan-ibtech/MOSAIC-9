@@ -381,12 +381,12 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({ se
               </div>
 
               <div className="p-3.5 rounded-xl bg-space-850 border border-space-700">
-                <div className="text-[10px] text-slate-400 uppercase">RECURRENCE RISK</div>
+                <div className="text-[10px] text-slate-400 uppercase">EXPLORATORY RECURRENCE INDEX</div>
                 <div className="text-lg font-bold text-emerald-400 mt-1">
                   {activeSimulationResult.scenario?.projections?.risk_recurrence_pct || 14}%
                 </div>
                 <div className="text-[9px] text-slate-400 mt-0.5">
-                  Reduced from 65%
+                  Hypothetical index (not clinical diagnosis)
                 </div>
               </div>
             </div>
@@ -432,7 +432,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({ se
                       {sc.projections?.time_to_stability_hours}h to stability
                     </span>
                     <div className="text-[10px] text-emerald-400">
-                      {sc.projections?.risk_recurrence_pct}% recurrence risk
+                      {sc.projections?.risk_recurrence_pct}% exploratory recurrence index
                     </div>
                   </div>
                 </div>
