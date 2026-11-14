@@ -109,7 +109,7 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
       title: 'Day 117 06:30 — Acute Sleep Curtailment (-2.6σ Deviation)',
       leadTime: 'LEAD TIME: 75.2 HOURS BEFORE INCIDENT',
       leadColor: 'bg-cyan-950 text-cyan-300 border-cyan-800',
-      description: 'Following an unscheduled nocturnal ECLSS audio alarm drill at 02:45, Commander Alex Morgan’s recorded sleep duration collapsed from 8.0h baseline to 5.4h (z = -2.6). This was the earliest statistically significant departure across all tracked physiological and mission signals.',
+      description: 'Following an unscheduled nocturnal ECLSS audio alarm drill at 02:45, Commander Alex Morgan’s recorded sleep duration was acutely curtailed from 8.0h baseline to 5.4h (z = -2.6). This was the earliest statistically significant departure across all tracked physiological and mission signals.',
     };
   };
 
@@ -301,7 +301,7 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
 
           <div className="p-3.5 rounded-lg bg-rose-950/40 border border-rose-500 space-y-1.5 shadow-glow-rose">
             <div className="text-[10px] text-rose-300 font-bold uppercase">DAY 120 — INCIDENT</div>
-            <div className="font-semibold text-white">Presyncope Collapse</div>
+            <div className="font-semibold text-white">Presyncopal Episode</div>
             <div className="text-[11px] text-slate-200 font-sans">
               Post-egress dizziness: BP drops to 88/56 mmHg, transient HR 118 bpm.
             </div>
@@ -331,7 +331,7 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
               <span className="text-xs font-bold text-cyan-300 flex items-center gap-2">
                 <GitFork className="w-4 h-4 text-cyan-400" />
-                Sleep Curtailment ➔ Autonomic Tone Suppression (HRV Collapse)
+                Sleep Curtailment ➔ Autonomic Tone Suppression (HRV RMSSD Drop)
               </span>
               <div className="flex items-center gap-2 text-[11px]">
                 <span className="px-2 py-0.5 rounded bg-space-800 text-slate-300 border border-space-700">

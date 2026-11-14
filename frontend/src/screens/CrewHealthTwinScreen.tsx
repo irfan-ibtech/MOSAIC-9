@@ -95,7 +95,7 @@ export const CrewHealthTwinScreen: React.FC<CrewHealthTwinScreenProps> = ({
     if (crew.callsign === 'AURORA') {
       return { badge: 'TELEMETRY UNVERIFIED', badgeColor: 'bg-slate-800 text-slate-300 border-slate-700', note: 'Days 116-118 nominal (55ms); Days 119-120 unverified due to patch disconnect.' };
     }
-    return { badge: 'AUTONOMIC COLLAPSE', badgeColor: 'bg-rose-950 text-rose-300 border-rose-800', note: 'Parasympathetic vagal tone plummeted from 58ms baseline to 27ms (z = -4.1).' };
+    return { badge: 'MARKED HRV SUPPRESSION', badgeColor: 'bg-rose-950 text-rose-300 border-rose-800', note: 'Parasympathetic vagal tone proxy (HRV RMSSD) decreased from 58ms baseline to 27ms (z = -4.1), indicating substantial autonomic deviation.' };
   };
 
   const sleepAnnot = getSleepAnnotation();

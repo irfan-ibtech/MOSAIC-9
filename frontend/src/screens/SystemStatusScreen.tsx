@@ -12,6 +12,7 @@ import {
   HardDrive,
   Download,
   ShieldCheck,
+  Info,
 } from 'lucide-react';
 
 interface SystemStatusScreenProps {
@@ -116,7 +117,7 @@ export const SystemStatusScreen: React.FC<SystemStatusScreenProps> = ({
 
       {statusMessage && (
         <div className="p-3.5 rounded-xl bg-cyan-950/80 border border-cyan-600 text-cyan-300 text-xs font-mono flex items-center gap-2 animate-fade-in">
-          <InfoIcon className="w-4 h-4 shrink-0" />
+          <Info className="w-4 h-4 shrink-0" />
           <span>{statusMessage}</span>
         </div>
       )}
@@ -241,7 +242,3 @@ export const SystemStatusScreen: React.FC<SystemStatusScreenProps> = ({
     </div>
   );
 };
-
-function InfoIcon(props: any) {
-  return <CheckCircle2 {...props} />;
-}

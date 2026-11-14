@@ -359,7 +359,7 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({
             <TelemetryChart options={cardioChartOptions} height={260} />
 
             <div className="p-3 rounded-lg bg-space-900 border border-space-700 text-xs text-slate-300 font-mono">
-              <span className="text-cyan-400 font-semibold">SCIENTIFIC RESTRICTION:</span> Microgravity cephalad fluid redistribution decreases lower-limb vascular tone and reduces effective circulating plasma volume. Orthostatic intolerance is common post-transit, but acute collapse requires evaluating multi-day predisposing sleep debt and hydration status.
+              <span className="text-cyan-400 font-semibold">SCIENTIFIC RESTRICTION:</span> Microgravity cephalad fluid redistribution decreases lower-limb vascular tone and reduces effective circulating plasma volume. Orthostatic intolerance is common post-transit, but acute presyncopal episodes require evaluating multi-day predisposing sleep debt and hydration status.
             </div>
           </div>
         </div>

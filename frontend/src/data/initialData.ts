@@ -183,7 +183,7 @@ export const DEFAULT_OBSERVATIONS: HealthObservation[] = [
 
   { id: 17, crew_member_id: 1, mission_day: 120, timestamp: '2026-11-15T06:10:00Z', domain: 'neuro_cognitive_sleep', metric_name: 'sleep_duration_hours', value: 4.6, unit: 'hours', baseline_reference: 8.0, deviation_zscore: -3.4, is_synthetic: true, confidence_score: 0.98, data_source: 'smart_bunk', quality_flag: 'VERIFIED', notes: 'Acute fatigue logged.' },
   { id: 18, crew_member_id: 1, mission_day: 120, timestamp: '2026-11-15T08:00:00Z', domain: 'cardiovascular', metric_name: 'heart_rate_resting', value: 78, unit: 'bpm', baseline_reference: 60, deviation_zscore: 3.5, is_synthetic: true, confidence_score: 0.98, data_source: 'ecg_patch', quality_flag: 'VERIFIED', notes: 'Pre-incident resting state.' },
-  { id: 19, crew_member_id: 1, mission_day: 120, timestamp: '2026-11-15T08:00:00Z', domain: 'cardiovascular', metric_name: 'hrv_rmssd', value: 27, unit: 'ms', baseline_reference: 58, deviation_zscore: -4.1, is_synthetic: true, confidence_score: 0.98, data_source: 'ecg_patch', quality_flag: 'VERIFIED', notes: 'Autonomic collapse nadir.' },
+  { id: 19, crew_member_id: 1, mission_day: 120, timestamp: '2026-11-15T08:00:00Z', domain: 'cardiovascular', metric_name: 'hrv_rmssd', value: 27, unit: 'ms', baseline_reference: 58, deviation_zscore: -4.1, is_synthetic: true, confidence_score: 0.98, data_source: 'ecg_patch', quality_flag: 'VERIFIED', notes: 'Autonomic tone suppression nadir.' },
   { id: 20, crew_member_id: 1, mission_day: 120, timestamp: '2026-11-15T09:42:00Z', domain: 'cardiovascular', metric_name: 'systolic_bp', value: 88, unit: 'mmHg', baseline_reference: 118, deviation_zscore: -3.8, is_synthetic: true, confidence_score: 0.98, data_source: 'sphygmomanometer', quality_flag: 'VERIFIED', notes: 'Orthostatic presyncope nadir.' },
 
   // Dr. Sarah Chen (id: 2) - Stable Nominal Baseline
@@ -985,7 +985,7 @@ export const DEFAULT_RECONSTRUCTION_INC1: ReconstructionData = {
       node_type: 'MISSING_EVIDENCE',
       title: 'Cerebral Tissue Oxygenation (NIRS)',
       description: 'Forehead near-infrared spectroscopy patch was not active during equipment bay transit.',
-      impact_on_confidence: 'Cerebral perfusion drop during transition confirmed via symptoms and blood pressure collapse, but microvascular brain tissue oxygenation is inferred.',
+      impact_on_confidence: 'Cerebral perfusion drop during transition confirmed via symptoms and blood pressure drop, but microvascular brain tissue oxygenation is inferred.',
       suggested_investigation: 'Review transcranial Doppler flow velocity if orthostatic challenge is repeated.',
     },
   ],
@@ -1194,7 +1194,7 @@ export const DEFAULT_TEMPORAL_ANALYSIS = {
       p_value: 0.012,
       sample_size: 5,
       direction: 'Negative (Vagal withdrawal strongly correlated with blood pressure nadir)',
-      scientific_note: 'Consistent precursor pattern: sleep deprivation followed by autonomic suppression followed by orthostatic collapse.',
+      scientific_note: 'Consistent precursor pattern: sleep deprivation followed by autonomic suppression followed by orthostatic presyncope.',
     },
     {
       pair: 'Workload Hours → PVT Cognitive Latency',

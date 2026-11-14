@@ -191,7 +191,7 @@ export const CommandCenterScreen: React.FC<CommandCenterScreenProps> = ({
                 {selectedCrew.name} — Acute Transient Orthostatic Presyncope Episode
               </h3>
               <p className="text-xs text-slate-300 mt-1 max-w-3xl">
-                Post-egress blood pressure collapse (88/56 mmHg) and compensatory tachycardia (118 bpm) following 72-hour cumulative sleep debt (9.8h deficit) and omitted aerobic countermeasure.
+                Post-egress transient blood pressure drop (88/56 mmHg) and compensatory tachycardia (118 bpm) following 72-hour cumulative sleep debt (9.8h deficit) and omitted aerobic countermeasure.
               </p>
             </div>
           </div>
