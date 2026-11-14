@@ -1164,6 +1164,30 @@ class MosaicSeeder extends Seeder
             'transmitted_at' => null,
         ]);
 
+        GroundCommunication::create([
+            'packet_id' => 'GND-COM-ARES4-118-002',
+            'crew_member_id' => $marcus->id,
+            'incident_id' => $incidentMarcus->id,
+            'title' => 'Operational Health Brief: Lead Engineer Marcus Vance Hypercapnia & Cephalalgia',
+            'clinical_summary' => 'Lead Flight Engineer Marcus Vance reported severe bilateral temporal throbbing headache and ocular fatigue during 12-hour continuous coolant loop maintenance under elevated cabin CO2 (3.5 mmHg).',
+            'sbar_situation' => 'Marcus Vance reported bilateral temporal throbbing cephalalgia and ocular fatigue on Day 118 at 19:15 MET following a continuous 12-hour coolant loop overhaul in Node 2.',
+            'sbar_background' => 'Localized cabin CO2 concentration rose to 3.5 mmHg behind the maintenance rack. Sleep duration was curtailed to 6.0 hours (vs 7.5h baseline). Blood pressure remained normal at 124/80 mmHg with resting HR 66 bpm.',
+            'sbar_assessment' => 'Hypercapnic and ergonomic cephalic tension secondary to confined-space maintenance with localized stagnant ventilation and circadian shift delay.',
+            'sbar_recommendation' => 'Enforce mandatory 8-hour daily cap on Node 2 pressurized maintenance, active ECLSS cabin duct scrub to < 1.8 mmHg, and 8 hours of uninterrupted rest cycle.',
+            'evidence_ledger_ids' => [
+                'EVT-116-1800-WRK',
+                'EVT-117-1400-ENV',
+                'EVT-118-0600-SLP',
+                'EVT-118-1200-ENV',
+                'EVT-118-1915-INC'
+            ],
+            'data_limitations' => 'No continuous cerebral near-infrared spectroscopy was worn during the 12-hour maintenance shift.',
+            'questions_for_ground' => '1. Should ECLSS duct velocity booster be permanently re-routed through Node 2 rack B? 2. Request ground concurrence on resuming routine duty at Day 119 morning checkout.',
+            'review_priority' => 'PRIORITY',
+            'sync_status' => 'QUEUED_LOCAL',
+            'transmitted_at' => null,
+        ]);
+
         // 8. Sync Telemetry (Module G)
         SyncTelemetry::create([
             'last_successful_sync_at' => $baseDate->copy()->addDays(119)->addHours(20)->addMinutes(58),

@@ -151,7 +151,12 @@ export default function App() {
             )}
 
             {currentScreen === 'incident_reconstruction' && (
-              <IncidentReconstructionScreen onNavigate={setCurrentScreen} />
+              <IncidentReconstructionScreen
+                onNavigate={setCurrentScreen}
+                selectedCrew={selectedCrew}
+                onSelectCrew={setSelectedCrew}
+                crewMembers={crewMembers}
+              />
             )}
 
             {currentScreen === 'scenario_sandbox' && (

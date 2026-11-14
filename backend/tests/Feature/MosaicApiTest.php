@@ -123,6 +123,21 @@ class MosaicApiTest extends TestCase
             ->assertJsonPath('communication.sync_status', 'QUEUED_LOCAL');
     }
 
+    public function test_marcus_vance_ground_communication_and_incident_link(): void
+    {
+        $marcus = CrewMember::where('name', 'like', '%Marcus Vance%')->first();
+        $this->assertNotNull($marcus);
+
+        $comms = GroundCommunication::where('crew_member_id', $marcus->id)->first();
+        $this->assertNotNull($comms);
+        $this->assertEquals('GND-COM-ARES4-118-002', $comms->packet_id);
+        $this->assertEquals('QUEUED_LOCAL', $comms->sync_status);
+
+        $transmitResp = $this->postJson("/api/ground-comms/{$comms->id}/transmit");
+        $transmitResp->assertStatus(200)
+            ->assertJsonPath('communication.sync_status', 'TRANSMITTING');
+    }
+
     public function test_temporal_relationship_analysis(): void
     {
         $alex = CrewMember::where('name', 'like', '%Alex Morgan%')->first();

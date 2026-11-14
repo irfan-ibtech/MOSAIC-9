@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Incident, ReconstructionData, EvidenceNode } from '../types';
+import { Incident, ReconstructionData, EvidenceNode, CrewMember } from '../types';
 import { ScreenId } from '../components/layout/Sidebar';
 import { mosaicApi } from '../services/api';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { EvidencePill } from '../components/common/EvidencePill';
 import {
   DEFAULT_INCIDENTS,
+  DEFAULT_CREW_MEMBERS,
   DEFAULT_RECONSTRUCTION_INC1,
   DEFAULT_RECONSTRUCTION_INC2,
 } from '../data/initialData';
@@ -27,26 +28,43 @@ import {
 
 interface IncidentReconstructionScreenProps {
   onNavigate: (screen: any) => void;
+  selectedCrew?: CrewMember | null;
+  onSelectCrew?: (crew: CrewMember) => void;
+  crewMembers?: CrewMember[];
 }
 
-export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreenProps> = ({ onNavigate }) => {
+export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreenProps> = ({
+  onNavigate,
+  selectedCrew,
+  onSelectCrew,
+  crewMembers,
+}) => {
   const [incidents, setIncidents] = useState<Incident[]>(DEFAULT_INCIDENTS);
-  const [selectedIncidentId, setSelectedIncidentId] = useState<number>(1);
+  const displayIncidents = incidents && incidents.length > 0 ? incidents : DEFAULT_INCIDENTS;
+
+  // Determine initial incident from selected crew member if matched
+  const initialIncident =
+    displayIncidents.find((i) => i.crew_member_id === selectedCrew?.id) || displayIncidents[0];
+
+  const [selectedIncidentId, setSelectedIncidentId] = useState<number>(initialIncident.id);
   const [horizonHours, setHorizonHours] = useState<number>(72);
-  const [reconstruction, setReconstruction] = useState<ReconstructionData | null>(DEFAULT_RECONSTRUCTION_INC1);
+  const [reconstruction, setReconstruction] = useState<ReconstructionData | null>(
+    initialIncident.id === 2 ? DEFAULT_RECONSTRUCTION_INC2 : DEFAULT_RECONSTRUCTION_INC1
+  );
   const [loading, setLoading] = useState(false);
   const [activeEvidenceModal, setActiveEvidenceModal] = useState<EvidenceNode | null>(null);
 
-  const displayIncidents = incidents && incidents.length > 0 ? incidents : DEFAULT_INCIDENTS;
-
   useEffect(() => {
     mosaicApi.getIncidents().then((list) => {
-      setIncidents(list || []);
       if (list && list.length > 0) {
-        setSelectedIncidentId(list[0].id);
+        setIncidents(list);
+        const matching = list.find((i) => i.crew_member_id === selectedCrew?.id);
+        if (matching) {
+          setSelectedIncidentId(matching.id);
+        }
       }
     });
-  }, []);
+  }, [selectedCrew?.id]);
 
   useEffect(() => {
     if (selectedIncidentId) {
@@ -109,7 +127,16 @@ export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreen
           <div className="relative">
             <select
               value={selectedIncidentId}
-              onChange={(e) => setSelectedIncidentId(Number(e.target.value))}
+              onChange={(e) => {
+                const incId = Number(e.target.value);
+                setSelectedIncidentId(incId);
+                const targetInc = displayIncidents.find((i) => i.id === incId);
+                if (targetInc && onSelectCrew) {
+                  const list: CrewMember[] = crewMembers && crewMembers.length > 0 ? crewMembers : DEFAULT_CREW_MEMBERS;
+                  const foundMember = list.find((c: CrewMember) => c.id === targetInc.crew_member_id);
+                  if (foundMember) onSelectCrew(foundMember);
+                }
+              }}
               className="appearance-none bg-space-900 border border-space-700 hover:border-cyan-500/60 text-xs text-white rounded-lg pl-3 pr-8 py-2 font-mono focus:outline-none focus:border-cyan-500 cursor-pointer"
             >
               {displayIncidents.map((inc) => (

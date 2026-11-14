@@ -83,4 +83,44 @@ describe('MOSAIC-9 Senior QA Feature Verification Suite', () => {
     const marsRoundTripSeconds = marsOneWayLatencyMinutes * 60 * 2;
     expect(marsRoundTripSeconds).toBe(2520);
   });
+
+  it('validates structured SBAR JSON export payload formatting', () => {
+    const template = ASTRONAUT_SBAR_TEMPLATES[1];
+    const exportPayload = {
+      system: 'MOSAIC-9 Ground Communication Subsystem',
+      mission: 'ARES-IV Mars Transit',
+      met: '2894:15:22',
+      crew_member_id: 1,
+      priority: template.priority,
+      packet: {
+        title: template.title,
+        situation: template.situation,
+        background: template.background,
+        assessment: template.assessment,
+        recommendation: template.recommendation,
+        questions_for_flight_surgeon: template.questions,
+        unmeasured_data_limitations: template.dataLimitations,
+      },
+      exported_at: new Date().toISOString(),
+    };
+
+    expect(exportPayload.system).toContain('MOSAIC-9');
+    expect(exportPayload.packet.title).toContain('Alex Morgan');
+    expect(exportPayload.packet.questions_for_flight_surgeon).toBeDefined();
+    expect(exportPayload.packet.unmeasured_data_limitations).toBeDefined();
+
+    const serialized = JSON.stringify(exportPayload, null, 2);
+    expect(serialized).toContain('questions_for_flight_surgeon');
+  });
+
+  it('verifies incident association matching for all crew members', () => {
+    const incAlex = DEFAULT_INCIDENTS.find((i) => i.crew_member_id === 1);
+    const incMarcus = DEFAULT_INCIDENTS.find((i) => i.crew_member_id === 3);
+
+    expect(incAlex).toBeDefined();
+    expect(incAlex?.incident_code).toBe('INC-ARES4-120-001');
+
+    expect(incMarcus).toBeDefined();
+    expect(incMarcus?.incident_code).toBe('INC-ARES4-118-002');
+  });
 });
