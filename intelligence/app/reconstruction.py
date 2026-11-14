@@ -1,6 +1,6 @@
 """
 MOSAIC-9 Incident Reconstruction Engine
-Reconstructs the multi-day evolutionary sequence preceding a health event.
+Reconstructs the multi-day chronological evidence sequence preceding a health event.
 Categorizes evidence strictly according to the MOSAIC-9 scientific taxonomy.
 """
 
@@ -20,57 +20,75 @@ TAXONOMY = {
 EVIDENCE_TAXONOMY_V2 = {
     "DIRECT_OBSERVATION": {
         "code": "DIRECT_OBSERVATION",
+        "alias_code": "SYNTHETIC_OBSERVATION",
         "legacy_code": "OBSERVED_FACT",
-        "label": "Direct Observation",
-        "description": "Recorded telemetry, symptom report, mission event, or environmental measurement.",
-        "source_attribution": "Onboard Mission Telemetry / Crew Health Log (Synthetic Mission Dataset)",
-        "applicability_level": "DIRECT_MISSION_RECORD",
-        "limitations": "Discrete sampling interval; reflects mission simulation scenario record rather than continuous invasive monitoring.",
+        "label": "Synthetic Observation (Mission Record)",
+        "is_synthetic": True,
+        "description": "Synthetic mission telemetry record, symptom report, mission log event, or cabin sensor reading from the onboard dataset.",
+        "source_attribution": "Synthetic Onboard Mission Telemetry / Crew Health Log (100% Synthetic Mission Dataset)",
+        "applicability_level": "SYNTHETIC_MISSION_RECORD",
+        "limitations": "100% synthetic mission scenario record generated for competition evaluation; does not represent real human astronaut sensor measurements.",
+    },
+    "SYNTHETIC_OBSERVATION": {
+        "code": "SYNTHETIC_OBSERVATION",
+        "alias_code": "DIRECT_OBSERVATION",
+        "legacy_code": "OBSERVED_FACT",
+        "label": "Synthetic Observation (Mission Record)",
+        "is_synthetic": True,
+        "description": "Synthetic mission telemetry record, symptom report, mission log event, or cabin sensor reading from the onboard dataset.",
+        "source_attribution": "Synthetic Onboard Mission Telemetry / Crew Health Log (100% Synthetic Mission Dataset)",
+        "applicability_level": "SYNTHETIC_MISSION_RECORD",
+        "limitations": "100% synthetic mission scenario record generated for competition evaluation; does not represent real human astronaut sensor measurements.",
     },
     "NASA_RESEARCH_CONTEXT": {
         "code": "NASA_RESEARCH_CONTEXT",
         "legacy_code": "NASA_RESEARCH_CONTEXT",
         "label": "NASA Research Context",
+        "is_synthetic": False,
         "description": "Published or curated NASA OSDR or NASA HRP spaceflight evidence relevant to the observed domain.",
         "source_attribution": "NASA Open Science Data Repository (OSDR) / NASA Human Research Program (HRP)",
         "applicability_level": "PUBLISHED_AEROSPACE_EVIDENCE",
-        "limitations": "Contextual reference from prior spaceflight cohorts or cellular studies; does not directly measure the current crew member.",
+        "limitations": "Contextual reference from prior spaceflight cohorts or cellular studies; does not directly measure the current synthetic crew persona.",
     },
     "DERIVED_TEMPORAL_ASSOCIATION": {
         "code": "DERIVED_TEMPORAL_ASSOCIATION",
         "legacy_code": "TEMPORAL_ASSOCIATION",
         "label": "Derived Temporal Association",
-        "description": "Calculated baseline deviation, anomaly sequence, or lead-lag statistical relationship.",
-        "source_attribution": "MOSAIC-9 Deterministic Temporal Engine",
+        "is_synthetic": True,
+        "description": "Calculated baseline deviation, chronological anomaly sequence, or lead-lag statistical relationship.",
+        "source_attribution": "MOSAIC-9 Deterministic Temporal Engine (Computed on Synthetic Telemetry)",
         "applicability_level": "STATISTICAL_CO_MOVEMENT",
-        "limitations": "Computed over finite lookback window (n=5 daily epochs); temporal correlation does not prove mechanistic causation.",
+        "limitations": "Computed over finite lookback window (n=5 daily epochs); temporal association never establishes mechanistic causation.",
     },
     "EXPLORATORY_HYPOTHESIS": {
         "code": "EXPLORATORY_HYPOTHESIS",
         "legacy_code": "POSSIBLE_EXPLANATION",
         "label": "Exploratory Hypothesis",
-        "description": "Candidate explanation supported by observed telemetry and published spaceflight evidence.",
+        "is_synthetic": True,
+        "description": "Candidate explanation supported by chronological synthetic telemetry and published spaceflight evidence.",
         "source_attribution": "MOSAIC-9 Explainable Reasoning Engine + NASA HRP Evidence Mapping",
         "applicability_level": "NON_DIAGNOSTIC_PLAUSIBILITY",
-        "limitations": "Heuristic evidence alignment score (not a calibrated clinical diagnostic probability); requires flight surgeon differential evaluation.",
+        "limitations": "Heuristic qualitative ranking (not a calibrated clinical diagnostic probability); requires flight surgeon differential evaluation.",
     },
     "MISSING_EVIDENCE": {
         "code": "MISSING_EVIDENCE",
         "legacy_code": "MISSING_EVIDENCE",
         "label": "Missing Evidence",
+        "is_synthetic": True,
         "description": "Unmeasured physiological or environmental variable that limits certainty.",
         "source_attribution": "MOSAIC-9 Epistemic Gap Detector",
         "applicability_level": "EPISTEMIC_CONSTRAINT",
-        "limitations": "Sensor modality absent or unacquired during event window; prevents definitive confirmation of downstream mechanism.",
+        "limitations": "Sensor modality absent or unacquired during event window; prevents confirmation of downstream physiological mechanism.",
     },
     "SYNTHETIC_SIMULATION": {
         "code": "SYNTHETIC_SIMULATION",
         "legacy_code": "SYNTHETIC_SIMULATION",
         "label": "Synthetic Simulation",
-        "description": "Scenario projection or synthetic dataset element generated by deterministic physiological models.",
+        "is_synthetic": True,
+        "description": "Scenario projection generated by deterministic parametric models.",
         "source_attribution": "MOSAIC-9 Countermeasure Sandbox Engine",
         "applicability_level": "HYPOTHETICAL_PROJECTION",
-        "limitations": "Deterministic parametric approximation; never represents guaranteed clinical outcomes or real human flight telemetry.",
+        "limitations": "Deterministic parametric approximation; simulation inputs are exploratory parameters, not medical prescriptions or clinical predictions.",
     },
 }
 
@@ -78,54 +96,58 @@ EVIDENCE_TAXONOMY_V2 = {
 NASA_EVIDENCE_REGISTRY: List[Dict[str, Any]] = [
     {
         "study_id": "OSD-575",
-        "accession": "OSD-575 / GLDS-566",
-        "title": "SpaceX Inspiration4 Blood Serum Metabolic Panel and Cytokine Profiling Study",
-        "source_organization": "NASA Open Science Data Repository (OSDR)",
+        "identifier_type": "OFFICIAL_NASA_OSDR_ACCESSION",
+        "accession": "OSD-575 / LSDS-8",
+        "title": "SpaceX Inspiration4 Blood Serum Metabolic Panel and Immune/Cardiac Cytokine Arrays",
+        "source_organization": "NASA Open Science Data Repository (OSDR / ALSDA)",
         "source_type": "NASA_OSDR",
         "study_type": "Human Spaceflight Cohort — Pre/Post-Flight Venous Blood Serum Profiling",
         "organism": "Homo sapiens (4 civilian astronauts, SpaceX Inspiration4 3-day LEO mission, 590 km altitude)",
+        "sample_timepoints": ["L-92", "L-44", "L-3", "R+1", "R+45", "R+82"],
         "domains": ["cardiovascular", "neuro_cognitive_sleep", "musculoskeletal"],
         "assay_types": [
-            "Comprehensive Metabolic Panel (CMP — Quest Diagnostics)",
-            "Multiplex Cytokine/Chemokine Bead Array (Eve Technologies HD71 / Alamar NULISAseq)",
+            "Comprehensive Metabolic Panel (CMP)",
+            "Multiplex Immune and Cardiac Cytokine Arrays",
         ],
-        "doi": "10.1038/s41586-024-07639-y",
-        "publication": "Nature 632, 1145–1154 (2024) — The Space Omics and Medical Atlas (SOMA) and international astronaut biobank",
+        "doi": "10.26030/mc5d-p710",
+        "associated_publication_doi": "10.1038/s41586-024-07639-y",
+        "publication": "NASA OSDR Dataset OSD-575 / LSDS-8 (DOI: 10.26030/mc5d-p710); associated with Space Omics and Medical Atlas (SOMA), Nature 632, 1145–1154 (2024)",
         "osdr_url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-575",
         "api_metadata_url": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-575/",
         "api_files_url": "https://osdr.nasa.gov/osdr/data/osd/files/575",
-        "summary": "Profiles systemic metabolic and inflammatory cytokine shifts across pre-flight (L-92, L-44, L-3) and post-flight (R+1, R+45, R+82) venous serum samples in four Inspiration4 crew members following short-duration orbital spaceflight.",
-        "relevance_to_mosaic": "Provides empirical human spaceflight context linking acute spaceflight physiological stress, fluid-electrolyte shifts, and inflammatory/autonomic recovery kinetics following orbital exposure.",
-        "applicability_note": "HUMAN PRE/POST-FLIGHT SERUM BIOMARKERS — NOT CONTINUOUS WEARABLE TELEMETRY",
-        "limitations": "Samples were collected via venous blood draw pre-flight and post-landing (R+1, R+45, R+82) across n=4 private astronauts on a 3-day LEO mission. Does not provide continuous beat-to-beat in-flight hemodynamic telemetry.",
+        "summary": "Profiles venous blood serum comprehensive metabolic panels and multiplex immune/cardiac cytokine arrays across pre-flight (L-92, L-44, L-3) and post-flight (R+1, R+45, R+82) timepoints in four SpaceX Inspiration4 astronauts.",
+        "relevance_to_mosaic": "Provides empirical human spaceflight context linking short-duration orbital stress, fluid-electrolyte shifts, and post-flight metabolic/cytokine recovery.",
+        "applicability_note": "HUMAN PRE/POST-FLIGHT SERUM BIOMARKERS (LSDS-8) — NOT CONTINUOUS WEARABLE TELEMETRY",
+        "limitations": "Venous serum samples collected at discrete pre-flight (L-92, L-44, L-3) and post-flight (R+1, R+45, R+82) timepoints across n=4 civilian astronauts. Does not provide continuous in-flight wearable hemodynamic telemetry.",
         "files_manifest": [
             {"file_name": "ISA_OSD-575_metadata.zip", "category": "Study Investigation/Assay Metadata (ISA-Tab)"},
-            {"file_name": "OSD-575_CMP_Serum_Metabolic_Panel.csv", "category": "Comprehensive Metabolic Panel Tabular Data"},
-            {"file_name": "OSD-575_Cytokine_Multiplex_Panel.csv", "category": "Serum Cytokine Profiling Data"},
+            {"file_name": "LSDS-8_Comprehensive_Metabolic_Panel_CMP.csv", "category": "Comprehensive Metabolic Panel Tabular Data"},
+            {"file_name": "LSDS-8_Immune_Cardiac_Cytokine_Arrays.csv", "category": "Multiplex Immune/Cardiac Cytokine Data"},
         ],
     },
     {
         "study_id": "OSD-635",
+        "identifier_type": "OFFICIAL_NASA_OSDR_ACCESSION",
         "accession": "OSD-635 / GLDS-608",
         "title": "Spaceflight effects on human vascular smooth muscle cell phenotype and function",
-        "source_organization": "NASA Open Science Data Repository (OSDR)",
+        "source_organization": "NASA Open Science Data Repository (OSDR / GeneLab)",
         "source_type": "NASA_OSDR",
         "study_type": "Cellular / In Vitro Spaceflight Transcriptomics (RNA-Seq on ISS)",
         "organism": "Homo sapiens (Primary Human Aortic Smooth Muscle Cells — HASMCs cultured in microgravity on ISS)",
         "domains": ["cardiovascular"],
         "assay_types": [
             "RNA Sequencing (RNA-Seq Transcriptomics)",
-            "Contractile & Signaling Pathway Enrichment Analysis",
+            "Vascular Smooth Muscle Phenotype & Signaling Pathway Analysis",
         ],
-        "doi": "10.26030/dc7p-2947",
-        "publication": "NASA OSDR Dataset OSD-635 (GLDS-608) — University of Florida / ISS National Lab Cellular Mechanotransduction Study",
+        "doi": "10.26030/8n5a-q187",
+        "publication": "NASA OSDR Dataset OSD-635 / GLDS-608 (Dataset DOI: 10.26030/8n5a-q187)",
         "osdr_url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-635",
         "api_metadata_url": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-635/",
         "api_files_url": "https://osdr.nasa.gov/osdr/data/osd/files/635",
-        "summary": "Investigates primary human aortic smooth muscle cells (HASMCs) cultured in microgravity aboard the ISS for 3 days versus 1g ground controls, identifying >4,400 differentially expressed genes including downregulation of contractile markers (alpha-SMA) and modulation of STAT3, NF-kB, PI3K/AKT, HIF-1a, and endothelin signaling pathways.",
-        "relevance_to_mosaic": "Provides cellular-level mechanistic context for vascular smooth muscle tone adaptation and reduced vasoconstrictive responsiveness under microgravity unloading—a foundational contributor to spaceflight orthostatic intolerance.",
-        "applicability_note": "IN VITRO CELLULAR TRANSCRIPTOMICS — NOT IN VIVO ASTRONAUT HEMODYNAMIC MONITORING",
-        "limitations": "Conducted in isolated primary human aortic smooth muscle cell cultures over 3 days aboard the ISS. Findings represent cellular mechanotransduction pathways in vitro and cannot be extrapolated as direct in vivo astronaut blood pressure measurements.",
+        "summary": "Investigates primary human aortic smooth muscle cells (HASMCs) cultured in microgravity aboard the ISS for 3 days versus ground controls using RNA-sequencing to characterize spaceflight-induced changes in vascular smooth muscle phenotype and signaling.",
+        "relevance_to_mosaic": "Provides cellular-level research context for vascular smooth muscle adaptation under microgravity unloading relevant to cardiovascular deconditioning hypotheses.",
+        "applicability_note": "IN VITRO CELLULAR TRANSCRIPTOMICS (GLDS-608) — NOT IN VIVO ASTRONAUT HEMODYNAMIC MONITORING",
+        "limitations": "Conducted in isolated primary human vascular smooth muscle cell cultures over 3 days aboard the ISS. In vitro cellular transcriptomics cannot be extrapolated as direct in vivo astronaut blood pressure or baroreflex measurements.",
         "files_manifest": [
             {"file_name": "GLDS-608_rna_seq_Normalized_Counts.csv", "category": "RNA-Seq Normalized Expression Matrix"},
             {"file_name": "GLDS-608_differential_expression.csv", "category": "Differential Expression Analysis (Flight vs Ground)"},
@@ -133,87 +155,122 @@ NASA_EVIDENCE_REGISTRY: List[Dict[str, Any]] = [
         ],
     },
     {
+        "study_id": "OSD-571",
+        "identifier_type": "OFFICIAL_NASA_OSDR_ACCESSION",
+        "accession": "OSD-571 / GLDS-563",
+        "title": "SpaceX Inspiration4 Plasma Profiling: Proteomics, EVPs, Metabolomics, cfDNA Sequencing and cfRNA Sequencing Study",
+        "source_organization": "NASA Open Science Data Repository (OSDR / GeneLab)",
+        "source_type": "NASA_OSDR",
+        "study_type": "Human Spaceflight Cohort — Multi-Omics Plasma Profiling",
+        "organism": "Homo sapiens (4 civilian astronauts, SpaceX Inspiration4)",
+        "sample_timepoints": ["L-92", "L-44", "L-3", "R+1", "R+45", "R+82"],
+        "domains": ["cardiovascular", "musculoskeletal"],
+        "assay_types": [
+            "Plasma Proteomics & Extracellular Vesicles/Particles (EVPs)",
+            "Untargeted Plasma Metabolomics",
+            "Cell-Free DNA (cfDNA) & Cell-Free RNA (cfRNA) Sequencing",
+        ],
+        "doi": "10.26030/h3p5-tc29",
+        "associated_publication_doi": "10.1038/s41586-024-07639-y",
+        "publication": "NASA OSDR Dataset OSD-571 / GLDS-563 (Dataset DOI: 10.26030/h3p5-tc29); associated with SOMA, Nature 632, 1145–1154 (2024)",
+        "osdr_url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-571",
+        "api_metadata_url": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-571/",
+        "api_files_url": "https://osdr.nasa.gov/osdr/data/osd/files/571",
+        "summary": "Multi-omic profiling of blood plasma (proteomics, extracellular vesicles and particles, metabolomics, cfDNA, and cfRNA sequencing) across pre- and post-flight timepoints in four SpaceX Inspiration4 crew members.",
+        "relevance_to_mosaic": "Supports contextual biological plausibility for systemic vascular and metabolic remodeling following orbital flight stress.",
+        "applicability_note": "HUMAN PRE/POST-FLIGHT PLASMA OMICS (GLDS-563) — NOT REAL-TIME TELEMETRY",
+        "limitations": "Pre- and post-flight venous plasma sampling across n=4 astronauts; does not measure real-time in-flight autonomic or arterial pressure fluctuations.",
+        "files_manifest": [
+            {"file_name": "GLDS-563_Plasma_Proteomics_Matrix.csv", "category": "Plasma Proteomics & EVP Data"},
+            {"file_name": "GLDS-563_cfDNA_cfRNA_Metadata.zip", "category": "Cell-Free Nucleic Acid & Metabolomics Metadata"},
+        ],
+    },
+    {
         "study_id": "HRP-CV-OI",
-        "accession": "NASA-HRP-CV-2023",
-        "title": "NASA HRP Evidence Report: Risk of Orthostatic Intolerance During Re-Exposure to Gravity",
-        "source_organization": "NASA Human Research Program (HRP)",
+        "identifier_type": "INTERNAL_APP_REFERENCE_ID",
+        "accession": "INTERNAL-REF: HRP-CV-OI (NASA HRR Risk ID i=179)",
+        "title": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes",
+        "source_organization": "NASA Human Research Program (HRP) — Human Research Roadmap",
         "source_type": "NASA_HRP",
         "study_type": "NASA Human System Risk Board Evidence Synthesis",
-        "organism": "Homo sapiens (Career ISS & Shuttle Astronaut Cohorts)",
+        "organism": "Homo sapiens (Career Spaceflight Astronaut Cohorts)",
         "domains": ["cardiovascular"],
-        "assay_types": ["Tilt-Table & Stand Tests", "Beat-to-Beat Arterial Pressure", "Plasma Volume & Autonomic Baroreflex Assessment"],
-        "doi": "NASA/TP-2023-HRP-CV",
-        "publication": "NASA Human Research Roadmap Evidence Book — Cardiovascular Adaptations in Spaceflight",
-        "osdr_url": "https://humanresearchroadmap.nasa.gov/evidence/",
-        "api_metadata_url": "https://humanresearchroadmap.nasa.gov/Risks/",
+        "assay_types": ["Tilt-Table & Stand Orthostatic Tests", "Arterial Pressure & Fluid Shift Assessment", "Autonomic Baroreflex Evaluation"],
+        "doi": "NASA-HRR-RISK-179 (Internal Ref: HRP-CV-OI)",
+        "publication": "NASA Human Research Roadmap — Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (risk.aspx?i=179)",
+        "osdr_url": "https://humanresearchroadmap.nasa.gov/Risks/risk.aspx?i=179",
+        "api_metadata_url": "https://humanresearchroadmap.nasa.gov/Risks/risk.aspx?i=179",
         "api_files_url": "https://humanresearchroadmap.nasa.gov/evidence/",
-        "summary": "Synthesizes spaceflight evidence showing cephalad fluid redistribution, 10–15% plasma volume contraction, attenuated vagal baroreflex sensitivity, and diminished vascular smooth muscle responsiveness contributing to presyncope.",
-        "relevance_to_mosaic": "Directly informs the multi-factorial autonomic and fluid-redistribution hypotheses evaluated during Commander Alex Morgan's Day 120 presyncope reconstruction.",
-        "applicability_note": "CAREER ASTRONAUT COHORT EVIDENCE SYNTHESIS — CONTEXTUAL REFERENCE",
-        "limitations": "Population-level risk synthesis across historical spaceflight missions; individual crew susceptibility varies with countermeasure adherence, sleep state, and fluid loading.",
+        "summary": "Documents spaceflight-induced cephalad fluid redistribution, plasma volume reduction, cardiac and vascular remodeling, and baroreflex attenuation that increase orthostatic intolerance risk during gravitational transitions or operational exertion.",
+        "relevance_to_mosaic": "Contextualizes the autonomic and fluid-redistribution hypotheses evaluated in Commander Alex Morgan's Day 120 presyncope reconstruction.",
+        "applicability_note": "INTERNAL APP ID (HRP-CV-OI) MAPPED TO OFFICIAL NASA HRR RISK i=179 — CONTEXTUAL REFERENCE",
+        "limitations": "HRP-CV-OI is an internal MOSAIC-9 reference ID mapped to NASA HRR Risk i=179. Population-level risk synthesis does not establish single-subject diagnostic certainty.",
         "files_manifest": [],
     },
     {
         "study_id": "HRP-SLEEP-CIRC",
-        "accession": "NASA-HRP-BMed-2023",
-        "title": "NASA HRP Evidence Report: Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload",
-        "source_organization": "NASA Human Research Program (HRP)",
+        "identifier_type": "INTERNAL_APP_REFERENCE_ID",
+        "accession": "INTERNAL-REF: HRP-SLEEP-CIRC (NASA HRR Risk ID i=100)",
+        "title": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload",
+        "source_organization": "NASA Human Research Program (HRP) — Human Research Roadmap",
         "source_type": "NASA_HRP",
         "study_type": "NASA Human System Risk Board Evidence Synthesis",
-        "organism": "Homo sapiens (ISS, Shuttle, and High-Fidelity Analog Crews)",
+        "organism": "Homo sapiens (ISS, Shuttle, and Spaceflight Analog Crews)",
         "domains": ["neuro_cognitive_sleep", "cardiovascular"],
-        "assay_types": ["Wrist Actigraphy", "Psychomotor Vigilance Task (PVT)", "Heart Rate Variability & Salivary Cortisol/Melatonin"],
-        "doi": "NASA/TP-2023-HRP-SLEEP",
-        "publication": "NASA Human Research Roadmap Evidence Book — Behavioral Medicine & Sleep Adaptation",
-        "osdr_url": "https://humanresearchroadmap.nasa.gov/evidence/",
-        "api_metadata_url": "https://humanresearchroadmap.nasa.gov/Risks/",
+        "assay_types": ["Wrist Actigraphy", "Psychomotor Vigilance Task (PVT)", "Autonomic & Circadian Phase Assessments"],
+        "doi": "NASA-HRR-RISK-100 (Internal Ref: HRP-SLEEP-CIRC)",
+        "publication": "NASA Human Research Roadmap — Sleep Loss, Circadian Desynchronization, and Work Overload (risk.aspx?i=100)",
+        "osdr_url": "https://humanresearchroadmap.nasa.gov/Risks/risk.aspx?i=100",
+        "api_metadata_url": "https://humanresearchroadmap.nasa.gov/Risks/risk.aspx?i=100",
         "api_files_url": "https://humanresearchroadmap.nasa.gov/evidence/",
-        "summary": "Documents that astronauts average ~6.0 hours of sleep per night in flight, with acute sleep curtailment (<6h) and high operational workload accelerating Psychomotor Vigilance Task (PVT) lapses and autonomic sympathetic dominance.",
-        "relevance_to_mosaic": "Provides published aerospace evidence linking multi-day sleep restriction (5.4h–4.6h) and operational schedule compression to subsequent PVT latency spikes and reduced vagal tone (HRV RMSSD).",
-        "applicability_note": "PUBLISHED HUMAN SPACEFLIGHT BEHAVIORAL & AUTONOMIC EVIDENCE",
-        "limitations": "Establishes cohort-level risk relationships between sleep debt, cognitive vigilance, and autonomic regulation, but does not prove single-subject causation in isolation.",
+        "summary": "Synthesizes spaceflight behavioral health evidence demonstrating that sleep curtailment, circadian misalignment, and work overload degrade cognitive vigilance (PVT reaction latency) and alter autonomic regulation.",
+        "relevance_to_mosaic": "Provides published aerospace context for multi-day sleep restriction and workload extension preceding cognitive slowing and autonomic strain.",
+        "applicability_note": "INTERNAL APP ID (HRP-SLEEP-CIRC) MAPPED TO OFFICIAL NASA HRR RISK i=100 — CONTEXTUAL REFERENCE",
+        "limitations": "HRP-SLEEP-CIRC is an internal MOSAIC-9 reference ID mapped to NASA HRR Risk i=100. Cohort-level behavioral risk relationships do not prove single-factor causation.",
         "files_manifest": [],
     },
     {
         "study_id": "HRP-AERO-MUSC",
-        "accession": "NASA-HRP-EX-2023",
-        "title": "NASA HRP Evidence Report: Risk of Impaired Performance Due to Reduced Muscle Mass, Strength & Cardiorespiratory Endurance",
-        "source_organization": "NASA Human Research Program (HRP)",
+        "identifier_type": "INTERNAL_APP_REFERENCE_ID",
+        "accession": "INTERNAL-REF: HRP-AERO-MUSC (NASA HRR Muscle & Aerobic Risk Portfolio)",
+        "title": "Risk of Impaired Performance Due to Reduced Muscle Mass, Strength, and Cardiorespiratory Endurance",
+        "source_organization": "NASA Human Research Program (HRP) — Human Research Roadmap",
         "source_type": "NASA_HRP",
         "study_type": "NASA Human System Risk Board Evidence Synthesis",
-        "organism": "Homo sapiens (ISS Long-Duration Astronaut Cohorts)",
+        "organism": "Homo sapiens (Long-Duration Spaceflight Astronaut Cohorts)",
         "domains": ["musculoskeletal", "cardiovascular"],
-        "assay_types": ["Cycle Ergometer VO2peak Grading", "ARED Resistance Telemetry", "Plasma Volume & Stroke Volume Maintenance"],
-        "doi": "NASA/TP-2023-HRP-AERO",
-        "publication": "NASA Human Research Roadmap Evidence Book — Exercise Countermeasures & Conditioning",
+        "assay_types": ["Cycle Ergometer & Treadmill VO2peak Protocols", "ARED Resistive Exercise Tracking", "Cardiorespiratory Conditioning Assessments"],
+        "doi": "NASA-HRR-AERO-MUSC (Internal Ref: HRP-AERO-MUSC)",
+        "publication": "NASA Human Research Roadmap Evidence Catalogue — Muscle Mass, Strength, and Cardiorespiratory Endurance Portfolio",
         "osdr_url": "https://humanresearchroadmap.nasa.gov/evidence/",
-        "api_metadata_url": "https://humanresearchroadmap.nasa.gov/Risks/",
+        "api_metadata_url": "https://humanresearchroadmap.nasa.gov/evidence/",
         "api_files_url": "https://humanresearchroadmap.nasa.gov/evidence/",
-        "summary": "Establishes that consistent aerobic cycle ergometer and resistive exercise countermeasures help preserve stroke volume, plasma volume, and baroreflex responsiveness during prolonged microgravity exposure.",
-        "relevance_to_mosaic": "Explains why skipped or degraded cycle ergometer sessions on Days 118–119 remove an important protective cardiovascular conditioning stimulus prior to Day 120.",
-        "applicability_note": "PUBLISHED SPACEFLIGHT COUNTERMEASURE EVIDENCE",
-        "limitations": "Cohort countermeasure efficacy evidence; acute impact of a single missed session depends on concurrent hydration and autonomic fatigue.",
+        "summary": "Summarizes evidence on skeletal unloading and cardiorespiratory deconditioning in microgravity, and evaluates aerobic cycle ergometer and resistive exercise protocols used to preserve functional capacity.",
+        "relevance_to_mosaic": "Contextualizes the role of abbreviated or omitted cycle ergometer sessions on Days 118–119 as a potential contributing factor in deconditioning.",
+        "applicability_note": "INTERNAL APP ID (HRP-AERO-MUSC) MAPPED TO NASA HRR EVIDENCE CATALOGUE — CONTEXTUAL REFERENCE",
+        "limitations": "HRP-AERO-MUSC is an internal MOSAIC-9 reference ID. Long-duration deconditioning evidence cannot isolate the acute effect of a single missed workout without controlled clinical testing.",
         "files_manifest": [],
     },
     {
         "study_id": "HRP-ENV-CO2",
-        "accession": "NASA-HRP-ENV-2023",
-        "title": "NASA HRP Evidence Report: Risk of Adverse Health & Performance Effects of Elevated Celestial/Spacecraft CO2 & Environmental Stressors",
-        "source_organization": "NASA Human Research Program (HRP)",
+        "identifier_type": "INTERNAL_APP_REFERENCE_ID",
+        "accession": "INTERNAL-REF: HRP-ENV-CO2 (NASA HRR Crewed Vehicle CO2 Risk)",
+        "title": "Risk of Nominal Acute and Chronic Ambient Carbon Dioxide Exposure in Crewed Vehicles Leading to In-Mission Health Effects or Performance Decrements (CO2 Risk)",
+        "source_organization": "NASA Human Research Program (HRP) — Human Research Roadmap",
         "source_type": "NASA_HRP",
-        "study_type": "Spacecraft Environmental Health & Toxicology Evidence Synthesis",
-        "organism": "Homo sapiens (ISS Crew & Chamber Study Cohorts)",
+        "study_type": "Spacecraft Environmental Health Risk Synthesis",
+        "organism": "Homo sapiens (Crewed Spacecraft & Enclosed Habitat Cohorts)",
         "domains": ["environmental", "neuro_cognitive_sleep", "cardiovascular"],
-        "assay_types": ["Spacecraft Cabin ppCO2 Telemetry", "Cerebral Blood Flow / Headache Incidence", "Sleep Architecture & Vigilance Assessment"],
-        "doi": "NASA/TP-2023-HRP-ENV",
-        "publication": "NASA Spacecraft Maximum Allowable Concentrations (SMAC) & HRP Environmental Risk Book",
+        "assay_types": ["Spacecraft Cabin Ambient ppCO2 Monitoring", "Spaceflight Headache & Symptom Logs", "Ventilation & Localized Microclimate Tracking"],
+        "doi": "NASA-HRR-CO2-RISK (Internal Ref: HRP-ENV-CO2)",
+        "publication": "NASA Human Research Roadmap — Risk of Nominal Acute and Chronic Ambient Carbon Dioxide Exposure in Crewed Vehicles (CO2 Risk)",
         "osdr_url": "https://humanresearchroadmap.nasa.gov/evidence/",
-        "api_metadata_url": "https://humanresearchroadmap.nasa.gov/Risks/",
+        "api_metadata_url": "https://humanresearchroadmap.nasa.gov/evidence/",
         "api_files_url": "https://humanresearchroadmap.nasa.gov/evidence/",
-        "summary": "Evaluates crew symptom thresholds during mild-to-moderate spacecraft hypercapnia (ppCO2 > 3.5–4.0 mmHg), documenting cerebral vasodilation, frontal headache propensity, sleep fragmentation, and vigilance decrements.",
-        "relevance_to_mosaic": "Contextualizes Specialist Marcus Vance's Day 118 incident (INC-ARES4-118-002) following CDRA scrubber maintenance when cabin CO2 transiently reached 4.2 mmHg.",
-        "applicability_note": "PUBLISHED SPACECRAFT ENVIRONMENTAL HEALTH EVIDENCE",
-        "limitations": "Individual sensitivity to cabin ppCO2 between 3.5 and 5.0 mmHg shows substantial inter-individual variation; requires correlation with local compartment airflow and crew workload.",
+        "summary": "Evaluates how enclosed spacecraft ambient carbon dioxide levels and localized ventilation pockets interact with cephalad fluid shifts, headache incidence, and operational performance.",
+        "relevance_to_mosaic": "Contextualizes Lead Flight Engineer Marcus Vance's Day 118 19:15 MET incident (INC-ARES4-118-002) during a 12-hour Node 2 coolant loop maintenance shift where synthetic localized cabin CO2 was modeled at 3.5 mmHg.",
+        "applicability_note": "INTERNAL APP ID (HRP-ENV-CO2) — NO UNIVERSAL DETERMINISTIC CO2 HEADACHE THRESHOLD ESTABLISHED",
+        "limitations": "HRP-ENV-CO2 is an internal MOSAIC-9 reference ID. NASA HRR notes wide inter-individual variability and localized air-pocket effects; the 3.5 mmHg value in MOSAIC-9 is a synthetic scenario parameter, not an established universal clinical threshold.",
         "files_manifest": [],
     },
 ]
@@ -256,19 +313,19 @@ def reconstruct_incident_timeline(
         if cat in ["sleep_observation", "workload_observation"]:
             classification = TAXONOMY["DERIVED"]
             taxonomy_v2 = "DERIVED_TEMPORAL_ASSOCIATION"
-            rationale = "Computed index derived from sensor motion and schedule."
+            rationale = "Computed index derived from synthetic sensor motion and schedule logs."
         elif cat in ["environmental_event", "mission_event"]:
             classification = TAXONOMY["ASSOCIATION"]
             taxonomy_v2 = "DERIVED_TEMPORAL_ASSOCIATION"
-            rationale = "External cabin condition coinciding with crew timeline."
+            rationale = "Synthetic cabin environmental condition coinciding with crew timeline."
         elif evt.get("severity") == "CRITICAL":
             classification = TAXONOMY["FACT"]
             taxonomy_v2 = "DIRECT_OBSERVATION"
-            rationale = "Target clinical event observation."
+            rationale = "Target clinical event observation in synthetic mission dataset."
         else:
             classification = TAXONOMY["FACT"]
             taxonomy_v2 = "DIRECT_OBSERVATION"
-            rationale = "Direct sensor telemetry or logged crew symptom report."
+            rationale = "Synthetic mission sensor telemetry or logged crew symptom report."
 
         tax_meta = EVIDENCE_TAXONOMY_V2[taxonomy_v2]
 
@@ -280,6 +337,8 @@ def reconstruct_incident_timeline(
             "hours_before_incident": hours_before,
             "classification": classification,
             "taxonomy_v2": taxonomy_v2,
+            "is_synthetic": True,
+            "synthetic_provenance": "SYNTHETIC_MISSION_DATASET",
             "source_attribution": tax_meta["source_attribution"],
             "applicability_level": tax_meta["applicability_level"],
             "limitations": tax_meta["limitations"],
@@ -300,7 +359,7 @@ def reconstruct_incident_timeline(
             "taxonomy_v2": "MISSING_EVIDENCE",
             "title": "Continuous Cerebral Oximetry (NIRS)",
             "description": "No frontal lobe hemodynamic oximetry sensor was worn during rapid postural shift.",
-            "impact": "Precludes direct optical confirmation of transient cerebral ischemia; inferred via systemic BP collapse.",
+            "impact": "Precludes direct optical confirmation of transient cerebral ischemia; inferred via systemic BP drop.",
             "source_attribution": EVIDENCE_TAXONOMY_V2["MISSING_EVIDENCE"]["source_attribution"],
             "applicability_level": EVIDENCE_TAXONOMY_V2["MISSING_EVIDENCE"]["applicability_level"],
         })
@@ -323,7 +382,7 @@ def reconstruct_incident_timeline(
         "missing_evidence": missing_nodes,
         "evidence_taxonomy_v2": EVIDENCE_TAXONOMY_V2,
         "nasa_research_context": NASA_EVIDENCE_REGISTRY,
-        "scientific_integrity_guarantee": "All links represent temporal proximity and observed telemetry; causation is not assumed.",
+        "scientific_integrity_guarantee": "All links represent chronological sequence and synthetic telemetry co-occurrence; physiological causation is not assumed.",
     }
 
 
@@ -335,7 +394,7 @@ def build_mission_evidence_graph(
 ) -> Dict[str, Any]:
     """
     Constructs an explainable Mission Evidence Graph linking:
-    - Health Incident & Direct Observations (DIRECT_OBSERVATION)
+    - Health Incident & Synthetic Observations (DIRECT_OBSERVATION / SYNTHETIC_OBSERVATION)
     - Derived Temporal Associations (DERIVED_TEMPORAL_ASSOCIATION)
     - Health Domains (HEALTH_DOMAIN)
     - Published NASA OSDR & HRP Evidence (NASA_RESEARCH_CONTEXT)
@@ -350,13 +409,14 @@ def build_mission_evidence_graph(
     inc_id = f"NODE-{incident_code}"
     nodes.append({
         "id": inc_id,
-        "label": "Day 118 CO2 Headache & Fatigue" if is_marcus else "Day 120 Orthostatic Presyncope",
+        "label": "Day 118 19:15 MET Cephalic Tension & Workload Strain" if is_marcus else "Day 120 09:42 MET Orthostatic Presyncope",
         "category": "DIRECT_OBSERVATION",
+        "is_synthetic": True,
         "node_type": "INCIDENT_ANCHOR",
-        "source_attribution": "Onboard Clinical Event Log (Synthetic Mission Dataset)",
+        "source_attribution": "Synthetic Onboard Clinical Event Log (100% Synthetic Mission Dataset)",
         "confidence_or_applicability": 0.99,
-        "provenance": f"Immutable Incident Record {incident_code}",
-        "limitations": "Acute clinical presentation; requires multi-domain precursor synthesis to evaluate contributing factors.",
+        "provenance": f"Immutable Synthetic Incident Record {incident_code}",
+        "limitations": "100% synthetic mission incident record; requires multi-domain precursor synthesis to evaluate contributing factors.",
     })
 
     # 2. Health Domain Nodes
@@ -371,35 +431,37 @@ def build_mission_evidence_graph(
             "id": dom_id,
             "label": dom_label,
             "category": "DERIVED_TEMPORAL_ASSOCIATION",
+            "is_synthetic": True,
             "node_type": "HEALTH_DOMAIN",
             "domain_key": dom_key,
-            "source_attribution": "MOSAIC-9 Multi-Domain Health Twin",
+            "source_attribution": "MOSAIC-9 Multi-Domain Health Twin (Synthetic Dataset)",
             "confidence_or_applicability": 0.95,
             "provenance": f"Aggregated telemetry domain: {dom_key}",
-            "limitations": "Domain-level composite index aggregates heterogeneous wearable and cabin sensors.",
+            "limitations": "Domain-level composite index aggregates synthetic wearable and cabin sensor channels.",
         })
         edges.append({
             "source": dom_id,
             "target": inc_id,
             "relationship": "CONTRIBUTES_DOMAIN_CONTEXT",
             "evidence_tier": "DERIVED_TEMPORAL_ASSOCIATION",
-            "explanation": f"{dom_label} signals converged prior to {incident_code}.",
+            "explanation": f"{dom_label} signals converged chronologically prior to {incident_code}.",
         })
 
-    # 3. Precursor Observation Nodes
+    # 3. Precursor Observation Nodes (Aligned 100% with MosaicSeeder canonical incident records)
     sample_events = preceding_events or (
         [
-            {"event_uid": "EVT-MV-117-CO2", "title": "CDRA Scrubber Maintenance & ppCO2 4.2 mmHg", "domain": "environmental", "classification": "DERIVED_TEMPORAL_ASSOCIATION", "confidence": 0.96},
-            {"event_uid": "EVT-MV-118-SLP", "title": "Fragmented Sleep (5.8h, 4 Awakenings)", "domain": "neuro_cognitive_sleep", "classification": "DIRECT_OBSERVATION", "confidence": 0.94},
-            {"event_uid": "EVT-MV-118-PVT", "title": "PVT Reaction Latency 268 ms (+2.6 sigma)", "domain": "neuro_cognitive_sleep", "classification": "DIRECT_OBSERVATION", "confidence": 0.95},
+            {"event_uid": "EVT-117-1800-WRK", "title": "Coolant Loop Pump Filter Maintenance (8.5h)", "domain": "neuro_cognitive_sleep", "classification": "DERIVED_TEMPORAL_ASSOCIATION", "confidence": 0.95},
+            {"event_uid": "EVT-118-0545-SLP", "title": "Shift-Delayed Sleep Period Curtailed (6.0h vs 7.5h)", "domain": "neuro_cognitive_sleep", "classification": "DERIVED_TEMPORAL_ASSOCIATION", "confidence": 0.95},
+            {"event_uid": "EVT-118-0830-WRK", "title": "Overtime Shift: Secondary Coolant Valve Overhaul (12.0h)", "domain": "neuro_cognitive_sleep", "classification": "DIRECT_OBSERVATION", "confidence": 0.95},
+            {"event_uid": "EVT-118-1630-ENV", "title": "Localized Node 2 CO2 Pocket Elevation (3.5 mmHg)", "domain": "environmental", "classification": "DERIVED_TEMPORAL_ASSOCIATION", "confidence": 0.96},
         ]
         if is_marcus
         else [
-            {"event_uid": "EVT-AM-117-SLP", "title": "Sleep Restriction (5.4h -> 4.6h, 9.8h Debt)", "domain": "neuro_cognitive_sleep", "classification": "DIRECT_OBSERVATION", "confidence": 0.96},
-            {"event_uid": "EVT-AM-118-HRV", "title": "HRV RMSSD Suppression (58ms -> 27ms)", "domain": "cardiovascular", "classification": "DERIVED_TEMPORAL_ASSOCIATION", "confidence": 0.95},
-            {"event_uid": "EVT-AM-119-EX", "title": "Skipped Cycle Ergometer Countermeasure", "domain": "musculoskeletal", "classification": "DIRECT_OBSERVATION", "confidence": 0.99},
-            {"event_uid": "EVT-AM-119-PVT", "title": "PVT Reaction Time Spike (310 ms)", "domain": "neuro_cognitive_sleep", "classification": "DIRECT_OBSERVATION", "confidence": 0.97},
-            {"event_uid": "EVT-AM-120-BP", "title": "Acute Postural BP Drop (88/56 mmHg, HR 118)", "domain": "cardiovascular", "classification": "DIRECT_OBSERVATION", "confidence": 0.98},
+            {"event_uid": "EVT-117-0630-SLP", "title": "Sleep Restriction (5.4h -> 4.6h, 9.8h Logged Debt)", "domain": "neuro_cognitive_sleep", "classification": "DERIVED_TEMPORAL_ASSOCIATION", "confidence": 0.96},
+            {"event_uid": "EVT-120-0800-HRV", "title": "HRV RMSSD Suppression (58ms -> 27ms)", "domain": "cardiovascular", "classification": "DERIVED_TEMPORAL_ASSOCIATION", "confidence": 0.95},
+            {"event_uid": "EVT-119-1000-EXE", "title": "Skipped Cycle Ergometer Countermeasure (0W)", "domain": "musculoskeletal", "classification": "DIRECT_OBSERVATION", "confidence": 0.99},
+            {"event_uid": "EVT-119-1520-MED", "title": "PVT Reaction Time Spike (310 ms)", "domain": "neuro_cognitive_sleep", "classification": "DIRECT_OBSERVATION", "confidence": 0.97},
+            {"event_uid": "EVT-120-0942-INC", "title": "Acute Postural BP Drop (88/56 mmHg, HR 118)", "domain": "cardiovascular", "classification": "DIRECT_OBSERVATION", "confidence": 0.98},
         ]
     )
 
@@ -421,10 +483,11 @@ def build_mission_evidence_graph(
             "id": ev_id,
             "label": evt.get("title", f"Observation {idx+1}"),
             "category": cat_tier,
+            "is_synthetic": True,
             "node_type": "TELEMETRY_OBSERVATION",
             "source_attribution": EVIDENCE_TAXONOMY_V2[cat_tier]["source_attribution"],
             "confidence_or_applicability": evt.get("confidence", 0.95),
-            "provenance": f"Recorded mission event {ev_id}",
+            "provenance": f"Synthetic mission event {ev_id}",
             "limitations": EVIDENCE_TAXONOMY_V2[cat_tier]["limitations"],
         })
         edges.append({
@@ -432,7 +495,7 @@ def build_mission_evidence_graph(
             "target": target_dom,
             "relationship": "OBSERVED_IN_DOMAIN",
             "evidence_tier": cat_tier,
-            "explanation": f"Telemetry observation {ev_id} feeds {target_dom}.",
+            "explanation": f"Synthetic telemetry observation {ev_id} feeds {target_dom}.",
         })
 
     # 4. NASA Research Context Nodes (OSDR + HRP)
@@ -443,6 +506,7 @@ def build_mission_evidence_graph(
             "label": f"{study['study_id']}: {study['title'][:48]}...",
             "full_title": study["title"],
             "category": "NASA_RESEARCH_CONTEXT",
+            "is_synthetic": False,
             "node_type": study["source_type"],
             "study_id": study["study_id"],
             "doi": study["doi"],
@@ -469,22 +533,27 @@ def build_mission_evidence_graph(
     hyps = hypotheses or (
         [
             {
-                "id": "HYP-MV-1",
-                "title": "Mild Hypercapnic Cerebral Vasodilation & Sleep Disruption",
-                "plausibility_score": 0.86,
-            }
+                "id": "HYP-MV-01",
+                "title": "Hypercapnic and Ergonomic Cephalic Strain",
+                "plausibility_score": 0.85,
+            },
+            {
+                "id": "HYP-MV-02",
+                "title": "Autonomic Circadian Disruption from Shift Extension",
+                "plausibility_score": 0.60,
+            },
         ]
         if is_marcus
         else [
             {
-                "id": "HYP-AM-1",
-                "title": "Multi-Factorial Autonomic Decompensation & Fluid Redistribution",
-                "plausibility_score": 0.89,
+                "id": "HYP-01",
+                "title": "Deconditioning-Exacerbated Baroreflex Decompensation",
+                "plausibility_score": 0.88,
             },
             {
-                "id": "HYP-AM-2",
-                "title": "Skipped Aerobic Countermeasure Conditioning Loss",
-                "plausibility_score": 0.76,
+                "id": "HYP-02",
+                "title": "Mild CO2 Induced Cephalic Vasodilation",
+                "plausibility_score": 0.62,
             },
         ]
     )
@@ -494,10 +563,11 @@ def build_mission_evidence_graph(
             "id": h_id,
             "label": hyp.get("title", f"Hypothesis {idx+1}"),
             "category": "EXPLORATORY_HYPOTHESIS",
+            "is_synthetic": True,
             "node_type": "HYPOTHESIS",
             "source_attribution": EVIDENCE_TAXONOMY_V2["EXPLORATORY_HYPOTHESIS"]["source_attribution"],
             "confidence_or_applicability": hyp.get("plausibility_score", 0.85),
-            "provenance": "Heuristic multi-factor evidence alignment model",
+            "provenance": "Heuristic qualitative evidence ranking model (not diagnostic probability)",
             "limitations": EVIDENCE_TAXONOMY_V2["EXPLORATORY_HYPOTHESIS"]["limitations"],
         })
         edges.append({
@@ -527,6 +597,7 @@ def build_mission_evidence_graph(
             "id": m_id,
             "label": m.get("title", f"Missing Evidence {idx+1}"),
             "category": "MISSING_EVIDENCE",
+            "is_synthetic": True,
             "node_type": "EPISTEMIC_GAP",
             "source_attribution": EVIDENCE_TAXONOMY_V2["MISSING_EVIDENCE"]["source_attribution"],
             "confidence_or_applicability": 0.0,
@@ -549,8 +620,8 @@ def build_mission_evidence_graph(
         "nodes": nodes,
         "edges": edges,
         "scientific_disclaimer": (
-            "The Mission Evidence Graph visualizes temporal co-occurrence and contextual NASA literature links. "
-            "OSD-575 represents pre/post-flight human venous serum biomarkers and OSD-635 represents in vitro "
+            "The Mission Evidence Graph visualizes chronological co-occurrence of synthetic mission telemetry and contextual NASA literature links. "
+            "OSD-575 (LSDS-8, DOI: 10.26030/mc5d-p710) represents pre/post-flight human venous serum biomarkers and OSD-635 (GLDS-608, DOI: 10.26030/8n5a-q187) represents in vitro "
             "vascular smooth muscle cell transcriptomics; neither constitutes continuous in-flight wearable telemetry."
         ),
     }

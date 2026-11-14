@@ -96,12 +96,12 @@ flowchart LR
 - **Action:** Inspect the **MISSION EVIDENCE GRAPH** panel and click on node **`NASA-OSD-575`** and **`NASA-OSD-635`** to show source attribution, DOI, organism, and explicit applicability boundaries.
 - **Action:** Click **"START REPLAY"** on the **Mission Event Replay** bar to step chronologically through the stored precursor timestamps.
 - **Visual Callouts:**
-  - 6-tier Evidence Classification Taxonomy pills: `DIRECT_OBSERVATION`, `NASA_RESEARCH_CONTEXT`, `DERIVED_TEMPORAL_ASSOCIATION`, `EXPLORATORY_HYPOTHESIS`, `MISSING_EVIDENCE`, `SYNTHETIC_SIMULATION`.
-  - Mission Evidence Graph connects precursor events, 4 health domains, `OSD-575` (Inspiration4 serum metabolic/cytokine study), `OSD-635` (ISS vascular smooth muscle cell RNA-Seq study), NASA HRP Evidence Reports, hypotheses, and missing measurements.
+  - 6-tier Evidence Classification Taxonomy pills: `SYNTHETIC OBSERVATION (MISSION RECORD)` (`DIRECT_OBSERVATION`), `NASA_RESEARCH_CONTEXT`, `DERIVED_TEMPORAL_ASSOCIATION`, `EXPLORATORY_HYPOTHESIS`, `MISSING_EVIDENCE`, `SYNTHETIC_SIMULATION`.
+  - Mission Evidence Graph connects precursor events, 4 health domains, `OSD-575 / LSDS-8` (Inspiration4 serum metabolic/cytokine study, Dataset DOI `10.26030/mc5d-p710`), `OSD-635 / GLDS-608` (ISS vascular smooth muscle cell RNA-Seq study, Dataset DOI `10.26030/8n5a-q187`), NASA HRP Risk records (`risk.aspx?i=179`, `risk.aspx?i=100`), hypotheses, and missing measurements.
 - **Spoken Script:**
   > *"This is MOSAIC-9’s signature capability: Incident Multi-Domain Reconstruction and the Mission Evidence Graph.
-  > Adjusting the lookback window from 6 hours to 72 hours reconstructs all 12 precursor nodes. In the Mission Evidence Graph, we link onboard telemetry directly to published NASA Open Science Data Repository studies—such as OSD-575 from the Inspiration4 cohort and OSD-635 on human vascular smooth muscle cells in microgravity—while explicitly noting that OSD-575 is pre/post-flight serum data and OSD-635 is in vitro cellular transcriptomics, not continuous wearable telemetry.
-  > Using Mission Event Replay, we can also step chronologically through every stored timestamp to watch the anomaly chain unfold."*
+  > Adjusting the lookback window from 6 hours to 72 hours reconstructs all 12 precursor nodes. In the Mission Evidence Graph, we link synthetic onboard telemetry directly to published NASA Open Science Data Repository studies—such as OSD-575 (LSDS-8) from the Inspiration4 cohort and OSD-635 (GLDS-608) on human vascular smooth muscle cells in microgravity—while explicitly noting that OSD-575 is pre/post-flight serum data and OSD-635 is in vitro cellular transcriptomics, not continuous wearable telemetry.
+  > Using Mission Event Replay, we can also step chronologically through every stored timestamp to watch the anomaly sequence unfold without claiming chronological order proves clinical causation."*
 
 ---
 

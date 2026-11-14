@@ -52,12 +52,12 @@ COLLECT ➔ VALIDATE ➔ CONTEXTUALIZE ➔ ANALYZE ➔ RECONSTRUCT ➔ EXPLAIN �
 
 Every piece of evidence in MOSAIC-9 is strictly classified to maintain complete scientific integrity:
 
-- **`DIRECT_OBSERVATION` (`OBSERVED_FACT`)** *(Cyan)*: Recorded telemetry, symptom report, mission event, or environmental measurement from the synthetic mission dataset.
-- **`NASA_RESEARCH_CONTEXT`** *(Indigo)*: Published or curated NASA OSDR (`OSD-575`, `OSD-635`, `OSD-571`) or NASA HRP spaceflight evidence relevant to the observed domain.
+- **`SYNTHETIC_OBSERVATION` / `DIRECT_OBSERVATION` (`OBSERVED_FACT`)** *(Cyan)*: Simulated crew telemetry, symptom report, mission event, or environmental measurement from the 100% synthetic ARES-IV mission dataset (`Synthetic Observation (Mission Record)` — not real astronaut flight telemetry).
+- **`NASA_RESEARCH_CONTEXT`** *(Indigo)*: Published or curated NASA OSDR (`OSD-575 / LSDS-8`, `OSD-571 / GLDS-563`, `OSD-635 / GLDS-608`) or NASA HRP spaceflight evidence relevant to the observed domain.
 - **`DERIVED_TEMPORAL_ASSOCIATION` (`DERIVED_INDICATOR` / `TEMPORAL_ASSOCIATION`)** *(Amber/Blue)*: Calculated baseline deviation, anomaly sequence, or lead-lag statistical relationship over finite lookback windows ($n=5$).
 - **`EXPLORATORY_HYPOTHESIS` (`POSSIBLE_EXPLANATION`)** *(Purple)*: Candidate non-diagnostic explanation supported by observed telemetry and published spaceflight evidence.
 - **`MISSING_EVIDENCE`** *(Rose Dashed)*: Unmeasured physiological or environmental variable that limits certainty and penalizes heuristic confidence.
-- **`SYNTHETIC_SIMULATION`** *(Teal)*: Scenario projection, multi-objective trade-off score, or parameter sensitivity curve (`SIMULATED DATA — NOT A CLINICAL RECOMMENDATION`).
+- **`SYNTHETIC_SIMULATION`** *(Teal)*: Scenario projection, multi-objective trade-off score, or parameter sensitivity curve (`SCENARIO INPUT | SIMULATED OUTPUT | HUMAN REVIEW REQUIRED | NOT A CLINICAL RECOMMENDATION`).
 
 ---
 
@@ -154,8 +154,16 @@ MOSAIC-9 includes two coherent multi-day incident scenarios calibrated to NASA H
 
 ## 8. Scientific Integrity & NASA Research Context
 
-- **NASA Open Science Data Repository (OSDR):** Integrates real published study metadata and file manifests from **`OSD-575`** (*SpaceX Inspiration4 Blood Serum Metabolic Panel and Cytokine Profiling Study*, *Nature* 2024, DOI `10.1038/s41586-024-07639-y`), **`OSD-635` (`GLDS-608`)** (*Spaceflight effects on human vascular smooth muscle cell phenotype and function*, DOI `10.26030/dc7p-2947`), and **`OSD-571`** (*SpaceX Inspiration4 Blood Plasma Proteomics & Metabolomics*). Explicitly distinguishes `OSD-575` (pre/post-flight human venous serum biomarkers across 4 astronauts) and `OSD-635` (*in vitro* vascular smooth muscle cell RNA-Seq on the ISS) from continuous wearable astronaut telemetry.
-- **NASA Human Research Program (HRP):** Directly addresses the *Risk of Orthostatic Intolerance*, *Risk of Performance Decrements from Sleep Loss, Circadian Desynchronization, and Work Overload*, *Reduced Cardiorespiratory/Musculoskeletal Fitness*, and *Elevated Spacecraft $\text{CO}_2$ Exposure*.
+- **NASA Open Science Data Repository (OSDR):** Integrates verified study metadata and file manifests from:
+  - **`OSD-575` (`LSDS-8`)**: *SpaceX Inspiration4 Blood Serum Metabolic Panel and Immune/Cardiac Cytokine Arrays* (Dataset DOI: `10.26030/mc5d-p710`; associated SOMA publication DOI: `10.1038/s41586-024-07639-y`, 4 astronauts across timepoints `L-92, L-44, L-3, R+1, R+45, R+82`).
+  - **`OSD-571` (`GLDS-563`)**: *SpaceX Inspiration4 Plasma Profiling: Proteomics, EVPs, Metabolomics, cfDNA Sequencing and cfRNA Sequencing Study* (Dataset DOI: `10.26030/h3p5-tc29`; distinct from `OSD-570 / GLDS-562`).
+  - **`OSD-635` (`GLDS-608`)**: *Spaceflight effects on human vascular smooth muscle cell phenotype and function* (Dataset DOI: `10.26030/8n5a-q187`).
+  - Explicitly distinguishes `OSD-575` and `OSD-571` (pre/post-flight human venous serum/plasma biomarkers across 4 astronauts) and `OSD-635` (*in vitro* vascular smooth muscle cell RNA-Seq on the ISS) from continuous wearable astronaut telemetry.
+- **NASA Human Research Program (HRP):** Maps internal application reference IDs (`HRP-CV-OI`, `HRP-SLEEP-CIRC`, `HRP-AERO-MUSC`, `HRP-ENV-CO2`) to official NASA Human Research Roadmap (HRR) Risk records:
+  - *Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes* (`https://humanresearchroadmap.nasa.gov/Risks/risk.aspx?i=179`)
+  - *Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload* (`https://humanresearchroadmap.nasa.gov/Risks/risk.aspx?i=100`)
+  - *Risk of Impaired Performance Due to Reduced Muscle Mass, Strength, and Cardiorespiratory Endurance* (`https://humanresearchroadmap.nasa.gov/evidence/`)
+  - *Risk of Nominal Acute and Chronic Ambient Carbon Dioxide Exposure in Crewed Vehicles Leading to In-Mission Health Effects or Performance Decrements (CO2 Risk)* (`https://humanresearchroadmap.nasa.gov/evidence/`)
 - **NASA DONKI Context:** Distinguishes external space weather radiation alerts from an astronaut's tissue-absorbed internal dose.
 - **100% Synthetic Crew Telemetry:** All astronaut names, mission telemetry streams, and incidents are synthetic models. No private medical records are accessed.
 

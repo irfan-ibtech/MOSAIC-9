@@ -223,10 +223,19 @@ def test_nasa_evidence_registry_and_taxonomy_v2():
         assert "source_attribution" in EVIDENCE_TAXONOMY_V2[tier]
         assert "limitations" in EVIDENCE_TAXONOMY_V2[tier]
 
-    # Verify OSD-575 and OSD-635 are present with accurate scientific attribution and limitations
+    # Verify OSD-575, OSD-571, and OSD-635 are present with accurate OSDR dataset DOIs, accessions, and limitations
     study_ids = {s["study_id"]: s for s in NASA_EVIDENCE_REGISTRY}
     assert "OSD-575" in study_ids
+    assert "OSD-571" in study_ids
     assert "OSD-635" in study_ids
+    assert "LSDS-8" in study_ids["OSD-575"]["accession"]
+    assert study_ids["OSD-575"]["doi"] == "10.26030/mc5d-p710"
+    assert study_ids["OSD-575"]["sample_timepoints"] == ["L-92", "L-44", "L-3", "R+1", "R+45", "R+82"]
+    assert "GLDS-563" in study_ids["OSD-571"]["accession"]
+    assert study_ids["OSD-571"]["doi"] == "10.26030/h3p5-tc29"
+    assert "GLDS-608" in study_ids["OSD-635"]["accession"]
+    assert study_ids["OSD-635"]["doi"] == "10.26030/8n5a-q187"
+    assert study_ids["HRP-CV-OI"]["identifier_type"] == "INTERNAL_APP_REFERENCE_ID"
     assert "Inspiration4" in study_ids["OSD-575"]["title"]
     assert "NOT CONTINUOUS" in study_ids["OSD-575"]["applicability_note"]
     assert "smooth muscle" in study_ids["OSD-635"]["title"].lower()
@@ -285,6 +294,12 @@ def test_sensitivity_analysis_and_boundary_conditions():
     assert sens["perturbation_percentage"] == 25.0
     assert len(sens["parameter_sensitivities"]) == 5
     assert sens["most_influential_parameter"] != "NONE"
+
+    # Zero-variance perturbation test (0% perturbation must produce 0.0 swing)
+    sens_zero = analyze_parameter_sensitivity(baseline, current, inputs, perturbation_pct=0.0)
+    assert sens_zero["perturbation_percentage"] == 0.0
+    for p in sens_zero["parameter_sensitivities"]:
+        assert p["outcome_swing"] == 0.0
 
     # Boundary condition test: extreme zero / negative inputs
     extreme_sim = simulate_countermeasure_trajectory(

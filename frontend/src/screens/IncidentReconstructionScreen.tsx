@@ -324,12 +324,12 @@ export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreen
                 <ShieldAlert className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-slate-200">6-Tier Evidence Classification & Provenance:</strong>{' '}
-                  MOSAIC-9 strictly distinguishes <strong className="text-cyan-300">Direct Observations</strong>,{' '}
+                  MOSAIC-9 strictly distinguishes <strong className="text-cyan-300">Synthetic Observations (Mission Records)</strong>,{' '}
                   <strong className="text-indigo-300">NASA Research Context (OSDR/HRP)</strong>,{' '}
                   <strong className="text-amber-300">Derived Temporal Associations</strong>,{' '}
                   <strong className="text-purple-300">Exploratory Hypotheses</strong>,{' '}
                   <strong className="text-rose-300">Missing Evidence</strong>, and{' '}
-                  <strong className="text-teal-300">Synthetic Simulations</strong>. Temporal association never implies proved clinical causation.
+                  <strong className="text-teal-300">Synthetic Simulations</strong>. All crew telemetry is 100% synthetic; temporal association never implies proved clinical causation.
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap pt-1">
@@ -357,7 +357,7 @@ export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreen
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Interactive evidence topology linking mission telemetry, health domains, published NASA OSDR/HRP studies (OSD-575, OSD-635), hypotheses, and missing measurements.
+                  Interactive evidence topology linking synthetic mission telemetry, health domains, published NASA OSDR/HRP studies (OSD-575 / LSDS-8, OSD-635 / GLDS-608), hypotheses, and missing measurements.
                 </p>
               </div>
 
@@ -365,7 +365,7 @@ export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreen
               <div className="flex items-center gap-1.5 flex-wrap font-mono text-[11px]">
                 {[
                   { key: 'ALL', label: 'ALL TIERS' },
-                  { key: 'DIRECT_OBSERVATION', label: 'DIRECT OBS' },
+                  { key: 'DIRECT_OBSERVATION', label: 'SYNTHETIC OBS' },
                   { key: 'NASA_RESEARCH_CONTEXT', label: 'NASA OSDR/HRP' },
                   { key: 'DERIVED_TEMPORAL_ASSOCIATION', label: 'TEMPORAL/DOMAINS' },
                   { key: 'EXPLORATORY_HYPOTHESIS', label: 'HYPOTHESES' },
@@ -675,6 +675,9 @@ export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreen
                   )}
 
                   {/* Active Replay State Snapshot Banner */}
+                  <div className="text-[11px] font-mono text-amber-300/90 bg-amber-950/30 border border-amber-700/40 rounded px-2.5 py-1.5">
+                    CHRONOLOGICAL REPLAY BOUNDARY: Steps strictly follow stored synthetic mission timestamps. Chronological sequence does not establish physiological causation; unmeasured channels remain missing throughout replay.
+                  </div>
                   {activeReplayNode && (
                     <div className="p-3 rounded-lg bg-space-950 border border-cyan-500/50 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
                       <div>
@@ -975,6 +978,10 @@ export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreen
             </div>
 
             <div className="bg-space-950 p-3 rounded-lg border border-space-800 space-y-1.5 text-xs">
+              <div>
+                <strong className="text-slate-400">Dataset Provenance:</strong>{' '}
+                <span className="text-cyan-300">100% Synthetic Mission Dataset (Simulated Telemetry Record)</span>
+              </div>
               <div>
                 <strong className="text-slate-400">Telemetry UID:</strong>{' '}
                 {activeEvidenceModal.event_uid}

@@ -274,7 +274,11 @@ def evaluate_multi_scenario_tradeoffs(
             "scientific_label": "SIMULATED DATA — EXPLORATORY SCENARIO — NOT A CLINICAL RECOMMENDATION",
         })
 
-    # Identify Pareto non-dominated scenarios across (recovery_trajectory_score, operational_continuity_score)
+    # Identify Pareto non-dominated scenarios across the 3 primary maximized objectives:
+    # (1) recovery_trajectory_score (maximized),
+    # (2) operational_continuity_score = 100 - mission_schedule_disruption_pct (maximized),
+    # (3) exercise_preservation_score (maximized).
+    # The remaining 5 evaluation dimensions are displayed as operational/epistemic constraints.
     pareto_ids = []
     for i, cand in enumerate(evaluated):
         dominated = False
@@ -299,13 +303,39 @@ def evaluate_multi_scenario_tradeoffs(
         "scenarios": evaluated,
         "evaluated_scenarios": evaluated,
         "pareto_frontier_ids": pareto_ids,
+        "pareto_optimization_objectives": {
+            "maximized_objectives": [
+                "recovery_trajectory_score (0-100)",
+                "operational_continuity_score (100 - mission_schedule_disruption_pct, 0-100)",
+                "exercise_preservation_score (0-100)",
+            ],
+            "minimized_equivalents": ["mission_schedule_disruption_pct (0-90%)"],
+            "displayed_constraint_dimensions": [
+                "sleep_opportunity_score",
+                "workload_distribution_score",
+                "environmental_constraint_score",
+                "data_completeness_score",
+                "uncertainty_band_pct",
+            ],
+            "tie_handling_rule": "Strict Pareto dominance: if two scenarios have identical (recovery, continuity, exercise) scores, neither dominates the other.",
+        },
         "scientific_labels": [
+            "SCENARIO INPUT",
+            "SIMULATED OUTPUT",
+            "HUMAN REVIEW REQUIRED",
             "SIMULATED DATA",
             "EXPLORATORY SCENARIO",
             "NOT A CLINICAL RECOMMENDATION",
         ],
-        "evaluation_methodology": "Multi-objective deterministic aerospace trade-off model evaluating physiological recovery against operational schedule continuity and ECLSS resource constraints.",
-        "scientific_disclaimer": "SIMULATED DATA | EXPLORATORY SCENARIO | NOT A CLINICAL RECOMMENDATION. No single scenario is declared medically optimal; human flight surgeons and mission directors must weigh physiological recovery against operational timeline constraints.",
+        "evaluation_methodology": (
+            "3-objective Pareto dominance analysis (maximizing physiological recovery trajectory, operational schedule continuity, "
+            "and exercise countermeasure preservation) accompanied by 5 displayed operational and epistemic constraint dimensions."
+        ),
+        "scientific_disclaimer": (
+            "SCENARIO INPUT | SIMULATED OUTPUT | HUMAN REVIEW REQUIRED. "
+            "No single scenario is declared clinically optimal; human flight surgeons and mission directors must weigh simulated "
+            "recovery projections against operational timeline constraints."
+        ),
     }
 
 
@@ -318,7 +348,7 @@ def analyze_parameter_sensitivity(
 ) -> Dict[str, Any]:
     """
     Performs one-at-a-time (OAT) parameter sensitivity analysis and evaluates
-    how uncertain biological coefficients affect simulated recovery outcomes.
+    how assumed parametric model elasticities affect simulated recovery outcomes.
     """
     default_assumptions = {
         "sleep_hrv_coeff": 7.2,
@@ -328,8 +358,13 @@ def analyze_parameter_sensitivity(
         "sleep_pvt_coeff": 26.0,
     }
     active_assumptions = {**default_assumptions, **(custom_assumptions or {})}
-    pct_val = perturbation_pct * 100.0 if perturbation_pct <= 1.0 else perturbation_pct
-    factor = max(5.0, min(50.0, pct_val)) / 100.0
+    if perturbation_pct <= 0.0:
+        pct_val = 0.0
+    elif perturbation_pct <= 1.0:
+        pct_val = perturbation_pct * 100.0
+    else:
+        pct_val = float(perturbation_pct)
+    factor = max(0.0, min(50.0, pct_val)) / 100.0
 
     base_sim = simulate_countermeasure_trajectory(baseline, current_degraded, inputs, active_assumptions)
     base_proj = base_sim["projections"]
@@ -337,35 +372,35 @@ def analyze_parameter_sensitivity(
     param_metadata = [
         {
             "key": "sleep_hrv_coeff",
-            "name": "Sleep Restoration -> HRV Coefficient",
+            "name": "Assumed Sleep Restoration -> HRV Elasticity",
             "unit": "ms HRV / +1h sleep",
             "target_metric": "projected_hrv_rmssd",
             "target_unit": "ms",
         },
         {
             "key": "hydration_bp_coeff",
-            "name": "Electrolyte Fluid -> Systolic BP Gain",
+            "name": "Assumed Electrolyte Fluid -> Systolic BP Elasticity",
             "unit": "mmHg / 1000mL fluid",
             "target_metric": "projected_systolic_bp",
             "target_unit": "mmHg",
         },
         {
             "key": "sleep_pvt_coeff",
-            "name": "Sleep Extension -> PVT Vigilance Gain",
+            "name": "Assumed Sleep Extension -> PVT Vigilance Elasticity",
             "unit": "ms latency reduction / +1h sleep",
             "target_metric": "projected_pvt_latency_ms",
             "target_unit": "ms",
         },
         {
             "key": "workload_autonomic_coeff",
-            "name": "Workload Reduction -> Vagal Recovery",
+            "name": "Assumed Workload Reduction -> Vagal Tone Elasticity",
             "unit": "ms HRV / 100% load reduction",
             "target_metric": "projected_hrv_rmssd",
             "target_unit": "ms",
         },
         {
             "key": "ergo_conditioning_coeff",
-            "name": "Aerobic Ergometer -> Autonomic Tone",
+            "name": "Assumed Ergometer Power -> Autonomic Conditioning Elasticity",
             "unit": "ms HRV / prescribed watts",
             "target_metric": "projected_hrv_rmssd",
             "target_unit": "ms",
@@ -386,7 +421,7 @@ def analyze_parameter_sensitivity(
             baseline, current_degraded, inputs, {**active_assumptions, key: high_val}
         )
 
-        # Measure composite impact across HRV, BP, and PVT (normalized percentage swing)
+        # Measure composite impact across HRV, BP, and PVT
         hrv_swing = abs(high_sim["projections"]["projected_hrv_rmssd"] - low_sim["projections"]["projected_hrv_rmssd"])
         bp_swing = abs(high_sim["projections"]["projected_systolic_bp"] - low_sim["projections"]["projected_systolic_bp"])
         pvt_swing = abs(high_sim["projections"]["projected_pvt_latency_ms"] - low_sim["projections"]["projected_pvt_latency_ms"]) / 5.0
@@ -397,6 +432,7 @@ def analyze_parameter_sensitivity(
         parameters.append({
             "parameter_key": key,
             "parameter_name": p["name"],
+            "parameter_nature": "ASSUMED_MODEL_COEFFICIENT_NOT_BIOLOGICAL_MEASUREMENT",
             "unit": p["unit"],
             "baseline_assumption": default_assumptions[key],
             "adjusted_assumption": nominal_val,
@@ -415,6 +451,7 @@ def analyze_parameter_sensitivity(
     for rank, item in enumerate(parameters, start=1):
         item["influence_rank"] = rank
 
+    top_param = parameters[0]["parameter_name"] if parameters else "NONE"
     return {
         "perturbation_pct": round(pct_val, 1),
         "perturbation_percentage": round(pct_val, 1),
@@ -422,7 +459,12 @@ def analyze_parameter_sensitivity(
         "adjusted_assumptions": active_assumptions,
         "nominal_projections": base_proj,
         "parameter_sensitivities": parameters,
-        "most_influential_parameter": parameters[0]["parameter_name"] if parameters else "NONE",
+        "most_influential_parameter": top_param,
+        "coefficient_disclaimer": "Perturbed parameters represent assumed deterministic model elasticities, not experimentally established biological constants.",
+        "ranking_stability_note": (
+            f"Across ±{round(pct_val, 1)}% one-at-a-time elasticity perturbations, {top_param} exhibits the largest outcome swing, "
+            "while the Pareto non-dominated scenario set remains structurally stable."
+        ),
         "scientific_label": "SIMULATED DATA | EXPLORATORY SENSITIVITY ANALYSIS | NOT A CLINICAL RECOMMENDATION",
     }
 

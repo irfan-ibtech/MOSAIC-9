@@ -8,6 +8,7 @@ export type EvidenceClassification =
   | 'MISSING_EVIDENCE'
   | 'RECOMMENDED_REVIEW'
   | 'DIRECT_OBSERVATION'
+  | 'SYNTHETIC_OBSERVATION'
   | 'NASA_RESEARCH_CONTEXT'
   | 'DERIVED_TEMPORAL_ASSOCIATION'
   | 'EXPLORATORY_HYPOTHESIS'
@@ -16,6 +17,7 @@ export type EvidenceClassification =
 export interface NasaStudyRecord {
   study_id: string;
   accession: string;
+  identifier_type?: string;
   title: string;
   source_organization: string;
   source_type: 'NASA_OSDR' | 'NASA_HRP' | 'NASA_DONKI';
@@ -23,14 +25,16 @@ export interface NasaStudyRecord {
   study_category: string;
   organism: string;
   population_type: string;
+  sample_timepoints?: string[];
   domains: string[];
   assay_types: string[];
   doi: string;
+  publication_doi?: string;
   publication: string;
   osdr_url: string;
   api_metadata_url: string;
   api_files_url: string;
-  retrieval_status: 'LIVE_NASA_OSDR_API' | 'CACHED_VERIFIED' | 'CURATED_REFERENCE';
+  retrieval_status: 'LIVE_NASA_OSDR_API' | 'CACHED_VERIFIED' | 'CURATED_REFERENCE' | 'LOCALLY_CURATED_SUMMARY';
   summary: string;
   relevance_to_mosaic: string;
   applicability_note: string;
@@ -48,6 +52,7 @@ export interface EvidenceGraphNode {
   full_title?: string;
   category: EvidenceClassification;
   node_type: string;
+  is_synthetic?: boolean;
   domain_key?: string;
   study_id?: string;
   doi?: string;

@@ -131,20 +131,34 @@ describe('MOSAIC-9 Senior QA Feature Verification Suite', () => {
     expect(incMarcus?.incident_code).toBe('INC-ARES4-118-002');
   });
 
-  it('verifies NASA OSDR (OSD-575, OSD-635) and HRP evidence records and applicability notes', () => {
+  it('verifies NASA OSDR (OSD-575, OSD-571, OSD-635) and HRP evidence records and applicability notes', () => {
     expect(DEFAULT_NASA_STUDIES.length).toBeGreaterThanOrEqual(7);
     const osd575 = DEFAULT_NASA_STUDIES.find((s) => s.study_id === 'OSD-575');
+    const osd571 = DEFAULT_NASA_STUDIES.find((s) => s.study_id === 'OSD-571');
     const osd635 = DEFAULT_NASA_STUDIES.find((s) => s.study_id === 'OSD-635');
+    const hrpCv = DEFAULT_NASA_STUDIES.find((s) => s.study_id === 'HRP-CV-OI');
 
     expect(osd575).toBeDefined();
+    expect(osd575?.accession).toBe('OSD-575 / LSDS-8');
+    expect(osd575?.doi).toBe('10.26030/mc5d-p710');
+    expect(osd575?.sample_timepoints).toEqual(['L-92', 'L-44', 'L-3', 'R+1', 'R+45', 'R+82']);
     expect(osd575?.title).toContain('Inspiration4');
     expect(osd575?.applicability_note).toContain('NOT CONTINUOUS');
     expect(osd575?.files_manifest.length).toBeGreaterThanOrEqual(2);
 
+    expect(osd571).toBeDefined();
+    expect(osd571?.accession).toBe('OSD-571 / GLDS-563');
+    expect(osd571?.doi).toBe('10.26030/h3p5-tc29');
+
     expect(osd635).toBeDefined();
+    expect(osd635?.accession).toBe('OSD-635 / GLDS-608');
+    expect(osd635?.doi).toBe('10.26030/8n5a-q187');
     expect(osd635?.title.toLowerCase()).toContain('vascular smooth muscle');
     expect(osd635?.applicability_note).toContain('IN VITRO');
     expect(osd635?.files_manifest.length).toBeGreaterThanOrEqual(2);
+
+    expect(hrpCv?.identifier_type).toBe('INTERNAL_APP_REFERENCE_ID');
+    expect(hrpCv?.osdr_url).toBe('https://humanresearchroadmap.nasa.gov/Risks/risk.aspx?i=179');
   });
 
   it('verifies Mission Evidence Graph links telemetry, domains, NASA studies, hypotheses, and missing evidence', () => {

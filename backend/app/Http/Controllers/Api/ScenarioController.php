@@ -89,28 +89,28 @@ class ScenarioController extends Controller
             $currentFatigue = 4.0;
         }
 
-        // Deterministic simulation math based on aerospace physiological countermeasure research
-        // 1. Sleep delta impact: +1 hour sleep improves HRV by ~6.5ms, drops HR by ~3.2 bpm, improves PVT by -24ms
+        // Deterministic simulation math using assumed linear model elasticities (unified with projectSingleScenario: 7.2, 8.0, 4.5, 14.5, 26.0)
+        // 1. Sleep delta impact: +1 hour sleep improves HRV by ~7.2ms, drops HR by ~3.5 bpm, improves PVT by -26.0ms
         $sleepImpact = $validated['sleep_delta_hours'];
         // 2. Workload delta impact: -20% workload decreases autonomic strain
         $workloadImpact = -$validated['workload_delta_pct'] / 100.0;
-        // 3. Ergometer countermeasure: 140W-180W maintains plasma volume and stroke volume
+        // 3. Ergometer countermeasure: 140W-180W supports plasma volume and stroke volume conditioning
         $ergoImpact = ($validated['cycle_ergometer_watts'] / 185.0);
         // 4. Hydration fluid loading: improves intravascular volume and systolic orthostatic tolerance
         $hydrationImpact = ($validated['hydration_fluid_ml'] / 1000.0);
 
         // Projected values relative to each astronaut's starting state and individual baseline
-        $projectedHrv = min($baseHrv + 6.0, max(20.0, round($currentHrv + ($sleepImpact * 6.8) + ($workloadImpact * 7.5) + ($ergoImpact * 3.5), 1)));
-        $projectedHr = max($baseHr - 3.0, min(95.0, round($currentHr - ($sleepImpact * 3.2) - ($workloadImpact * 3.5) - ($ergoImpact * 2.0), 1)));
+        $projectedHrv = min($baseHrv + 6.0, max(20.0, round($currentHrv + ($sleepImpact * 7.2) + ($workloadImpact * 8.0) + ($ergoImpact * 4.5), 1)));
+        $projectedHr = max($baseHr - 3.0, min(95.0, round($currentHr - ($sleepImpact * 3.5) - ($workloadImpact * 3.8) - ($ergoImpact * 2.2), 1)));
 
         // BP adjustment: if currently hypotensive (like Alex), hydration & ergo elevate it; if elevated (like Marcus), rest normalizes it
         if ($currentBp < $baseBp) {
-            $projectedBp = min($baseBp + 2.0, max(85.0, round($currentBp + ($hydrationImpact * 14.0) + ($ergoImpact * 4.0) + ($sleepImpact * 1.5), 1)));
+            $projectedBp = min($baseBp + 2.0, max(85.0, round($currentBp + ($hydrationImpact * 14.5) + ($ergoImpact * 4.5) + ($sleepImpact * 1.8), 1)));
         } else {
             $projectedBp = max($baseBp - 2.0, round($currentBp - ($sleepImpact * 2.5) - ($workloadImpact * 3.0), 1));
         }
 
-        $projectedPvt = max($basePvt - 5.0, min(380.0, round($currentPvt - ($sleepImpact * 24.0) - ($workloadImpact * 16.0), 1)));
+        $projectedPvt = max($basePvt - 5.0, min(380.0, round($currentPvt - ($sleepImpact * 26.0) - ($workloadImpact * 17.0), 1)));
         $projectedFatigue = max(1.0, min(10.0, round($currentFatigue - ($sleepImpact * 1.5) - ($workloadImpact * 1.2), 1)));
 
         // Time to stability estimation in hours
@@ -377,11 +377,19 @@ class ScenarioController extends Controller
                 'strengths' => $strengths,
                 'operational_tradeoffs' => $tradeoffs,
                 'is_pareto_non_dominated' => false,
-                'scientific_label' => 'SIMULATED DATA — EXPLORATORY SCENARIO — NOT A CLINICAL RECOMMENDATION',
+                'boundary_classification' => [
+                    'inputs' => 'SCENARIO INPUT (Operator-Defined Hypothetical Parameters)',
+                    'projections' => 'SIMULATED OUTPUT (Deterministic Linear Model Projection)',
+                    'governance' => 'HUMAN REVIEW REQUIRED (Flight Surgeon & Mission Director Concurrence)',
+                ],
+                'scientific_label' => 'SCENARIO INPUT | SIMULATED OUTPUT | HUMAN REVIEW REQUIRED | NOT A CLINICAL RECOMMENDATION',
             ];
         }
 
-        // Compute Pareto non-dominated frontier
+        // Compute Pareto non-dominated frontier across 3 primary maximized objectives:
+        // 1. recovery_trajectory_score (maximize)
+        // 2. operational_continuity_score = 100 - mission_schedule_disruption_pct (maximize)
+        // 3. exercise_preservation_score (maximize)
         $paretoIds = [];
         foreach ($evaluated as $i => &$cand) {
             $dominated = false;
@@ -414,13 +422,31 @@ class ScenarioController extends Controller
             'scenarios' => $evaluated,
             'evaluated_scenarios' => $evaluated,
             'pareto_frontier_ids' => $paretoIds,
+            'pareto_optimization_objectives' => [
+                'maximized_dimensions' => [
+                    'recovery_trajectory_score',
+                    'operational_continuity_score (100 - mission_schedule_disruption_pct)',
+                    'exercise_preservation_score',
+                ],
+                'displayed_context_dimensions' => [
+                    'sleep_opportunity_score',
+                    'workload_distribution_score',
+                    'environmental_constraint_score',
+                    'data_completeness_score',
+                    'uncertainty_band_pct',
+                ],
+                'dominance_definition' => 'Scenario B dominates Scenario A iff B >= A on all 3 maximized primary objectives (Recovery Trajectory, Operational Continuity, Exercise Preservation) and strictly > A on at least one.',
+            ],
             'scientific_labels' => [
+                'SCENARIO INPUT',
+                'SIMULATED OUTPUT',
+                'HUMAN REVIEW REQUIRED',
                 'SIMULATED DATA',
                 'EXPLORATORY SCENARIO',
                 'NOT A CLINICAL RECOMMENDATION',
             ],
-            'evaluation_methodology' => 'Multi-objective deterministic aerospace trade-off model evaluating physiological recovery against operational schedule continuity and ECLSS resource constraints.',
-            'scientific_disclaimer' => 'SIMULATED DATA | EXPLORATORY SCENARIO | NOT A CLINICAL RECOMMENDATION. No single scenario is declared medically optimal; human flight surgeons and mission directors must weigh physiological recovery against operational timeline constraints.',
+            'evaluation_methodology' => 'Multi-objective deterministic aerospace trade-off model evaluating 8 operational/physiological dimensions; Pareto dominance is computed across 3 primary maximized objectives (Recovery Trajectory, Operational Continuity, and Exercise Preservation).',
+            'scientific_disclaimer' => 'SCENARIO INPUT | SIMULATED OUTPUT | HUMAN REVIEW REQUIRED | NOT A CLINICAL RECOMMENDATION. No single scenario is declared medically optimal; human flight surgeons and mission directors must weigh physiological recovery against operational timeline constraints.',
         ]);
     }
 
@@ -441,8 +467,14 @@ class ScenarioController extends Controller
         ];
 
         $rawPerturb = (float) $request->input('perturbation_pct', 25.0);
-        $pctVal = $rawPerturb <= 1.0 ? $rawPerturb * 100.0 : $rawPerturb;
-        $factor = max(5.0, min(50.0, $pctVal)) / 100.0;
+        if ($rawPerturb <= 0.0) {
+            $pctVal = 0.0;
+            $factor = 0.0;
+        } else {
+            $pctVal = $rawPerturb <= 1.0 ? $rawPerturb * 100.0 : $rawPerturb;
+            $pctVal = min(50.0, max(0.0, $pctVal));
+            $factor = $pctVal / 100.0;
+        }
 
         $defaultAssumptions = [
             'sleep_hrv_coeff' => 7.2,
@@ -484,6 +516,7 @@ class ScenarioController extends Controller
                 'parameter_key' => $key,
                 'parameter_name' => $p['name'],
                 'unit' => $p['unit'],
+                'parameter_nature' => 'ASSUMED_MODEL_COEFFICIENT_NOT_BIOLOGICAL_MEASUREMENT',
                 'baseline_assumption' => $defaultAssumptions[$key],
                 'adjusted_assumption' => $nomVal,
                 'low_bound_assumption' => $lowVal,
@@ -509,13 +542,14 @@ class ScenarioController extends Controller
             'crew_member_name' => $member->name,
             'perturbation_pct' => round($pctVal, 1),
             'perturbation_percentage' => round($pctVal, 1),
+            'parameter_nature' => 'ASSUMED_MODEL_COEFFICIENT_NOT_BIOLOGICAL_MEASUREMENT',
             'baseline_assumptions' => $defaultAssumptions,
             'adjusted_assumptions' => $activeAssumptions,
             'nominal_projections' => $nominalProj,
             'parameter_sensitivities' => $parameters,
             'most_influential_parameter' => $parameters[0]['parameter_name'] ?? 'NONE',
-            'ranking_stability_note' => 'Across +/-' . round($pctVal, 0) . '% coefficient perturbation, Combined Operational Adjustments (Scenario Alpha) and Sleep Opportunity Protection remain on the Pareto frontier.',
-            'scientific_label' => 'SIMULATED DATA | EXPLORATORY SENSITIVITY ANALYSIS | NOT A CLINICAL RECOMMENDATION',
+            'ranking_stability_note' => 'Across +/-' . round($pctVal, 0) . '% perturbation of assumed linear model coefficients, Combined Operational Adjustments (Scenario Alpha) and Sleep Opportunity Protection remain on the Pareto frontier.',
+            'scientific_label' => 'SCENARIO INPUT | SIMULATED OUTPUT | HUMAN REVIEW REQUIRED | ASSUMED MODEL ELASTICITIES (NOT EMPIRICAL BIOLOGICAL CONSTANTS)',
         ]);
     }
 }

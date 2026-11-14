@@ -17,11 +17,12 @@ export const EvidencePill: React.FC<EvidencePillProps> = ({
     switch (classification) {
       case 'OBSERVED_FACT':
       case 'DIRECT_OBSERVATION':
+      case 'SYNTHETIC_OBSERVATION':
         return {
-          label: classification === 'DIRECT_OBSERVATION' ? 'DIRECT OBSERVATION' : 'OBSERVED FACT',
+          label: 'SYNTHETIC OBSERVATION (MISSION RECORD)',
           bg: 'bg-cyan-950/70 border-cyan-500/50 text-cyan-300',
           icon: Eye,
-          desc: 'Direct primary sensor telemetry or verified crew log',
+          desc: 'Simulated crew telemetry or operational log entry from the 100% synthetic ARES-IV mission dataset (not real astronaut flight measurements)',
         };
       case 'NASA_RESEARCH_CONTEXT':
         return {

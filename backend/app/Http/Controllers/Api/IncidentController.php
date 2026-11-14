@@ -60,24 +60,24 @@ class IncidentController extends Controller
         foreach ($events as $event) {
             $classification = 'OBSERVED_FACT';
             $taxonomyTier = 'DIRECT_OBSERVATION';
-            $reasoning = 'Direct primary sensor record.';
+            $reasoning = 'Synthetic mission telemetry record (simulated onboard sensor channel).';
 
             if (in_array($event->event_category, ['sleep_observation', 'workload_observation'])) {
                 $classification = 'DERIVED_INDICATOR';
                 $taxonomyTier = 'DERIVED_TEMPORAL_ASSOCIATION';
-                $reasoning = 'Algorithmic calculation from raw bunk micro-movement & task scheduler.';
+                $reasoning = 'Algorithmic calculation from simulated bunk micro-movement & task scheduler telemetry.';
             } elseif ($event->event_category === 'symptom_report' && $event->severity !== 'CRITICAL') {
                 $classification = 'OBSERVED_FACT';
                 $taxonomyTier = 'DIRECT_OBSERVATION';
-                $reasoning = 'Self-reported subjective symptom logged by crew member.';
+                $reasoning = 'Simulated self-reported subjective symptom logged in synthetic mission dataset.';
             } elseif ($event->severity === 'CRITICAL') {
                 $classification = 'OBSERVED_FACT';
                 $taxonomyTier = 'DIRECT_OBSERVATION';
-                $reasoning = 'Target acute incident event.';
+                $reasoning = 'Target acute incident record in synthetic mission dataset.';
             } elseif ($event->event_category === 'environmental_event') {
                 $classification = 'TEMPORAL_ASSOCIATION';
                 $taxonomyTier = 'DERIVED_TEMPORAL_ASSOCIATION';
-                $reasoning = 'Ambient environmental factor coinciding with crew timeline.';
+                $reasoning = 'Simulated ambient environmental factor coinciding with crew timeline.';
             }
 
             $evidenceNodes[] = [
@@ -91,6 +91,8 @@ class IncidentController extends Controller
                 'unit' => $event->unit,
                 'classification' => $classification,
                 'taxonomy_v2' => $taxonomyTier,
+                'is_synthetic' => true,
+                'synthetic_provenance' => 'SYNTHETIC_MISSION_DATASET',
                 'source_attribution' => $taxonomyV2[$taxonomyTier]['source_attribution'],
                 'applicability_level' => $taxonomyV2[$taxonomyTier]['applicability_level'],
                 'limitations' => $taxonomyV2[$taxonomyTier]['limitations'],
@@ -165,7 +167,7 @@ class IncidentController extends Controller
                     'node_type' => 'MISSING_EVIDENCE',
                     'title' => 'Cerebral Tissue Oxygenation (NIRS)',
                     'description' => 'Forehead near-infrared spectroscopy patch was not active during equipment bay transit.',
-                    'impact_on_confidence' => 'Cerebral perfusion drop during transition confirmed via symptoms and blood pressure collapse, but microvascular brain tissue oxygenation is inferred.',
+                    'impact_on_confidence' => 'Cerebral perfusion drop during transition is associated with logged symptoms and blood pressure drop, but microvascular brain tissue oxygenation remains unmeasured.',
                     'suggested_investigation' => 'Review transcranial Doppler flow velocity if orthostatic challenge is repeated.',
                 ],
             ];

@@ -475,8 +475,14 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
             <span>SCIENTIFIC RESTRICTION: SIMULATION IS NOT A CLINICALLY VALIDATED PROGNOSTIC GUARANTEE</span>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-blue-950 border border-blue-700 text-blue-300">
+              SCENARIO INPUT
+            </span>
             <span className="px-2 py-0.5 rounded bg-cyan-950 border border-cyan-700 text-cyan-300">
-              SIMULATED DATA
+              SIMULATED OUTPUT
+            </span>
+            <span className="px-2 py-0.5 rounded bg-amber-950 border border-amber-700 text-amber-300">
+              HUMAN REVIEW REQUIRED
             </span>
             <span className="px-2 py-0.5 rounded bg-purple-950 border border-purple-700 text-purple-300">
               EXPLORATORY SCENARIO
@@ -487,7 +493,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
           </div>
         </div>
         <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-          Projections represent simplified deterministic aerospace physiological approximations. Never represent simulated outcomes as guaranteed clinical medical outcomes. Historical observations remain completely distinct from hypothetical simulated futures.
+          Projections represent simplified deterministic aerospace physiological approximations driven by assumed linear model elasticities. Never represent simulated outcomes as guaranteed clinical medical outcomes. Historical observations remain completely distinct from hypothetical simulated futures.
         </p>
       </div>
 
@@ -499,6 +505,9 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
             <h2 className="text-sm font-bold text-white uppercase font-mono flex items-center gap-2">
               <Sliders className="w-4 h-4 text-cyan-400" />
               <span>SIMULATION INPUT PARAMETERS</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-950 border border-blue-700 text-blue-300">
+                SCENARIO INPUT
+              </span>
             </h2>
             <button
               onClick={handleReset}
@@ -542,7 +551,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
                 className="w-full accent-cyan-500 cursor-pointer"
               />
               <div className="text-[10px] text-slate-500 font-sans">
-                Each +1.0h sleep accelerates parasympathetic tone recovery by ~6.8ms HRV.
+                Assumed linear model elasticity: each +1.0h sleep adds ~7.2ms HRV recovery.
               </div>
             </div>
 
@@ -704,9 +713,14 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
                   Hypothetical autonomic, blood pressure, and heart rate stabilization under selected inputs.
                 </p>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-space-900 text-cyan-400 border border-space-700">
-                SIMULATED DATA
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-space-900 text-cyan-400 border border-space-700">
+                  SIMULATED OUTPUT
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700">
+                  HUMAN REVIEW REQUIRED
+                </span>
+              </div>
             </div>
 
             <TelemetryChart options={trajectoryChartOptions} height={240} />
@@ -764,7 +778,7 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Compares Baseline Schedule, Sleep Protection, Workload Redistribution, Exercise Adjustment, and Combined Adjustments without claiming a single medically optimal prescription.
+              Evaluates 5 candidate protocols across 8 operational/epistemic dimensions. Pareto dominance is computed across 3 primary maximized objectives (<strong className="text-cyan-300">1. Recovery Score</strong>, <strong className="text-emerald-300">Operational Continuity = 100% − Schedule Disruption</strong>, and <strong className="text-purple-300">4. Exercise Preservation</strong>); the remaining 5 dimensions provide operational and epistemic context for human Flight Surgeon &amp; Mission Director review.
             </p>
           </div>
         </div>
@@ -880,14 +894,14 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              One-at-a-Time (OAT) perturbation analysis testing how uncertain physiological response coefficients affect projected outcomes and scenario rankings.
+              One-at-a-Time (OAT) perturbation analysis testing how assumed linear model elasticities (not empirical biological constants) affect projected outcomes and scenario rankings.
             </p>
           </div>
 
           {/* Perturbation Range Controls */}
           <div className="flex items-center gap-2 font-mono text-xs flex-wrap">
             <span className="text-slate-400 text-[11px]">PERTURBATION RANGE:</span>
-            {[10, 20, 25, 40].map((pct) => (
+            {[0, 10, 20, 25, 40].map((pct) => (
               <button
                 key={pct}
                 onClick={() => setPerturbationPct(pct)}

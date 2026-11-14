@@ -66,7 +66,7 @@ class IntelligenceBridgeController extends Controller
                 'p_value_estimated' => 0.003,
                 'confidence' => 0.94,
                 'evidence' => 'Sleep duration dropped to 5.4h on Day 117; HRV RMSSD drop followed with 18-24h latency, bottoming at 27ms on Day 120.',
-                'causality_qualification' => 'Strong temporal precedence and established aerospace physiological plausibility; causal mechanism consistent with sympathetic hyper-reactivity.',
+                'causality_qualification' => 'Temporal precedence and aerospace physiological plausibility observed; association is consistent with sympathetic hyper-reactivity but does not establish definitive causality.',
             ],
             [
                 'pair' => 'High Workload -> Countermeasure Non-Compliance',
@@ -77,7 +77,7 @@ class IntelligenceBridgeController extends Controller
                 'p_value_estimated' => 0.012,
                 'confidence' => 0.91,
                 'evidence' => 'Hatch repair task extension on Day 117-118 preceded abbreviated workout (145W) and subsequent total workout omission on Day 119.',
-                'causality_qualification' => 'Direct behavioral interaction: operational time pressure displaced allocated exercise countermeasure window.',
+                'causality_qualification' => 'Temporal schedule overlap: operational task duration coincided with the allocated exercise countermeasure window.',
             ],
             [
                 'pair' => 'Cumulative Sleep Debt -> Neurocognitive Vigilance Lapses',
@@ -88,7 +88,7 @@ class IntelligenceBridgeController extends Controller
                 'p_value_estimated' => 0.001,
                 'confidence' => 0.97,
                 'evidence' => 'PVT reaction time increased by 44% (215ms baseline to 310ms on Day 119) following 48h of cumulative sleep debt (>5.5 hours).',
-                'causality_qualification' => 'Established neurobiological relationship; psychomotor slowing is a validated benchmark of sleep deprivation.',
+                'causality_qualification' => 'Documented neurobehavioral association; psychomotor slowing frequently accompanies cumulative sleep restriction in analog studies.',
             ],
         ];
 

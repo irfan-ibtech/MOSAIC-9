@@ -207,8 +207,9 @@ export const DataSourcesScreen: React.FC = () => {
           In strict compliance with NASA Space Apps Challenge ethical standards and astronaut privacy policies,{' '}
           <strong>MOSAIC-9 uses 100% synthetic crew mission telemetry</strong> while integrating{' '}
           <strong>real published NASA OSDR and NASA HRP scientific evidence metadata</strong> as contextual research references.{' '}
-          Specifically, <strong>OSD-575</strong> represents pre/post-flight human venous serum biomarkers (SpaceX Inspiration4, n=4) and{' '}
-          <strong>OSD-635</strong> represents <em>in vitro</em> primary human aortic smooth muscle cell transcriptomics cultured 3 days on the ISS—neither is presented as continuous wearable astronaut telemetry.
+          Specifically, <strong>OSD-575 (LSDS-8, Dataset DOI: 10.26030/mc5d-p710)</strong> represents pre/post-flight human venous serum biomarkers (SpaceX Inspiration4, n=4 across L-92, L-44, L-3, R+1, R+45, R+82),{' '}
+          <strong>OSD-571 (GLDS-563, Dataset DOI: 10.26030/h3p5-tc29)</strong> represents human plasma multi-omics profiling, and{' '}
+          <strong>OSD-635 (GLDS-608, Dataset DOI: 10.26030/8n5a-q187)</strong> represents <em>in vitro</em> primary human aortic smooth muscle cell transcriptomics cultured 3 days on the ISS—none is presented as continuous wearable astronaut telemetry. Internal keys (<code className="text-indigo-300">HRP-CV-OI</code>, <code className="text-indigo-300">HRP-SLEEP-CIRC</code>, <code className="text-indigo-300">HRP-AERO-MUSC</code>, <code className="text-indigo-300">HRP-ENV-CO2</code>) are internal application reference IDs mapped to official NASA Human Research Roadmap (HRR) Risk records (<code className="text-cyan-300">risk.aspx?i=179</code>, <code className="text-cyan-300">risk.aspx?i=100</code>).
         </p>
       </div>
 
@@ -246,13 +247,19 @@ export const DataSourcesScreen: React.FC = () => {
               onClick={() => handleOsdrLookup('OSD-575')}
               className="px-2.5 py-1.5 rounded-lg bg-space-900 hover:bg-space-800 border border-space-700 text-cyan-300 text-xs"
             >
-              OSD-575
+              OSD-575 (LSDS-8)
+            </button>
+            <button
+              onClick={() => handleOsdrLookup('OSD-571')}
+              className="px-2.5 py-1.5 rounded-lg bg-space-900 hover:bg-space-800 border border-space-700 text-cyan-300 text-xs"
+            >
+              OSD-571 (GLDS-563)
             </button>
             <button
               onClick={() => handleOsdrLookup('OSD-635')}
               className="px-2.5 py-1.5 rounded-lg bg-space-900 hover:bg-space-800 border border-space-700 text-cyan-300 text-xs"
             >
-              OSD-635
+              OSD-635 (GLDS-608)
             </button>
           </div>
         </div>

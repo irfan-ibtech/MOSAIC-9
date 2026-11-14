@@ -286,16 +286,27 @@ class MosaicApiTest extends TestCase
         $osdrOnly->assertStatus(200);
         $this->assertEquals(3, $osdrOnly->json('total_studies'));
 
-        // Verify OSD-575 detail & applicability notes
+        // Verify OSD-575 detail, LSDS-8 accession, dataset DOI 10.26030/mc5d-p710 & applicability notes
         $osd575 = $this->getJson('/api/evidence/studies/OSD-575');
         $osd575->assertStatus(200)
-            ->assertJsonPath('study.study_id', 'OSD-575');
+            ->assertJsonPath('study.study_id', 'OSD-575')
+            ->assertJsonPath('study.accession', 'OSD-575 / LSDS-8')
+            ->assertJsonPath('study.doi', '10.26030/mc5d-p710');
         $this->assertStringContainsString('NOT CONTINUOUS', $osd575->json('study.applicability_note'));
 
-        // Verify OSD-635 detail & in vitro cellular distinction
+        // Verify OSD-571 detail, GLDS-563 accession & dataset DOI 10.26030/h3p5-tc29
+        $osd571 = $this->getJson('/api/evidence/studies/OSD-571');
+        $osd571->assertStatus(200)
+            ->assertJsonPath('study.study_id', 'OSD-571')
+            ->assertJsonPath('study.accession', 'OSD-571 / GLDS-563')
+            ->assertJsonPath('study.doi', '10.26030/h3p5-tc29');
+
+        // Verify OSD-635 detail, GLDS-608 accession, dataset DOI 10.26030/8n5a-q187 & in vitro cellular distinction
         $osd635 = $this->getJson('/api/evidence/studies/OSD-635');
         $osd635->assertStatus(200)
-            ->assertJsonPath('study.study_id', 'OSD-635');
+            ->assertJsonPath('study.study_id', 'OSD-635')
+            ->assertJsonPath('study.accession', 'OSD-635 / GLDS-608')
+            ->assertJsonPath('study.doi', '10.26030/8n5a-q187');
         $this->assertStringContainsString('IN VITRO', $osd635->json('study.applicability_note'));
     }
 
@@ -373,5 +384,53 @@ class MosaicApiTest extends TestCase
                 'scientific_label',
             ]);
         $this->assertCount(5, $sensResp->json('parameter_sensitivities'));
+
+        // Verify zero-variance perturbation (perturbation_pct = 0) produces 0.0 swing
+        $zeroSensResp = $this->postJson('/api/scenarios/sensitivity', [
+            'crew_member_id' => $alex->id,
+            'perturbation_pct' => 0,
+        ]);
+        $zeroSensResp->assertStatus(200)
+            ->assertJsonPath('perturbation_percentage', 0);
+        foreach ($zeroSensResp->json('parameter_sensitivities') as $param) {
+            $this->assertEquals(0.0, $param['outcome_swing']);
+        }
+    }
+
+    public function test_hrp_internal_reference_id_disclosure_and_official_hrr_links(): void
+    {
+        $hrpCv = $this->getJson('/api/evidence/studies/HRP-CV-OI');
+        $hrpCv->assertStatus(200)
+            ->assertJsonPath('study.identifier_type', 'INTERNAL_APP_REFERENCE_ID')
+            ->assertJsonPath('study.osdr_url', 'https://humanresearchroadmap.nasa.gov/Risks/risk.aspx?i=179');
+
+        $hrpSleep = $this->getJson('/api/evidence/studies/HRP-SLEEP-CIRC');
+        $hrpSleep->assertStatus(200)
+            ->assertJsonPath('study.identifier_type', 'INTERNAL_APP_REFERENCE_ID')
+            ->assertJsonPath('study.osdr_url', 'https://humanresearchroadmap.nasa.gov/Risks/risk.aspx?i=100');
+    }
+
+    public function test_synthetic_observation_provenance_and_pareto_objective_disclosure(): void
+    {
+        $incident = Incident::where('incident_code', 'INC-ARES4-120-001')->first();
+        $recon = $this->getJson("/api/incidents/{$incident->id}/reconstruct?horizon_hours=72");
+        $recon->assertStatus(200)
+            ->assertJsonPath('evidence_taxonomy_v2.DIRECT_OBSERVATION.is_synthetic', true);
+
+        foreach ($recon->json('evidence_nodes') as $node) {
+            $this->assertTrue($node['is_synthetic']);
+            $this->assertEquals('SYNTHETIC_MISSION_DATASET', $node['synthetic_provenance']);
+        }
+
+        $compare = $this->postJson('/api/scenarios/compare', ['crew_member_id' => 1]);
+        $compare->assertStatus(200)
+            ->assertJsonStructure([
+                'pareto_optimization_objectives' => [
+                    'maximized_dimensions',
+                    'displayed_context_dimensions',
+                    'dominance_definition',
+                ],
+            ]);
+        $this->assertCount(3, $compare->json('pareto_optimization_objectives.maximized_dimensions'));
     }
 }
