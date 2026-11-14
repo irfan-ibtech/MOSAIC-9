@@ -256,8 +256,8 @@ export const CommandCenterScreen: React.FC<CommandCenterScreenProps> = ({
       )}
 
       {selectedCrew?.status === 'WATCH' && (
-        <div className="bg-amber-950/30 border border-amber-500/40 rounded-xl p-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="bg-amber-950/30 border border-amber-500/40 rounded-xl p-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
             <div className="w-10 h-10 rounded-lg bg-amber-950 border border-amber-700 flex items-center justify-center shrink-0">
               <AlertTriangle className="w-5 h-5 text-amber-400" />
             </div>
@@ -267,12 +267,21 @@ export const CommandCenterScreen: React.FC<CommandCenterScreenProps> = ({
                   MONITORING WATCH: {selectedCrew.name}
                 </span>
                 <StatusBadge status="WATCH" size="sm" />
+                <span className="text-[11px] font-mono text-slate-400">Incident Code: INC-ARES4-118-002</span>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
+              <p className="text-xs text-slate-300 mt-0.5 max-w-3xl">
                 {selectedCrew.status_explanation}
               </p>
             </div>
           </div>
+
+          <button
+            onClick={() => onNavigate('incident_reconstruction')}
+            className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-semibold rounded-lg shadow-panel flex items-center gap-2 shrink-0 transition-all font-mono"
+          >
+            <span>RECONSTRUCT INCIDENT TIMELINE</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       )}
 

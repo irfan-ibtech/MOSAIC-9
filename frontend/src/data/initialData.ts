@@ -668,6 +668,58 @@ export const CREW_SIMULATION_DEFAULTS: Record<number, {
   },
 };
 
+export const ASTRONAUT_SBAR_TEMPLATES: Record<number, {
+  title: string;
+  situation: string;
+  background: string;
+  assessment: string;
+  recommendation: string;
+  questions: string;
+  dataLimitations: string;
+  priority: 'ROUTINE' | 'PRIORITY' | 'URGENT';
+}> = {
+  1: {
+    title: 'Clinical & Operational Incident Brief: Commander Alex Morgan Presyncope',
+    situation: 'Commander Alex Morgan suffered an acute transient orthostatic presyncope episode on Day 120 at 09:42 MET upon standing in the Airlock Node. Blood pressure dropped to 88/56 mmHg with compensatory tachycardia of 118 bpm.',
+    background: 'Over the preceding 72 hours, cumulative sleep debt reached 9.8 hours following night-time drill alarms and high EVA stowage workload. Day 119 cycle ergometer aerobic countermeasure was skipped completely.',
+    assessment: 'Multi-factorial autonomic decompensation: microgravity cephalad fluid redistribution exacerbated by acute-on-chronic sleep restriction, missed cardiovascular countermeasure conditioning, and rapid postural change.',
+    recommendation: 'Request ground flight surgeon concurrence on Scenario Alpha: 36-hour light duty restriction, mandatory 8.5h sleep window, 1200 mL oral electrolyte hydration loading, and graded cycle ergometer resumption at 140W.',
+    questions: '1. Does Ground Flight Surgeon advise delaying ARED resistance exercise until Day 122? 2. Should midodrine be considered if orthostatic stability is not regained within 48h?',
+    dataLimitations: 'No continuous beat-to-beat arterial tonometry or NIRS cerebral oximetry was recorded during the acute episode.',
+    priority: 'PRIORITY',
+  },
+  2: {
+    title: 'Routine Flight Surgeon Brief: Dr. Sarah Chen Nominal Triage Operations',
+    situation: 'Chief Medical Officer Dr. Sarah Chen maintains 100% countermeasure adherence. Assuming clinical primary coverage for Commander Morgan.',
+    background: 'Resting HR 56 bpm, HRV 64 ms, sleep duration average 7.8 hours. All biomarkers within 1-sigma personal baseline.',
+    assessment: 'Physiologically and cognitively nominal. Circadian stability maintained during clinical triage.',
+    recommendation: 'Continue nominal flight and science schedule. Re-assess crew complement workload distribution at Day 121 flight surgeon conference.',
+    questions: '1. Concurrence on CMO executing standing orthostatic challenge for Commander Morgan on Day 121?',
+    dataLimitations: 'Indirect estimates of plasma volume based on fluid intake logs rather than continuous tonometry.',
+    priority: 'ROUTINE',
+  },
+  3: {
+    title: 'Operational Health Brief: Lead Engineer Marcus Vance Hypercapnia & Cephalalgia',
+    situation: 'Marcus Vance reported bilateral temporal throbbing cephalalgia and ocular fatigue on Day 118 at 19:15 MET following a continuous 12-hour coolant loop overhaul in Node 2.',
+    background: 'Localized cabin CO2 concentration rose to 3.5 mmHg behind the maintenance rack. Sleep duration was curtailed to 6.0 hours (vs 7.5h baseline). Blood pressure remained normal at 124/80 mmHg with resting HR 66 bpm.',
+    assessment: 'Hypercapnic and ergonomic cephalic tension secondary to confined-space maintenance with localized stagnant ventilation and circadian shift delay.',
+    recommendation: 'Enforce mandatory 8-hour daily cap on Node 2 pressurized maintenance, active ECLSS cabin duct scrub to < 1.8 mmHg, and 8 hours of uninterrupted rest cycle.',
+    questions: '1. Should ECLSS duct velocity booster be permanently re-routed through Node 2 rack B? 2. Request ground concurrence on resuming routine duty at Day 119 morning checkout.',
+    dataLimitations: 'No continuous cerebral near-infrared spectroscopy was worn during the 12-hour maintenance shift.',
+    priority: 'PRIORITY',
+  },
+  4: {
+    title: 'Telemetry Quality & Health Brief: Elena Rostova Biosensor Re-Acquisition',
+    situation: 'Biometric sensor RF packet loss occurred from Day 119 18:00 to Day 120 12:00. Crew status was placed in UNKNOWN due to missing telemetry streams.',
+    background: 'Elena completed scheduled cycle ergometer exercise manually without reported distress. Pre-dropout physiological metrics were nominal (HR 63 bpm, HRV 55 ms).',
+    assessment: 'Sensor battery depletion and transponder decoupling rather than acute physiological degradation. Completeness score penalized under MOSAIC-9 integrity rules.',
+    recommendation: 'Deploy replacement biosensor patch electrode array, verify RF lock with cabin Node 3, and perform manual blood pressure validation checkout.',
+    questions: '1. Should patch replacement schedule be increased to every 48 hours for remaining transit? 2. Request ground log check for delayed RF packets buffered in repeater.',
+    dataLimitations: 'Continuous physiological records for Mission Days 119–120 are absent from onboard telemetry.',
+    priority: 'ROUTINE',
+  },
+};
+
 export const DEFAULT_GROUND_COMMS: GroundCommunication[] = [
   {
     id: 1,
@@ -687,6 +739,25 @@ export const DEFAULT_GROUND_COMMS: GroundCommunication[] = [
     sync_status: 'QUEUED_LOCAL',
     transmitted_at: null,
     created_at: '2026-11-15T11:30:00Z',
+  },
+  {
+    id: 2,
+    packet_id: 'GND-COM-ARES4-118-002',
+    crew_member_id: 3,
+    incident_id: 2,
+    title: 'Operational Health Brief: Lead Engineer Marcus Vance Hypercapnia & Cephalalgia',
+    clinical_summary: 'Lead Flight Engineer Marcus Vance reported severe bilateral temporal throbbing headache and ocular fatigue during 12-hour continuous coolant loop maintenance under elevated cabin CO2 (3.5 mmHg).',
+    sbar_situation: 'Marcus Vance reported bilateral temporal throbbing cephalalgia and ocular fatigue on Day 118 at 19:15 MET following a continuous 12-hour coolant loop overhaul in Node 2.',
+    sbar_background: 'Localized cabin CO2 concentration rose to 3.5 mmHg behind the maintenance rack. Sleep duration was curtailed to 6.0 hours (vs 7.5h baseline). Blood pressure remained normal at 124/80 mmHg with resting HR 66 bpm.',
+    sbar_assessment: 'Hypercapnic and ergonomic cephalic tension secondary to confined-space maintenance with localized stagnant ventilation and circadian shift delay.',
+    sbar_recommendation: 'Enforce mandatory 8-hour daily cap on Node 2 pressurized maintenance, active ECLSS cabin duct scrub to < 1.8 mmHg, and 8 hours of uninterrupted rest cycle.',
+    evidence_ledger_ids: ['EVT-116-1800-WRK', 'EVT-117-1400-ENV', 'EVT-118-0600-SLP', 'EVT-118-1200-ENV', 'EVT-118-1915-INC'],
+    data_limitations: 'No continuous cerebral near-infrared spectroscopy was worn during the 12-hour maintenance shift.',
+    questions_for_ground: '1. Should ECLSS duct velocity booster be permanently re-routed through Node 2 rack B? 2. Request ground concurrence on resuming routine duty at Day 119 morning checkout.',
+    review_priority: 'PRIORITY',
+    sync_status: 'QUEUED_LOCAL',
+    transmitted_at: null,
+    created_at: '2026-11-13T20:30:00Z',
   },
 ];
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { GroundCommunication, CrewMember, Incident } from '../types';
+import { GroundCommunication, CrewMember } from '../types';
 import { mosaicApi } from '../services/api';
-import { DEFAULT_CREW_MEMBERS, DEFAULT_GROUND_COMMS } from '../data/initialData';
+import { DEFAULT_CREW_MEMBERS, DEFAULT_GROUND_COMMS, ASTRONAUT_SBAR_TEMPLATES } from '../data/initialData';
 import {
   Radio,
   Send,
@@ -9,11 +9,11 @@ import {
   CheckCircle2,
   Clock,
   WifiOff,
-  AlertCircle,
   FileText,
-  HelpCircle,
   ShieldCheck,
   ChevronDown,
+  Download,
+  RotateCcw,
 } from 'lucide-react';
 
 interface GroundCommunicationScreenProps {
@@ -26,31 +26,22 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
   selectedCrew,
 }) => {
   const displayCrew = crewMembers && crewMembers.length > 0 ? crewMembers : DEFAULT_CREW_MEMBERS;
+  const initialCrewId = selectedCrew?.id || 1;
+  const initialTemplate = ASTRONAUT_SBAR_TEMPLATES[initialCrewId] || ASTRONAUT_SBAR_TEMPLATES[1];
+
   const [comms, setComms] = useState<GroundCommunication[]>(DEFAULT_GROUND_COMMS);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
 
   // Form State for new Ground Brief (SBAR format)
-  const [title, setTitle] = useState('Clinical & Operational Incident Brief: Commander Alex Morgan Presyncope');
-  const [selectedCrewId, setSelectedCrewId] = useState<number>(selectedCrew?.id || 1);
-  const [situation, setSituation] = useState(
-    'Commander Alex Morgan suffered an acute transient orthostatic presyncope episode on Day 120 at 09:42 MET upon standing in the Airlock Node. Blood pressure dropped to 88/56 mmHg with compensatory tachycardia of 118 bpm.'
-  );
-  const [background, setBackground] = useState(
-    'Over the preceding 72 hours, cumulative sleep debt reached 9.8 hours following night-time drill alarms and high EVA stowage workload. Day 119 cycle ergometer aerobic countermeasure was skipped completely.'
-  );
-  const [assessment, setAssessment] = useState(
-    'Multi-factorial autonomic decompensation: microgravity cephalad fluid redistribution exacerbated by acute-on-chronic sleep restriction, missed cardiovascular countermeasure conditioning, and rapid postural change.'
-  );
-  const [recommendation, setRecommendation] = useState(
-    'Request ground flight surgeon concurrence on Scenario Alpha: 36-hour light duty restriction, mandatory 8.5h sleep window, 1200 mL oral electrolyte hydration loading, and graded cycle ergometer resumption at 140W.'
-  );
-  const [questions, setQuestions] = useState(
-    '1. Does Ground Flight Surgeon advise delaying ARED resistance exercise until Day 122? 2. Should midodrine be considered if orthostatic stability is not regained within 48h?'
-  );
-  const [dataLimitations, setDataLimitations] = useState(
-    'No continuous beat-to-beat arterial tonometry or NIRS cerebral oximetry was recorded during the acute episode.'
-  );
-  const [priority, setPriority] = useState<'ROUTINE' | 'PRIORITY' | 'URGENT'>('PRIORITY');
+  const [selectedCrewId, setSelectedCrewId] = useState<number>(initialCrewId);
+  const [title, setTitle] = useState(initialTemplate.title);
+  const [situation, setSituation] = useState(initialTemplate.situation);
+  const [background, setBackground] = useState(initialTemplate.background);
+  const [assessment, setAssessment] = useState(initialTemplate.assessment);
+  const [recommendation, setRecommendation] = useState(initialTemplate.recommendation);
+  const [questions, setQuestions] = useState(initialTemplate.questions);
+  const [dataLimitations, setDataLimitations] = useState(initialTemplate.dataLimitations);
+  const [priority, setPriority] = useState<'ROUTINE' | 'PRIORITY' | 'URGENT'>(initialTemplate.priority);
   const [isSaving, setIsSaving] = useState(false);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
@@ -65,6 +56,26 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
   useEffect(() => {
     fetchComms();
   }, []);
+
+  const handleApplyTemplate = (crewId: number) => {
+    const t = ASTRONAUT_SBAR_TEMPLATES[crewId] || ASTRONAUT_SBAR_TEMPLATES[1];
+    setSelectedCrewId(crewId);
+    setTitle(t.title);
+    setSituation(t.situation);
+    setBackground(t.background);
+    setAssessment(t.assessment);
+    setRecommendation(t.recommendation);
+    setQuestions(t.questions);
+    setDataLimitations(t.dataLimitations);
+    setPriority(t.priority);
+  };
+
+  // Sync when selectedCrew prop changes
+  useEffect(() => {
+    if (selectedCrew) {
+      handleApplyTemplate(selectedCrew.id);
+    }
+  }, [selectedCrew?.id]);
 
   const handleSaveDraft = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,24 +114,62 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
     }
   };
 
+  const handleExportSBAR = () => {
+    const sbarPayload = {
+      system: 'MOSAIC-9 Ground Communication Subsystem',
+      mission: 'ARES-IV Mars Transit',
+      met: '2894:15:22',
+      crew_member_id: selectedCrewId,
+      priority,
+      packet: {
+        title,
+        situation,
+        background,
+        assessment,
+        recommendation,
+        questions_for_flight_surgeon: questions,
+        unmeasured_data_limitations: dataLimitations,
+      },
+      exported_at: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(sbarPayload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sbar_brief_crew${selectedCrewId}_day120.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-space-700/60 pb-4">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-400">
-            MODULE H — MISSION GROUND COMMUNICATION
-          </span>
-          <span className="text-xs font-mono text-slate-400">
-            SBAR CLINICAL & OPERATIONAL BRIEF WORKSPACE
-          </span>
+      <div className="border-b border-space-700/60 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-400">
+              MODULE H — MISSION GROUND COMMUNICATION
+            </span>
+            <span className="text-xs font-mono text-slate-400">
+              SBAR CLINICAL & OPERATIONAL BRIEF WORKSPACE
+            </span>
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-white">
+            Ground Flight Surgeon Communication Workspace
+          </h1>
+          <p className="text-xs text-slate-400">
+            Prepare standardized SBAR consultation packets with linked telemetry evidence, explicit uncertainties, and offline resilient queueing.
+          </p>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-white">
-          Ground Flight Surgeon Communication Workspace
-        </h1>
-        <p className="text-xs text-slate-400">
-          Prepare standardized SBAR consultation packets with linked telemetry evidence, explicit uncertainties, and offline resilient queueing.
-        </p>
+
+        {/* Quick Export Button */}
+        <button
+          onClick={handleExportSBAR}
+          className="px-3.5 py-2 rounded-lg bg-space-850 hover:bg-space-800 text-cyan-300 border border-cyan-800 text-xs font-mono flex items-center gap-1.5 transition-all self-start md:self-auto shrink-0"
+        >
+          <Download className="w-3.5 h-3.5 text-cyan-400" />
+          <span>EXPORT SBAR PACKET</span>
+        </button>
       </div>
 
       {/* Offline Status / Mars Latency Callout */}
@@ -153,9 +202,32 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
         </div>
       )}
 
-      {/* Main Grid: Builder Form on Left, Queued Packets on Right */}
+      {/* Quick Astronaut Template Selection Bar */}
+      <div className="bg-space-850 border border-space-700 rounded-xl p-3.5 shadow-panel flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 font-mono text-xs text-slate-300">
+          <RotateCcw className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="font-semibold uppercase text-[10px] text-slate-400">LOAD SBAR TEMPLATE:</span>
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap font-mono text-xs">
+          {displayCrew.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => handleApplyTemplate(c.id)}
+              className={`px-2.5 py-1 rounded-lg border text-xs transition-all ${
+                selectedCrewId === c.id
+                  ? 'bg-cyan-950 border-cyan-600 text-cyan-300 font-bold'
+                  : 'bg-space-900 border-space-700 text-slate-400 hover:text-white'
+              }`}
+            >
+              {c.name.split(' ')[0]} ({c.callsign})
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Grid: Form Builder on Left, Queue Stream on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left 7 Cols: SBAR Editor Form */}
+        {/* Left 7 Cols: SBAR Builder Form */}
         <div className="lg:col-span-7 bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-sm font-bold text-white uppercase font-mono flex items-center gap-2">
@@ -194,7 +266,7 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
               <div className="relative">
                 <select
                   value={selectedCrewId}
-                  onChange={(e) => setSelectedCrewId(Number(e.target.value))}
+                  onChange={(e) => handleApplyTemplate(Number(e.target.value))}
                   className="w-full appearance-none bg-space-900 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-3 pr-8 py-2 text-white font-sans text-xs focus:outline-none focus:border-cyan-500 cursor-pointer"
                 >
                   {displayCrew.map((c) => (
@@ -220,79 +292,80 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
               />
             </div>
 
-            {/* S - Situation */}
+            {/* SBAR Section: Situation */}
             <div>
-              <label className="block text-cyan-400 font-bold uppercase text-[10px] mb-1">
-                [S] SITUATION — ACUTE INCIDENT STATEMENT
+              <label className="block text-rose-400 font-bold uppercase text-[10px] mb-1">
+                1. SITUATION (Acute Event or Query)
               </label>
               <textarea
                 required
                 rows={2}
                 value={situation}
                 onChange={(e) => setSituation(e.target.value)}
-                className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-sans text-xs focus:outline-none focus:border-cyan-500"
+                className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-sans text-xs focus:outline-none focus:border-cyan-500 leading-relaxed"
               />
             </div>
 
-            {/* B - Background */}
+            {/* SBAR Section: Background */}
             <div>
               <label className="block text-cyan-400 font-bold uppercase text-[10px] mb-1">
-                [B] BACKGROUND — PRECEDING MISSION & SLEEP CONTEXT
+                2. BACKGROUND (Precursor Telemetry & Timeline)
               </label>
               <textarea
                 required
                 rows={2}
                 value={background}
                 onChange={(e) => setBackground(e.target.value)}
-                className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-sans text-xs focus:outline-none focus:border-cyan-500"
+                className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-sans text-xs focus:outline-none focus:border-cyan-500 leading-relaxed"
               />
             </div>
 
-            {/* A - Assessment */}
+            {/* SBAR Section: Assessment */}
             <div>
-              <label className="block text-cyan-400 font-bold uppercase text-[10px] mb-1">
-                [A] ASSESSMENT — MULTI-DOMAIN RECONSTRUCTION HYPOTHESIS
+              <label className="block text-amber-400 font-bold uppercase text-[10px] mb-1">
+                3. ASSESSMENT (Autonomic & Physiological Rationale)
               </label>
               <textarea
                 required
                 rows={2}
                 value={assessment}
                 onChange={(e) => setAssessment(e.target.value)}
-                className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-sans text-xs focus:outline-none focus:border-cyan-500"
+                className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-sans text-xs focus:outline-none focus:border-cyan-500 leading-relaxed"
               />
             </div>
 
-            {/* R - Recommendation */}
+            {/* SBAR Section: Recommendation */}
             <div>
-              <label className="block text-cyan-400 font-bold uppercase text-[10px] mb-1">
-                [R] RECOMMENDATION — REQUESTED COUNTERMEASURE ACTIONS
+              <label className="block text-emerald-400 font-bold uppercase text-[10px] mb-1">
+                4. RECOMMENDATION (Countermeasure & Workload Protocol)
               </label>
               <textarea
                 required
                 rows={2}
                 value={recommendation}
                 onChange={(e) => setRecommendation(e.target.value)}
-                className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-sans text-xs focus:outline-none focus:border-cyan-500"
+                className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-sans text-xs focus:outline-none focus:border-cyan-500 leading-relaxed"
               />
             </div>
 
-            {/* Questions for Ground */}
+            {/* Questions for Ground Flight Surgeon */}
             <div>
-              <label className="block text-amber-400 font-bold uppercase text-[10px] mb-1">
-                SPECIFIC QUESTIONS FOR GROUND FLIGHT SURGEONS
+              <label className="block text-slate-400 uppercase text-[10px] mb-1">
+                EXPLICIT QUESTIONS FOR FLIGHT SURGEON
               </label>
-              <textarea
-                rows={2}
+              <input
+                type="text"
                 value={questions}
                 onChange={(e) => setQuestions(e.target.value)}
                 className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-sans text-xs focus:outline-none focus:border-cyan-500"
               />
             </div>
 
-            {/* Data Limitations */}
+            {/* Data Limitations Disclosure */}
             <div>
-              <label className="block text-rose-400 font-bold uppercase text-[10px] mb-1">
-                DATA LIMITATIONS & UNCERTAINTIES
+              <label className="block text-slate-400 uppercase text-[10px] mb-1 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                <span>UNMEASURED DATA & SCIENTIFIC UNCERTAINTIES</span>
               </label>
               <input
                 type="text"
