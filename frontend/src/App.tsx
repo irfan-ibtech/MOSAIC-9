@@ -14,15 +14,21 @@ import { SystemStatusScreen } from './screens/SystemStatusScreen';
 
 import { Mission, CrewMember, LedgerEvent } from './types';
 import { mosaicApi } from './services/api';
+import {
+  DEFAULT_MISSION,
+  DEFAULT_CREW_MEMBERS,
+  DEFAULT_RECENT_EVENTS,
+} from './data/initialData';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>('command_center');
-  const [mission, setMission] = useState<Mission | null>(null);
-  const [crewMembers, setCrewMembers] = useState<CrewMember[]>([]);
-  const [selectedCrew, setSelectedCrew] = useState<CrewMember | null>(null);
-  const [recentEvents, setRecentEvents] = useState<LedgerEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [mission, setMission] = useState<Mission | null>(DEFAULT_MISSION);
+  const [crewMembers, setCrewMembers] = useState<CrewMember[]>(DEFAULT_CREW_MEMBERS);
+  const [selectedCrew, setSelectedCrew] = useState<CrewMember | null>(DEFAULT_CREW_MEMBERS[0]);
+  const [recentEvents, setRecentEvents] = useState<LedgerEvent[]>(DEFAULT_RECENT_EVENTS);
+  const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const loadInitialData = async () => {
     try {
@@ -39,11 +45,13 @@ export default function App() {
       if (crewRes && crewRes.length > 0) {
         setCrewMembers(crewRes);
         // Default to Commander Alex Morgan (focal astronaut)
-        const alex = crewRes.find((c) => c.name.includes('Alex Morgan')) || crewRes[0];
+        const currentSelectedId = selectedCrew?.id;
+        const matching = crewRes.find((c) => c.id === currentSelectedId);
+        const alex = matching || crewRes.find((c) => c.name.includes('Alex Morgan')) || crewRes[0];
         setSelectedCrew(alex);
       }
     } catch (err) {
-      console.error('Initial data load error:', err);
+      console.error('Initial data load error (resilient fallback active):', err);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -61,11 +69,13 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-space-950 text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
-      {/* Persistent Left Navigation Sidebar */}
+      {/* Persistent / Responsive Left Navigation Sidebar */}
       <Sidebar
         currentScreen={currentScreen}
         onSelectScreen={setCurrentScreen}
         activeIncidentAlert={true}
+        mobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
       {/* Main Mission Operations Pane */}
@@ -78,6 +88,7 @@ export default function App() {
           onSelectCrew={setSelectedCrew}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
+          onToggleMobileMenu={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />
 
         {/* Scrollable Workspace Content */}
@@ -103,7 +114,11 @@ export default function App() {
             )}
 
             {currentScreen === 'domain_details' && (
-              <HealthDomainScreen selectedCrew={selectedCrew} />
+              <HealthDomainScreen
+                selectedCrew={selectedCrew}
+                crewMembers={crewMembers}
+                onSelectCrew={setSelectedCrew}
+              />
             )}
 
             {currentScreen === 'event_ledger' && (
@@ -111,7 +126,11 @@ export default function App() {
             )}
 
             {currentScreen === 'temporal_intelligence' && (
-              <TemporalIntelligenceScreen selectedCrew={selectedCrew} />
+              <TemporalIntelligenceScreen
+                selectedCrew={selectedCrew}
+                crewMembers={crewMembers}
+                onSelectCrew={setSelectedCrew}
+              />
             )}
 
             {currentScreen === 'incident_reconstruction' && (
@@ -119,11 +138,18 @@ export default function App() {
             )}
 
             {currentScreen === 'scenario_sandbox' && (
-              <ScenarioSandboxScreen selectedCrew={selectedCrew} />
+              <ScenarioSandboxScreen
+                selectedCrew={selectedCrew}
+                crewMembers={crewMembers}
+                onSelectCrew={setSelectedCrew}
+              />
             )}
 
             {currentScreen === 'ground_comms' && (
-              <GroundCommunicationScreen crewMembers={crewMembers} />
+              <GroundCommunicationScreen
+                crewMembers={crewMembers}
+                selectedCrew={selectedCrew}
+              />
             )}
 
             {currentScreen === 'data_sources' && (

@@ -5,6 +5,11 @@ import { mosaicApi } from '../services/api';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { EvidencePill } from '../components/common/EvidencePill';
 import {
+  DEFAULT_INCIDENTS,
+  DEFAULT_RECONSTRUCTION_INC1,
+  DEFAULT_RECONSTRUCTION_INC2,
+} from '../data/initialData';
+import {
   History,
   AlertTriangle,
   Clock,
@@ -17,6 +22,7 @@ import {
   Sliders,
   Database,
   X,
+  ChevronDown,
 } from 'lucide-react';
 
 interface IncidentReconstructionScreenProps {
@@ -24,12 +30,14 @@ interface IncidentReconstructionScreenProps {
 }
 
 export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreenProps> = ({ onNavigate }) => {
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>(DEFAULT_INCIDENTS);
   const [selectedIncidentId, setSelectedIncidentId] = useState<number>(1);
   const [horizonHours, setHorizonHours] = useState<number>(72);
-  const [reconstruction, setReconstruction] = useState<ReconstructionData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [reconstruction, setReconstruction] = useState<ReconstructionData | null>(DEFAULT_RECONSTRUCTION_INC1);
+  const [loading, setLoading] = useState(false);
   const [activeEvidenceModal, setActiveEvidenceModal] = useState<EvidenceNode | null>(null);
+
+  const displayIncidents = incidents && incidents.length > 0 ? incidents : DEFAULT_INCIDENTS;
 
   useEffect(() => {
     mosaicApi.getIncidents().then((list) => {
@@ -96,19 +104,22 @@ export const IncidentReconstructionScreen: React.FC<IncidentReconstructionScreen
 
       {/* Incident Selector & Horizon Control Bar */}
       <div className="bg-space-850 border border-space-700 rounded-xl p-4 shadow-panel flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-slate-400 uppercase">SELECT INCIDENT:</span>
-          <select
-            value={selectedIncidentId}
-            onChange={(e) => setSelectedIncidentId(Number(e.target.value))}
-            className="bg-space-900 border border-space-700 text-xs text-white rounded-lg px-3 py-1.5 font-mono focus:outline-none focus:border-cyan-500"
-          >
-            {incidents.map((inc) => (
-              <option key={inc.id} value={inc.id}>
-                {inc.incident_code} — {inc.title} (Day {inc.mission_day})
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-xs font-mono text-slate-400 uppercase shrink-0">SELECT INCIDENT:</span>
+          <div className="relative">
+            <select
+              value={selectedIncidentId}
+              onChange={(e) => setSelectedIncidentId(Number(e.target.value))}
+              className="appearance-none bg-space-900 border border-space-700 hover:border-cyan-500/60 text-xs text-white rounded-lg pl-3 pr-8 py-2 font-mono focus:outline-none focus:border-cyan-500 cursor-pointer"
+            >
+              {displayIncidents.map((inc) => (
+                <option key={inc.id} value={inc.id}>
+                  {inc.incident_code} — {inc.title} (Day {inc.mission_day})
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2.5 top-2.5 pointer-events-none" />
+          </div>
         </div>
 
         {/* Horizon Range Switcher */}

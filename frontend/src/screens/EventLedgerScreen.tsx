@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LedgerEvent, CrewMember, EventCategory, EventSeverity, DataQuality } from '../types';
 import { mosaicApi } from '../services/api';
+import { DEFAULT_CREW_MEMBERS } from '../data/initialData';
 import {
   Search,
   Filter,
@@ -12,6 +13,7 @@ import {
   X,
   CheckCircle2,
   AlertTriangle,
+  ChevronDown,
 } from 'lucide-react';
 
 interface EventLedgerScreenProps {
@@ -135,28 +137,29 @@ export const EventLedgerScreen: React.FC<EventLedgerScreenProps> = ({ crewMember
           </div>
 
           {/* Crew Filter */}
-          <div>
+          <div className="relative">
             <select
               value={selectedCrewId}
               onChange={(e) => setSelectedCrewId(e.target.value)}
-              className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+              className="w-full appearance-none bg-space-900 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-3 pr-8 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono cursor-pointer"
             >
               <option value="all">ALL CREW & SHIPWIDE</option>
               <option value="shipwide">SHIPWIDE / STATION ONLY</option>
-              {crewMembers.map((c) => (
+              {(crewMembers && crewMembers.length > 0 ? crewMembers : DEFAULT_CREW_MEMBERS).map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name} ({c.callsign})
                 </option>
               ))}
             </select>
+            <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2.5 top-3 pointer-events-none" />
           </div>
 
           {/* Category Filter */}
-          <div>
+          <div className="relative">
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+              className="w-full appearance-none bg-space-900 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-3 pr-8 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono cursor-pointer"
             >
               <option value="">ALL CATEGORIES</option>
               <option value="health_observation">HEALTH OBSERVATIONS</option>
@@ -168,14 +171,15 @@ export const EventLedgerScreen: React.FC<EventLedgerScreenProps> = ({ crewMember
               <option value="mission_event">MISSION EVENTS</option>
               <option value="communication_quality">COMMUNICATION QUALITY</option>
             </select>
+            <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2.5 top-3 pointer-events-none" />
           </div>
 
           {/* Severity Filter */}
-          <div>
+          <div className="relative">
             <select
               value={selectedSeverity}
               onChange={(e) => setSelectedSeverity(e.target.value)}
-              className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+              className="w-full appearance-none bg-space-900 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-3 pr-8 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono cursor-pointer"
             >
               <option value="">ALL SEVERITIES</option>
               <option value="CRITICAL">CRITICAL</option>
@@ -184,14 +188,15 @@ export const EventLedgerScreen: React.FC<EventLedgerScreenProps> = ({ crewMember
               <option value="LOW">LOW</option>
               <option value="INFO">INFO</option>
             </select>
+            <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2.5 top-3 pointer-events-none" />
           </div>
 
           {/* Quality Filter */}
-          <div>
+          <div className="relative">
             <select
               value={selectedQuality}
               onChange={(e) => setSelectedQuality(e.target.value)}
-              className="w-full bg-space-900 border border-space-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+              className="w-full appearance-none bg-space-900 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-3 pr-8 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono cursor-pointer"
             >
               <option value="">ALL DATA QUALITIES</option>
               <option value="VERIFIED">VERIFIED</option>
@@ -200,6 +205,7 @@ export const EventLedgerScreen: React.FC<EventLedgerScreenProps> = ({ crewMember
               <option value="STALE">STALE</option>
               <option value="UNRELIABLE">UNRELIABLE</option>
             </select>
+            <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2.5 top-3 pointer-events-none" />
           </div>
         </div>
 
@@ -407,34 +413,40 @@ export const EventLedgerScreen: React.FC<EventLedgerScreenProps> = ({ crewMember
                 <label className="block text-slate-400 font-mono text-[10px] uppercase mb-1">
                   Crew Member
                 </label>
-                <select
-                  value={newCrewId}
-                  onChange={(e) => setNewCrewId(Number(e.target.value))}
-                  className="w-full bg-space-950 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-mono"
-                >
-                  {crewMembers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.callsign})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={newCrewId}
+                    onChange={(e) => setNewCrewId(Number(e.target.value))}
+                    className="w-full appearance-none bg-space-950 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-3 pr-8 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-cyan-500 cursor-pointer"
+                  >
+                    {(crewMembers && crewMembers.length > 0 ? crewMembers : DEFAULT_CREW_MEMBERS).map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.callsign})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2.5 top-3 pointer-events-none" />
+                </div>
               </div>
 
               <div>
                 <label className="block text-slate-400 font-mono text-[10px] uppercase mb-1">
                   Event Category
                 </label>
-                <select
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value as EventCategory)}
-                  className="w-full bg-space-950 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-mono"
-                >
-                  <option value="symptom_report">Symptom Report (Subjective)</option>
-                  <option value="health_observation">Health Observation</option>
-                  <option value="exercise_record">Exercise Record</option>
-                  <option value="sleep_observation">Sleep Observation</option>
-                  <option value="workload_observation">Workload Observation</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value as EventCategory)}
+                    className="w-full appearance-none bg-space-950 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-3 pr-8 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-cyan-500 cursor-pointer"
+                  >
+                    <option value="symptom_report">Symptom Report (Subjective)</option>
+                    <option value="health_observation">Health Observation</option>
+                    <option value="exercise_record">Exercise Record</option>
+                    <option value="sleep_observation">Sleep Observation</option>
+                    <option value="workload_observation">Workload Observation</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2.5 top-3 pointer-events-none" />
+                </div>
               </div>
 
               <div>
@@ -470,17 +482,20 @@ export const EventLedgerScreen: React.FC<EventLedgerScreenProps> = ({ crewMember
                   <label className="block text-slate-400 font-mono text-[10px] uppercase mb-1">
                     Severity
                   </label>
-                  <select
-                    value={newSeverity}
-                    onChange={(e) => setNewSeverity(e.target.value as EventSeverity)}
-                    className="w-full bg-space-950 border border-space-700 rounded-lg px-3 py-2 text-slate-200 font-mono"
-                  >
-                    <option value="INFO">INFO</option>
-                    <option value="LOW">LOW</option>
-                    <option value="MODERATE">MODERATE</option>
-                    <option value="HIGH">HIGH</option>
-                    <option value="CRITICAL">CRITICAL</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={newSeverity}
+                      onChange={(e) => setNewSeverity(e.target.value as EventSeverity)}
+                      className="w-full appearance-none bg-space-950 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-3 pr-8 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-cyan-500 cursor-pointer"
+                    >
+                      <option value="INFO">INFO</option>
+                      <option value="LOW">LOW</option>
+                      <option value="MODERATE">MODERATE</option>
+                      <option value="HIGH">HIGH</option>
+                      <option value="CRITICAL">CRITICAL</option>
+                    </select>
+                    <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2.5 top-3 pointer-events-none" />
+                  </div>
                 </div>
 
                 <div>

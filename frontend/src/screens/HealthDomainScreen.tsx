@@ -2,20 +2,35 @@ import React, { useState } from 'react';
 import { CrewMember } from '../types';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { TelemetryChart } from '../components/common/TelemetryChart';
-import { Heart, Dumbbell, Moon, Radiation, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { DEFAULT_CREW_MEMBERS } from '../data/initialData';
+import {
+  Heart,
+  Dumbbell,
+  Moon,
+  Radiation,
+  ChevronDown,
+} from 'lucide-react';
 
 interface HealthDomainScreenProps {
   selectedCrew: CrewMember | null;
+  crewMembers?: CrewMember[];
+  onSelectCrew?: (crew: CrewMember) => void;
 }
 
-export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selectedCrew }) => {
+export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({
+  selectedCrew,
+  crewMembers,
+  onSelectCrew,
+}) => {
   const [activeTab, setActiveTab] = useState<'cardio' | 'musc' | 'neuro' | 'rad'>('cardio');
 
-  if (!selectedCrew) return null;
+  // Safe crew resolution - never return null!
+  const list = crewMembers && crewMembers.length > 0 ? crewMembers : DEFAULT_CREW_MEMBERS;
+  const crew = selectedCrew || list[0] || DEFAULT_CREW_MEMBERS[0];
 
   // Domain Chart Configurations dynamically driven by selected crew member
   const getDomainData = () => {
-    if (selectedCrew.callsign === 'CADUCEUS') {
+    if (crew.callsign === 'CADUCEUS') {
       // Dr. Sarah Chen
       return {
         cardio: {
@@ -38,7 +53,7 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selected
       };
     }
 
-    if (selectedCrew.callsign === 'VULCAN') {
+    if (crew.callsign === 'VULCAN') {
       // Marcus Vance
       return {
         cardio: {
@@ -61,7 +76,7 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selected
       };
     }
 
-    if (selectedCrew.callsign === 'AURORA') {
+    if (crew.callsign === 'AURORA') {
       // Elena Rostova (Demonstrates missing data handling on Days 119-120)
       return {
         cardio: {
@@ -110,17 +125,21 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selected
 
   const cardioChartOptions = {
     tooltip: { trigger: 'axis' },
-    legend: { data: ['Systolic BP (mmHg)', 'Diastolic BP (mmHg)', 'Heart Rate (bpm)'], textStyle: { color: '#94a3b8' } },
+    legend: {
+      data: ['Systolic BP (mmHg)', 'Diastolic BP (mmHg)', 'Heart Rate (bpm)'],
+      textStyle: { color: '#94a3b8', fontSize: 11 },
+      top: 0,
+    },
     xAxis: {
       type: 'category',
       data: ['Day 116', 'Day 117', 'Day 118', 'Day 119', 'Day 120'],
       axisLine: { lineStyle: { color: '#1e2c4c' } },
-      axisLabel: { color: '#64748b' },
+      axisLabel: { color: '#64748b', fontSize: 10 },
     },
     yAxis: {
       type: 'value',
       splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.05)' } },
-      axisLabel: { color: '#64748b' },
+      axisLabel: { color: '#64748b', fontSize: 10 },
     },
     series: [
       { name: 'Systolic BP (mmHg)', type: 'line', connectNulls: false, data: domainData.cardio.sbp, itemStyle: { color: '#f43f5e' } },
@@ -131,17 +150,21 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selected
 
   const muscChartOptions = {
     tooltip: { trigger: 'axis' },
-    legend: { data: ['Ergometer Workload (W)', `Target Protocol (${domainData.musc.target}W)`], textStyle: { color: '#94a3b8' } },
+    legend: {
+      data: ['Ergometer Workload (W)', `Target Protocol (${domainData.musc.target}W)`],
+      textStyle: { color: '#94a3b8', fontSize: 11 },
+      top: 0,
+    },
     xAxis: {
       type: 'category',
       data: ['Day 116', 'Day 117', 'Day 118', 'Day 119', 'Day 120'],
       axisLine: { lineStyle: { color: '#1e2c4c' } },
-      axisLabel: { color: '#64748b' },
+      axisLabel: { color: '#64748b', fontSize: 10 },
     },
     yAxis: {
       type: 'value',
       splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.05)' } },
-      axisLabel: { color: '#64748b' },
+      axisLabel: { color: '#64748b', fontSize: 10 },
     },
     series: [
       {
@@ -165,16 +188,20 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selected
 
   const neuroChartOptions = {
     tooltip: { trigger: 'axis' },
-    legend: { data: ['PVT Reaction Latency (ms)', 'Fatigue Score (1-10)'], textStyle: { color: '#94a3b8' } },
+    legend: {
+      data: ['PVT Reaction Latency (ms)', 'Fatigue Score (1-10)'],
+      textStyle: { color: '#94a3b8', fontSize: 11 },
+      top: 0,
+    },
     xAxis: {
       type: 'category',
       data: ['Day 116', 'Day 117', 'Day 118', 'Day 119', 'Day 120'],
       axisLine: { lineStyle: { color: '#1e2c4c' } },
-      axisLabel: { color: '#64748b' },
+      axisLabel: { color: '#64748b', fontSize: 10 },
     },
     yAxis: [
-      { type: 'value', name: 'Latency (ms)', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }, axisLabel: { color: '#64748b' } },
-      { type: 'value', name: 'Score', max: 10, axisLabel: { color: '#64748b' } },
+      { type: 'value', name: 'Latency (ms)', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }, axisLabel: { color: '#64748b', fontSize: 10 } },
+      { type: 'value', name: 'Score', max: 10, axisLabel: { color: '#64748b', fontSize: 10 } },
     ],
     series: [
       { name: 'PVT Reaction Latency (ms)', type: 'line', connectNulls: false, data: domainData.neuro.pvt, itemStyle: { color: '#f59e0b' } },
@@ -184,26 +211,30 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selected
 
   const radChartOptions = {
     tooltip: { trigger: 'axis' },
-    legend: { data: ['Dosimeter Rate (µSv/h)', 'Cabin CO2 (mmHg)'], textStyle: { color: '#94a3b8' } },
+    legend: {
+      data: ['Dosimeter Rate (µSv/h)', 'Cabin CO2 (mmHg)'],
+      textStyle: { color: '#94a3b8', fontSize: 11 },
+      top: 0,
+    },
     xAxis: {
       type: 'category',
       data: ['Day 116', 'Day 117', 'Day 118', 'Day 119', 'Day 120'],
       axisLine: { lineStyle: { color: '#1e2c4c' } },
-      axisLabel: { color: '#64748b' },
+      axisLabel: { color: '#64748b', fontSize: 10 },
     },
     yAxis: [
-      { type: 'value', name: 'µSv/h', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }, axisLabel: { color: '#64748b' } },
-      { type: 'value', name: 'mmHg', min: 1.5, max: 4.5, axisLabel: { color: '#64748b' } },
+      { type: 'value', name: 'µSv/h', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }, axisLabel: { color: '#64748b', fontSize: 10 } },
+      { type: 'value', name: 'mmHg', min: 1.5, max: 4.5, axisLabel: { color: '#64748b', fontSize: 10 } },
     ],
     series: [
-      { name: 'Dosimeter Rate (µSv/h)', type: 'line', data: domainData.rad.dosimeter, itemStyle: { color: '#a855f7' } },
-      { name: 'Cabin CO2 (mmHg)', type: 'line', yAxisIndex: 1, data: domainData.rad.co2, itemStyle: { color: '#10b981' } },
+      { name: 'Dosimeter Rate (µSv/h)', type: 'line', connectNulls: false, data: domainData.rad.dosimeter, itemStyle: { color: '#a855f7' } },
+      { name: 'Cabin CO2 (mmHg)', type: 'line', connectNulls: false, yAxisIndex: 1, data: domainData.rad.co2, itemStyle: { color: '#10b981' } },
     ],
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header & Astronaut Selector Bar */}
       <div className="border-b border-space-700/60 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -212,74 +243,117 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selected
             </span>
             <span className="text-xs font-mono text-slate-400">DEEP DIVE MULTI-MODAL METRICS</span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
             <span>Physiological & Environmental Domains</span>
-            <span className="text-cyan-400 font-mono text-base">({selectedCrew.name})</span>
+            <span className="text-cyan-400 font-mono text-base">({crew.name})</span>
+            <StatusBadge status={crew.status} size="sm" />
           </h1>
           <p className="text-xs text-slate-400">
             Compare individual domain performance, countermeasure compliance, and environmental stress context.
           </p>
         </div>
 
-        {/* Domain Navigation Tabs */}
-        <div className="flex items-center gap-1.5 bg-space-900 border border-space-700 p-1 rounded-xl">
-          <button
-            onClick={() => setActiveTab('cardio')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-              activeTab === 'cardio' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 font-semibold shadow-panel' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Heart className="w-3.5 h-3.5 text-rose-400" />
-            <span>Cardiovascular</span>
-          </button>
+        {/* Astronaut Selector: Dropdown for Mobile / Pills for Desktop */}
+        {onSelectCrew && (
+          <div className="flex items-center gap-2">
+            {/* Mobile / Tablet Dropdown */}
+            <div className="relative md:hidden flex items-center bg-space-900 border border-space-700 rounded-lg px-2.5 py-1.5 w-full">
+              <select
+                value={crew.id}
+                onChange={(e) => {
+                  const found = list.find((c) => c.id === Number(e.target.value));
+                  if (found) onSelectCrew(found);
+                }}
+                className="appearance-none bg-transparent text-xs text-white font-mono focus:outline-none pr-6 cursor-pointer w-full"
+              >
+                {list.map((c) => (
+                  <option key={c.id} value={c.id} className="bg-space-900 text-slate-100">
+                    {c.name} ({c.callsign})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-cyan-400 absolute right-2 pointer-events-none" />
+            </div>
 
-          <button
-            onClick={() => setActiveTab('musc')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-              activeTab === 'musc' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 font-semibold shadow-panel' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Dumbbell className="w-3.5 h-3.5 text-amber-400" />
-            <span>Musculoskeletal</span>
-          </button>
+            {/* Desktop Pill Tabs */}
+            <div className="hidden md:flex items-center gap-2">
+              {list.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => onSelectCrew(c)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all flex items-center gap-2 border ${
+                    crew.id === c.id
+                      ? 'bg-cyan-950 border-cyan-600 text-cyan-300 shadow-panel font-semibold'
+                      : 'bg-space-900 border-space-700 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>{c.avatar_initials}</span>
+                  <span>{c.callsign}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
-          <button
-            onClick={() => setActiveTab('neuro')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-              activeTab === 'neuro' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 font-semibold shadow-panel' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Moon className="w-3.5 h-3.5 text-rose-400" />
-            <span>Sleep & Cognitive</span>
-          </button>
+      {/* Domain Navigation Tabs */}
+      <div className="flex flex-wrap items-center gap-1.5 bg-space-900 border border-space-700 p-1 rounded-xl">
+        <button
+          onClick={() => setActiveTab('cardio')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+            activeTab === 'cardio' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 font-semibold shadow-panel' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Heart className="w-3.5 h-3.5 text-rose-400" />
+          <span>Cardiovascular</span>
+        </button>
 
-          <button
-            onClick={() => setActiveTab('rad')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-              activeTab === 'rad' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 font-semibold shadow-panel' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Radiation className="w-3.5 h-3.5 text-purple-400" />
-            <span>Radiation / Habitat</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setActiveTab('musc')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+            activeTab === 'musc' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 font-semibold shadow-panel' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Dumbbell className="w-3.5 h-3.5 text-amber-400" />
+          <span>Musculoskeletal</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('neuro')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+            activeTab === 'neuro' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 font-semibold shadow-panel' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Moon className="w-3.5 h-3.5 text-rose-400" />
+          <span>Sleep & Cognitive</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('rad')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+            activeTab === 'rad' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 font-semibold shadow-panel' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Radiation className="w-3.5 h-3.5 text-purple-400" />
+          <span>Radiation / Habitat</span>
+        </button>
       </div>
 
       {/* Active Domain Panel Content */}
       {activeTab === 'cardio' && (
         <div className="space-y-6">
-          <div className="bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-space-850 border border-space-700 rounded-xl p-4 sm:p-5 shadow-panel space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <h2 className="text-sm font-bold text-white uppercase font-mono flex items-center gap-2">
                   <Heart className="w-4 h-4 text-rose-400" />
-                  <span>Cardiovascular & Hemodynamic Response — {selectedCrew.name}</span>
+                  <span>Cardiovascular & Hemodynamic Response — {crew.name}</span>
                 </h2>
                 <p className="text-xs text-slate-400">
-                  {selectedCrew.domain_status?.cardiovascular?.summary || 'Nominal hemodynamic observations.'}
+                  {crew.domain_status?.cardiovascular?.summary || 'Nominal hemodynamic observations.'}
                 </p>
               </div>
-              <StatusBadge status={selectedCrew.domain_status?.cardiovascular?.status || 'UNKNOWN'} size="sm" />
+              <StatusBadge status={crew.domain_status?.cardiovascular?.status || 'UNKNOWN'} size="sm" />
             </div>
 
             <TelemetryChart options={cardioChartOptions} height={260} />
@@ -293,18 +367,18 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selected
 
       {activeTab === 'musc' && (
         <div className="space-y-6">
-          <div className="bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-space-850 border border-space-700 rounded-xl p-4 sm:p-5 shadow-panel space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <h2 className="text-sm font-bold text-white uppercase font-mono flex items-center gap-2">
                   <Dumbbell className="w-4 h-4 text-amber-400" />
-                  <span>Exercise Countermeasure Adherence & Power Output — {selectedCrew.name}</span>
+                  <span>Exercise Countermeasure Adherence & Power Output — {crew.name}</span>
                 </h2>
                 <p className="text-xs text-slate-400">
-                  {selectedCrew.domain_status?.musculoskeletal?.summary || 'Standard exercise countermeasure logs.'}
+                  {crew.domain_status?.musculoskeletal?.summary || 'Standard exercise countermeasure logs.'}
                 </p>
               </div>
-              <StatusBadge status={selectedCrew.domain_status?.musculoskeletal?.status || 'UNKNOWN'} size="sm" />
+              <StatusBadge status={crew.domain_status?.musculoskeletal?.status || 'UNKNOWN'} size="sm" />
             </div>
 
             <TelemetryChart options={muscChartOptions} height={260} />
@@ -318,18 +392,18 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selected
 
       {activeTab === 'neuro' && (
         <div className="space-y-6">
-          <div className="bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-space-850 border border-space-700 rounded-xl p-4 sm:p-5 shadow-panel space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <h2 className="text-sm font-bold text-white uppercase font-mono flex items-center gap-2">
                   <Moon className="w-4 h-4 text-rose-400" />
-                  <span>Sleep & Psychomotor Vigilance State — {selectedCrew.name}</span>
+                  <span>Sleep & Psychomotor Vigilance State — {crew.name}</span>
                 </h2>
                 <p className="text-xs text-slate-400">
-                  {selectedCrew.domain_status?.neuro_cognitive_sleep?.summary || 'Sleep and neurobehavioral vigilance monitoring.'}
+                  {crew.domain_status?.neuro_cognitive_sleep?.summary || 'Sleep and neurobehavioral vigilance monitoring.'}
                 </p>
               </div>
-              <StatusBadge status={selectedCrew.domain_status?.neuro_cognitive_sleep?.status || 'UNKNOWN'} size="sm" />
+              <StatusBadge status={crew.domain_status?.neuro_cognitive_sleep?.status || 'UNKNOWN'} size="sm" />
             </div>
 
             <TelemetryChart options={neuroChartOptions} height={260} />
@@ -343,18 +417,18 @@ export const HealthDomainScreen: React.FC<HealthDomainScreenProps> = ({ selected
 
       {activeTab === 'rad' && (
         <div className="space-y-6">
-          <div className="bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-space-850 border border-space-700 rounded-xl p-4 sm:p-5 shadow-panel space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <h2 className="text-sm font-bold text-white uppercase font-mono flex items-center gap-2">
                   <Radiation className="w-4 h-4 text-purple-400" />
-                  <span>Habitation Environment & Radiation Dosimetry — {selectedCrew.name}</span>
+                  <span>Habitation Environment & Radiation Dosimetry — {crew.name}</span>
                 </h2>
                 <p className="text-xs text-slate-400">
-                  {selectedCrew.domain_status?.radiation_environment?.summary || 'Ambient radiation dosimeter and cabin atmospheric sensors.'}
+                  {crew.domain_status?.radiation_environment?.summary || 'Ambient radiation dosimeter and cabin atmospheric sensors.'}
                 </p>
               </div>
-              <StatusBadge status={selectedCrew.domain_status?.radiation_environment?.status || 'UNKNOWN'} size="sm" />
+              <StatusBadge status={crew.domain_status?.radiation_environment?.status || 'UNKNOWN'} size="sm" />
             </div>
 
             <TelemetryChart options={radChartOptions} height={260} />

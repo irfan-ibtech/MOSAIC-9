@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GroundCommunication, CrewMember, Incident } from '../types';
 import { mosaicApi } from '../services/api';
+import { DEFAULT_CREW_MEMBERS, DEFAULT_GROUND_COMMS } from '../data/initialData';
 import {
   Radio,
   Send,
@@ -12,19 +13,25 @@ import {
   FileText,
   HelpCircle,
   ShieldCheck,
+  ChevronDown,
 } from 'lucide-react';
 
 interface GroundCommunicationScreenProps {
   crewMembers: CrewMember[];
+  selectedCrew?: CrewMember | null;
 }
 
-export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps> = ({ crewMembers }) => {
-  const [comms, setComms] = useState<GroundCommunication[]>([]);
-  const [loading, setLoading] = useState(true);
+export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps> = ({
+  crewMembers,
+  selectedCrew,
+}) => {
+  const displayCrew = crewMembers && crewMembers.length > 0 ? crewMembers : DEFAULT_CREW_MEMBERS;
+  const [comms, setComms] = useState<GroundCommunication[]>(DEFAULT_GROUND_COMMS);
+  const [loading, setLoading] = useState(false);
 
   // Form State for new Ground Brief (SBAR format)
   const [title, setTitle] = useState('Clinical & Operational Incident Brief: Commander Alex Morgan Presyncope');
-  const [selectedCrewId, setSelectedCrewId] = useState<number>(1);
+  const [selectedCrewId, setSelectedCrewId] = useState<number>(selectedCrew?.id || 1);
   const [situation, setSituation] = useState(
     'Commander Alex Morgan suffered an acute transient orthostatic presyncope episode on Day 120 at 09:42 MET upon standing in the Airlock Node. Blood pressure dropped to 88/56 mmHg with compensatory tachycardia of 118 bpm.'
   );
@@ -150,32 +157,56 @@ export const GroundCommunicationScreen: React.FC<GroundCommunicationScreenProps>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left 7 Cols: SBAR Editor Form */}
         <div className="lg:col-span-7 bg-space-850 border border-space-700 rounded-xl p-5 shadow-panel space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-sm font-bold text-white uppercase font-mono flex items-center gap-2">
               <FileText className="w-4 h-4 text-cyan-400" />
               <span>STRUCTURED SBAR BRIEF BUILDER</span>
             </h2>
             <div className="flex items-center gap-2">
               <label className="text-[10px] font-mono text-slate-400 uppercase">PRIORITY:</label>
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value as any)}
-                className={`bg-space-900 border text-xs font-mono px-2 py-1 rounded ${
-                  priority === 'URGENT'
-                    ? 'border-rose-500 text-rose-300'
-                    : priority === 'PRIORITY'
-                    ? 'border-amber-500 text-amber-300'
-                    : 'border-space-700 text-slate-300'
-                }`}
-              >
-                <option value="ROUTINE">ROUTINE</option>
-                <option value="PRIORITY">PRIORITY</option>
-                <option value="URGENT">URGENT</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as any)}
+                  className={`appearance-none bg-space-900 border text-xs font-mono pl-2 pr-6 py-1 rounded cursor-pointer ${
+                    priority === 'URGENT'
+                      ? 'border-rose-500 text-rose-300'
+                      : priority === 'PRIORITY'
+                      ? 'border-amber-500 text-amber-300'
+                      : 'border-space-700 text-slate-300'
+                  }`}
+                >
+                  <option value="ROUTINE">ROUTINE</option>
+                  <option value="PRIORITY">PRIORITY</option>
+                  <option value="URGENT">URGENT</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-1.5 top-1.5 pointer-events-none" />
+              </div>
             </div>
           </div>
 
           <form onSubmit={handleSaveDraft} className="space-y-4 text-xs font-mono">
+            {/* Astronaut Selector */}
+            <div>
+              <label className="block text-slate-400 uppercase text-[10px] mb-1">
+                ASTRONAUT SUBJECT
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedCrewId}
+                  onChange={(e) => setSelectedCrewId(Number(e.target.value))}
+                  className="w-full appearance-none bg-space-900 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-3 pr-8 py-2 text-white font-sans text-xs focus:outline-none focus:border-cyan-500 cursor-pointer"
+                >
+                  {displayCrew.map((c) => (
+                    <option key={c.id} value={c.id} className="bg-space-900 text-slate-100">
+                      {c.name} ({c.callsign}) — {c.role}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-cyan-400 absolute right-2.5 top-2.5 pointer-events-none" />
+              </div>
+            </div>
+
             <div>
               <label className="block text-slate-400 uppercase text-[10px] mb-1">
                 Brief Title

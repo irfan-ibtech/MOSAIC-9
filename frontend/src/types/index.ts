@@ -167,6 +167,12 @@ export interface ReconstructionData {
   hypotheses: Hypothesis[];
   recommended_reviews: string[];
   scientific_disclaimer: string;
+  metrics?: {
+    total_precursor_events: number;
+    first_detected_anomaly_hours_prior: number;
+    heuristic_confidence_score: number;
+    penalty_breakdown: Record<string, number>;
+  };
 }
 
 export interface CountermeasureScenario {

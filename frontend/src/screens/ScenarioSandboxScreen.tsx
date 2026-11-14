@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CrewMember, CountermeasureScenario } from '../types';
 import { mosaicApi } from '../services/api';
 import { TelemetryChart } from '../components/common/TelemetryChart';
+import { DEFAULT_CREW_MEMBERS, DEFAULT_SCENARIOS } from '../data/initialData';
 import {
   Sliders,
   Play,
@@ -12,49 +13,55 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 
 interface ScenarioSandboxScreenProps {
   selectedCrew: CrewMember | null;
+  crewMembers?: CrewMember[];
+  onSelectCrew?: (crew: CrewMember) => void;
 }
 
-export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({ selectedCrew }) => {
-  const [scenarios, setScenarios] = useState<CountermeasureScenario[]>([]);
-  const [scenarioName, setScenarioName] = useState('Custom Rest & Fluid Protocol');
-  const [sleepDelta, setSleepDelta] = useState<number>(2.0);
-  const [workloadDelta, setWorkloadDelta] = useState<number>(-30);
+export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({
+  selectedCrew,
+  crewMembers,
+  onSelectCrew,
+}) => {
+  const list = crewMembers && crewMembers.length > 0 ? crewMembers : DEFAULT_CREW_MEMBERS;
+  const crew = selectedCrew || list[0] || DEFAULT_CREW_MEMBERS[0];
+
+  const [scenarios, setScenarios] = useState<CountermeasureScenario[]>(DEFAULT_SCENARIOS);
+  const [scenarioName, setScenarioName] = useState('Scenario Alpha: Sleep Restoration & Fluid Loading');
+  const [sleepDelta, setSleepDelta] = useState<number>(2.5);
+  const [workloadDelta, setWorkloadDelta] = useState<number>(-35);
   const [ergoWatts, setErgoWatts] = useState<number>(140);
   const [hydrationMl, setHydrationMl] = useState<number>(1200);
-  const [ambientCo2, setAmbientCo2] = useState<number>(2.2);
+  const [ambientCo2, setAmbientCo2] = useState<number>(2.0);
 
-  const [activeSimulationResult, setActiveSimulationResult] = useState<any>(null);
+  const [activeSimulationResult, setActiveSimulationResult] = useState<any>({
+    scenario: DEFAULT_SCENARIOS[0],
+    baseline_comparison: {
+      hrv: { current: 27.0, projected: DEFAULT_SCENARIOS[0].projections.projected_hrv_rmssd, baseline: 58.0, unit: 'ms' },
+      hr: { current: 78.0, projected: DEFAULT_SCENARIOS[0].projections.projected_resting_hr, baseline: 60.0, unit: 'bpm' },
+      bp: { current: 88.0, projected: DEFAULT_SCENARIOS[0].projections.projected_systolic_bp, baseline: 118.0, unit: 'mmHg' },
+      pvt: { current: 310.0, projected: DEFAULT_SCENARIOS[0].projections.projected_pvt_latency_ms, baseline: 215.0, unit: 'ms' },
+    },
+  });
   const [isSimulating, setIsSimulating] = useState(false);
 
   useEffect(() => {
-    mosaicApi.getScenarios().then((list) => {
-      setScenarios(list || []);
-      if (list && list.length > 0) {
-        // Load default Scenario Alpha
-        const alpha = list[0];
-        setActiveSimulationResult({
-          scenario: alpha,
-          baseline_comparison: {
-            hrv: { current: 27.0, projected: alpha.projections.projected_hrv_rmssd, baseline: 58.0, unit: 'ms' },
-            hr: { current: 78.0, projected: alpha.projections.projected_resting_hr, baseline: 60.0, unit: 'bpm' },
-            bp: { current: 88.0, projected: alpha.projections.projected_systolic_bp, baseline: 118.0, unit: 'mmHg' },
-            pvt: { current: 310.0, projected: alpha.projections.projected_pvt_latency_ms, baseline: 215.0, unit: 'ms' },
-          },
-        });
+    mosaicApi.getScenarios().then((resList) => {
+      if (resList && resList.length > 0) {
+        setScenarios(resList);
       }
     });
   }, []);
 
   const handleRunSimulation = async () => {
-    if (!selectedCrew) return;
     setIsSimulating(true);
     try {
       const res = await mosaicApi.simulateScenario({
-        crew_member_id: selectedCrew.id,
+        crew_member_id: crew.id,
         name: scenarioName,
         sleep_delta_hours: sleepDelta,
         workload_delta_pct: workloadDelta,
@@ -64,7 +71,9 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({ se
       });
       setActiveSimulationResult(res);
       // Reload list
-      mosaicApi.getScenarios().then((list) => setScenarios(list || []));
+      mosaicApi.getScenarios().then((resList) => {
+        if (resList && resList.length > 0) setScenarios(resList);
+      });
     } catch (err) {
       alert('Simulation error');
     } finally {
@@ -160,28 +169,62 @@ export const ScenarioSandboxScreen: React.FC<ScenarioSandboxScreenProps> = ({ se
             </span>
             <span className="text-xs font-mono text-slate-400">HYPOTHETICAL PHYSIOLOGICAL SIMULATION</span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            Countermeasure Exploration & Trajectory Sandbox
+          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
+            <span>Countermeasure Exploration & Trajectory Sandbox</span>
+            <span className="text-cyan-400 font-mono text-base">({crew.name})</span>
           </h1>
           <p className="text-xs text-slate-400">
             Model hypothetical recovery trajectories across sleep extensions, workload shifts, and fluid loading protocols.
           </p>
         </div>
 
-        {/* Preset scenario loaders */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleLoadPreset('alpha')}
-            className="px-3 py-1.5 rounded-lg bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 text-xs font-mono transition-all"
-          >
-            LOAD ALPHA (RESTORATION)
-          </button>
-          <button
-            onClick={() => handleLoadPreset('bravo')}
-            className="px-3 py-1.5 rounded-lg bg-purple-950 hover:bg-purple-900 border border-purple-700 text-purple-300 text-xs font-mono transition-all"
-          >
-            LOAD BRAVO (MAINTENANCE)
-          </button>
+        {/* Astronaut Selector & Preset Controls */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {onSelectCrew && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-mono text-slate-400 uppercase">CREW:</span>
+              <div className="relative">
+                <select
+                  value={crew.id}
+                  onChange={(e) => {
+                    const found = list.find((c) => c.id === Number(e.target.value));
+                    if (found) onSelectCrew(found);
+                  }}
+                  className="appearance-none bg-space-900 border border-space-700 hover:border-cyan-500/60 rounded-lg pl-2.5 pr-7 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-cyan-500 cursor-pointer"
+                >
+                  {list.map((c) => (
+                    <option key={c.id} value={c.id} className="bg-space-900 text-slate-100">
+                      {c.name} ({c.callsign})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2 top-2 pointer-events-none" />
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => handleLoadPreset('alpha')}
+              className={`px-2.5 py-1.5 rounded-lg border text-xs font-mono transition-all ${
+                scenarioName.includes('Alpha')
+                  ? 'bg-cyan-950 border-cyan-600 text-cyan-300 font-bold'
+                  : 'bg-space-900 border-space-700 text-slate-400 hover:text-white'
+              }`}
+            >
+              LOAD ALPHA
+            </button>
+            <button
+              onClick={() => handleLoadPreset('bravo')}
+              className={`px-2.5 py-1.5 rounded-lg border text-xs font-mono transition-all ${
+                scenarioName.includes('Bravo')
+                  ? 'bg-purple-950 border-purple-600 text-purple-300 font-bold'
+                  : 'bg-space-900 border-space-700 text-slate-400 hover:text-white'
+              }`}
+            >
+              LOAD BRAVO
+            </button>
+          </div>
         </div>
       </div>
 

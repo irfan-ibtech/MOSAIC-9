@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CrewMember } from '../types';
 import { mosaicApi } from '../services/api';
 import { TelemetryChart } from '../components/common/TelemetryChart';
+import { DEFAULT_CREW_MEMBERS, DEFAULT_TEMPORAL_ANALYSIS } from '../data/initialData';
 import {
   Clock,
   GitFork,
@@ -11,21 +12,31 @@ import {
   Info,
   ShieldCheck,
   Zap,
+  ChevronDown,
 } from 'lucide-react';
 
 interface TemporalIntelligenceScreenProps {
   selectedCrew: CrewMember | null;
+  crewMembers?: CrewMember[];
+  onSelectCrew?: (crew: CrewMember) => void;
 }
 
-export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProps> = ({ selectedCrew }) => {
-  const [temporalData, setTemporalData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProps> = ({
+  selectedCrew,
+  crewMembers,
+  onSelectCrew,
+}) => {
+  const list = crewMembers && crewMembers.length > 0 ? crewMembers : DEFAULT_CREW_MEMBERS;
+  const crew = selectedCrew || list[0] || DEFAULT_CREW_MEMBERS[0];
+
+  const [temporalData, setTemporalData] = useState<any>(DEFAULT_TEMPORAL_ANALYSIS);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (selectedCrew) {
+    if (crew) {
       setLoading(true);
       mosaicApi
-        .getTemporalAnalysis(selectedCrew.id)
+        .getTemporalAnalysis(crew.id)
         .then((res) => {
           setTemporalData(res);
           setLoading(false);
@@ -34,25 +45,25 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
           setLoading(false);
         });
     }
-  }, [selectedCrew]);
+  }, [crew?.id]);
 
   // Anomaly sequence progression chart (Z-score composite across 5 days) dynamically tailored
   const getZScoreSeries = () => {
-    if (selectedCrew?.callsign === 'CADUCEUS') {
+    if (crew?.callsign === 'CADUCEUS') {
       return {
         autonomic: [0.0, 0.1, 0.0, -0.1, 0.0],
         sleep: [0.1, 0.0, 0.1, 0.0, 0.1],
         cognitive: [0.0, 0.1, 0.0, 0.1, 0.0],
       };
     }
-    if (selectedCrew?.callsign === 'VULCAN') {
+    if (crew?.callsign === 'VULCAN') {
       return {
         autonomic: [0.0, -0.4, -0.8, -1.2, -1.4],
         sleep: [-0.1, -0.8, -1.5, -1.3, -1.4],
         cognitive: [0.1, 0.4, 0.9, 1.2, 1.4],
       };
     }
-    if (selectedCrew?.callsign === 'AURORA') {
+    if (crew?.callsign === 'AURORA') {
       return {
         autonomic: [0.0, -0.2, 0.0, null, null],
         sleep: [0.0, 0.1, 0.0, null, null],
@@ -68,6 +79,41 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
   };
 
   const zData = getZScoreSeries();
+
+  const getSignalDetails = () => {
+    if (crew?.callsign === 'CADUCEUS') {
+      return {
+        title: 'Nominal Physiological Stability Across Mission Days 116–120',
+        leadTime: 'NOMINAL (0 ANOMALIES)',
+        leadColor: 'bg-emerald-950 text-emerald-300 border-emerald-800',
+        description: 'Dr. Sarah Chen maintained complete countermeasure compliance, balanced rest cycles (7.8h avg), and stable resting cardiovascular metrics with zero precursor threshold exceedances.',
+      };
+    }
+    if (crew?.callsign === 'VULCAN') {
+      return {
+        title: 'Day 116 18:00 — Coolant Loop Overtime Shift (10.5h Workload Surge)',
+        leadTime: 'LEAD TIME: 49.2 HOURS BEFORE EPISODE',
+        leadColor: 'bg-amber-950 text-amber-300 border-amber-800',
+        description: 'Extended manual maintenance in confined Node 2 compartment caused minor sleep window delay and local CO2 elevation to 3.1 mmHg, initiating physical fatigue progression.',
+      };
+    }
+    if (crew?.callsign === 'AURORA') {
+      return {
+        title: 'Day 119 18:00 — Transponder Telemetry Packet Dropout',
+        leadTime: 'STATUS: UNVERIFIED PACKET LOSS',
+        leadColor: 'bg-slate-800 text-slate-300 border-slate-700',
+        description: 'Continuous biometric patch disconnected at Day 119 18:00. Precursor timeline unverified for Days 119-120; data completeness score penalized to 45%.',
+      };
+    }
+    return {
+      title: 'Day 117 06:30 — Acute Sleep Curtailment (-2.6σ Deviation)',
+      leadTime: 'LEAD TIME: 75.2 HOURS BEFORE INCIDENT',
+      leadColor: 'bg-cyan-950 text-cyan-300 border-cyan-800',
+      description: 'Following an unscheduled nocturnal ECLSS audio alarm drill at 02:45, Commander Alex Morgan’s recorded sleep duration collapsed from 8.0h baseline to 5.4h (z = -2.6). This was the earliest statistically significant departure across all tracked physiological and mission signals.',
+    };
+  };
+
+  const signalDetails = getSignalDetails();
 
   const anomalyChartOptions = {
     tooltip: { trigger: 'axis' },
@@ -116,22 +162,65 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="border-b border-space-700/60 pb-4">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-400">
-            MODULE D — TEMPORAL RELATIONSHIP INTELLIGENCE ENGINE
-          </span>
-          <span className="text-xs font-mono text-slate-400">
-            CROSS-DOMAIN LEAD-LAG & SEQUENCE DISCOVERY
-          </span>
+      {/* Header & Astronaut Selector */}
+      <div className="border-b border-space-700/60 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-400">
+              MODULE D — TEMPORAL RELATIONSHIP INTELLIGENCE ENGINE
+            </span>
+            <span className="text-xs font-mono text-slate-400">
+              CROSS-DOMAIN LEAD-LAG & SEQUENCE DISCOVERY
+            </span>
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
+            <span>Multi-Domain Temporal Evolution & Precursor Detection</span>
+            <span className="text-cyan-400 font-mono text-base">({crew.name})</span>
+          </h1>
+          <p className="text-xs text-slate-400">
+            Deterministic time-series analysis reconstructing how preceding sleep debt, workload spikes, and autonomic suppression converged prior to the acute episode.
+          </p>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-white">
-          Multi-Domain Temporal Evolution & Precursor Detection
-        </h1>
-        <p className="text-xs text-slate-400">
-          Deterministic time-series analysis reconstructing how preceding sleep debt, workload spikes, and autonomic suppression converged prior to the acute episode.
-        </p>
+
+        {/* Astronaut Selector */}
+        {onSelectCrew && (
+          <div className="flex items-center gap-2">
+            <div className="relative md:hidden flex items-center bg-space-900 border border-space-700 rounded-lg px-2.5 py-1.5 w-full">
+              <select
+                value={crew.id}
+                onChange={(e) => {
+                  const found = list.find((c) => c.id === Number(e.target.value));
+                  if (found) onSelectCrew(found);
+                }}
+                className="appearance-none bg-transparent text-xs text-white font-mono focus:outline-none pr-6 cursor-pointer w-full"
+              >
+                {list.map((c) => (
+                  <option key={c.id} value={c.id} className="bg-space-900 text-slate-100">
+                    {c.name} ({c.callsign})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-cyan-400 absolute right-2 pointer-events-none" />
+            </div>
+
+            <div className="hidden md:flex items-center gap-2">
+              {list.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => onSelectCrew(c)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all flex items-center gap-2 border ${
+                    crew.id === c.id
+                      ? 'bg-cyan-950 border-cyan-600 text-cyan-300 shadow-panel font-semibold'
+                      : 'bg-space-900 border-space-700 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>{c.avatar_initials}</span>
+                  <span>{c.callsign}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Scientific Principle Alert */}
@@ -147,7 +236,7 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
 
       {/* First Unusual Signal Card */}
       <div className="bg-space-850 border border-cyan-700/60 rounded-xl p-5 shadow-glow-cyan space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-cyan-950 border border-cyan-700 flex items-center justify-center text-cyan-300">
               <Zap className="w-4 h-4" />
@@ -157,17 +246,17 @@ export const TemporalIntelligenceScreen: React.FC<TemporalIntelligenceScreenProp
                 FIRST UNUSUAL SIGNAL IDENTIFIED
               </div>
               <h3 className="text-sm font-bold text-white font-mono">
-                Day 117 06:30 — Acute Sleep Curtailment (-2.6σ Deviation)
+                {signalDetails.title}
               </h3>
             </div>
           </div>
-          <span className="text-xs font-mono px-2.5 py-1 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
-            LEAD TIME: 75.2 HOURS BEFORE INCIDENT
+          <span className={`text-xs font-mono px-2.5 py-1 rounded border ${signalDetails.leadColor}`}>
+            {signalDetails.leadTime}
           </span>
         </div>
 
         <p className="text-xs text-slate-300 leading-relaxed font-sans">
-          Following an unscheduled nocturnal ECLSS audio alarm drill at 02:45, Commander Alex Morgan’s recorded sleep duration collapsed from 8.0h baseline to 5.4h (z = -2.6). This was the earliest statistically significant departure across all tracked physiological and mission signals.
+          {signalDetails.description}
         </p>
       </div>
 
